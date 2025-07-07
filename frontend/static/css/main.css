@@ -1,0 +1,44 @@
+/* frontend/static/css/main.css */
+
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.navbar-azevix {
+  background-color: #0d6efd;
+}
+
+.btn-azevix {
+  background-color: #0d6efd;
+  color: #fff;
+  border: none;
+}
+
+.btn-azevix:hover {
+  background-color: #0b5ed7;
+  color: #fff;
+}
+
+.card-azevix {
+  border: 1px solid #0d6efd;
+  box-shadow: 0 0.2rem 0.5rem rgba(13, 110, 253, 0.1);
+}
+
+.card-azevix .card-header {
+  background-color: #e9f1ff;
+  border-bottom: 1px solid #0d6efd;
+  color: #0d6efd;
+}
+
+.text-azevix {
+  color: #0d6efd;
+}
+
+.badge.bg-azevix {
+  background-color: #0d6efd;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #eef5ff;
+}

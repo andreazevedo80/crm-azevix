@@ -1,0 +1,55 @@
+version: '3.8'
+
+# Adicione esta linha para que o Docker Compose leia o arquivo .env
+env_file:
+  - .env
+
+services:
+  db:
+    image: postgres:15
+    container_name: crm-azevix-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - crm_network
+
+  backend:
+    build: ./backend
+    container_name: crm-azevix-backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      FLASK_ENV: production
+    depends_on:
+      - db
+    ports:
+      - "5090:5090"
+    volumes:
+      - ./backend:/app
+    networks:
+      - crm_network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend:/usr/share/nginx/html
+    depends_on:
+      - backend
+    networks:
+      - crm_network
+
+volumes:
+  postgres_data:
+
+networks:
+  crm_network:
+    driver: bridge

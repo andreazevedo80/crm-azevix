@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Vendas - Leads</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/main.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-azevix">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white fw-bold" href="/">
+                <i class="fas fa-chart-line me-2"></i>CRM Azevix
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white active" href="/leads">
+                            <i class="fas fa-users me-1"></i>Leads
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/novo-lead">
+                            <i class="fas fa-plus me-1"></i>Novo Lead
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Filtros -->
+        <div class="card card-azevix mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>Filtros
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Buscar</label>
+                        <input type="text" class="form-control" id="search" placeholder="Nome, conta ou email...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status-filter" class="form-label">Status</label>
+                        <select class="form-select" id="status-filter">
+                            <option value="">Todos os Status</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="segment-filter" class="form-label">Segmento</label>
+                        <select class="form-select" id="segment-filter">
+                            <option value="">Todos os Segmentos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-azevix w-100" onclick="applyFilters()">
+                            <i class="fas fa-search me-1"></i>Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Leads -->
+        <div class="card card-azevix">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>Lista de Leads
+                    <span class="badge bg-azevix ms-2" id="total-count">0</span>
+                </h5>
+                <a href="/novo-lead" class="btn btn-azevix">
+                    <i class="fas fa-plus me-1"></i>Novo Lead
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Loading -->
+                <div id="loading" class="text-center py-4">
+                    <div class="spinner-border text-azevix" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
+
+                <!-- Tabela Desktop -->
+                <div class="table-responsive d-none d-md-block" id="leads-table-desktop">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Conta</th>
+                                <th>Email</th>
+                                <th>Telefone</th>
+                                <th>Segmento</th>
+                                <th>Status</th>
+                                <th>Última Atualização</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-list-desktop">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Cards Mobile -->
+                <div class="d-md-none" id="leads-cards-mobile">
+                    <!-- Preenchido via JavaScript -->
+                </div>
+
+                <!-- Paginação -->
+                <nav aria-label="Paginação" id="pagination-container" class="mt-4">
+                    <!-- Preenchido via JavaScript -->
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Editar Lead
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="edit-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="edit-nome" class="form-label">Nome Completo *</label>
+                                <input type="text" class="form-control" id="edit-nome" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-conta" class="form-label">Nome da Conta *</label>
+                                <input type="text" class="form-control" id="edit-conta" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="edit-email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-telefone-fixo" class="form-label">Telefone Fixo</label>
+                                <input type="text" class="form-control" id="edit-telefone-fixo">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-telefone-celular" class="form-label">Telefone Celular</label>
+                                <input type="text" class="form-control" id="edit-telefone-celular">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-segmento" class="form-label">Segmento *</label>
+                                <select class="form-select" id="edit-segmento" required>
+                                    <!-- Preenchido via JavaScript -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-status" class="form-label">Status *</label>
+                                <select class="form-select" id="edit-status" required>
+                                    <!-- Preenchido via JavaScript -->
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="edit-observacoes" class="form-label">Observações</label>
+                                <textarea class="form-control" id="edit-observacoes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-azevix" onclick="saveEdit()">
+                        <i class="fas fa-save me-1"></i>Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico -->
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-history me-2"></i>Histórico de Interações
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="history-content">
+                        <!-- Preenchido via JavaScript -->
+                    </div>
+                    
+                    <!-- Formulário para nova interação -->
+                    <hr>
+                    <h6>Nova Interação</h6>
+                    <form id="historyForm">
+                        <input type="hidden" id="history-lead-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="history-tipo" class="form-label">Tipo de Interação</label>
+                                <select class="form-select" id="history-tipo" required>
+                                    <option value="CONTATO">Contato</option>
+                                    <option value="EMAIL">Email</option>
+                                    <option value="REUNIAO">Reunião</option>
+                                    <option value="PROPOSTA">Proposta</option>
+                                    <option value="FOLLOW_UP">Follow-up</option>
+                                    <option value="OBSERVACAO">Observação</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="history-descricao" class="form-label">Descrição</label>
+                                <textarea class="form-control" id="history-descricao" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-azevix" onclick="addHistory()">
+                        <i class="fas fa-plus me-1"></i>Adicionar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/leads.js"></script>
+</body>
+</html>
