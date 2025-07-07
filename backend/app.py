@@ -9,9 +9,10 @@ from sqlalchemy import inspect
 # Carrega as variáveis do arquivo .env
 load_dotenv()
 
+# --- MODIFICADO: Caminhos absolutos para templates e arquivos estáticos ---
 app = Flask(__name__,
-            template_folder='../frontend/templates',
-            static_folder='../frontend/static')
+            template_folder='/frontend/templates',
+            static_folder='/frontend/static')
 
 # --- Configuração do Banco de Dados ---
 DB_USER = os.getenv('POSTGRES_USER')
@@ -29,6 +30,7 @@ app.config['SECRET_KEY'] = 'crm-azevix-secret-key-2024'
 db = SQLAlchemy(app)
 CORS(app)
 
+# (O resto do seu código permanece exatamente o mesmo)
 # --- Definições de Configuração ---
 SEGMENTOS = [
     'Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços',
@@ -293,13 +295,8 @@ def get_config():
         'status_leads': STATUS_LEADS
     })
 
-
 # --- Função de Inicialização do Banco de Dados ---
 def create_tables():
     """Cria as tabelas no banco de dados se elas não existirem."""
     with app.app_context():
-        # A verificação agora é feita no boot.sh, então apenas criamos.
         db.create_all()
-
-# O bloco if __name__ == '__main__' foi removido para evitar confusão,
-# já que o Gunicorn será iniciado pelo boot.sh.

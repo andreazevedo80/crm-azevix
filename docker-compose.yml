@@ -32,11 +32,12 @@ services:
       FLASK_ENV: production
     depends_on:
       db:
-        condition: service_healthy # Agora o backend espera o healthcheck do db passar
+        condition: service_healthy
     ports:
       - "5090:5090"
     volumes:
       - ./backend:/app
+      - ./frontend:/frontend # <-- ADICIONE ESTA LINHA
     networks:
       - crm_network
 
