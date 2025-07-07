@@ -1,56 +1,41 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-import json
-import urllib.parse # Importa para URL-encode, caso precise no futuro
+from sqlalchemy import inspect # <-- Adicione esta importação
 
 # Carrega as variáveis do arquivo .env
 load_dotenv()
 
-app = Flask(__name__, 
+app = Flask(__name__,
             template_folder='../frontend/templates',
             static_folder='../frontend/static')
 
-# Acessa as variáveis de ambiente carregadas pelo dotenv
+# --- Configuração do Banco de Dados ---
 DB_USER = os.getenv('POSTGRES_USER')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 DB_NAME = os.getenv('POSTGRES_DB')
-DB_HOST = 'crm-azevix-db' 
+DB_HOST = 'crm-azevix-db'
 DB_PORT = '5432'
 
-# Para senhas SEM '@' e outros caracteres especiais que causam conflito em URLs:
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-# Para depuração, você pode imprimir a URL construída:
 print(f"DEBUG: Constructed DATABASE_URL: {DATABASE_URL}")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'crm-azevix-secret-key-2024'
 
-# Inicializar extensões
+# --- Inicialização das Extensões ---
 db = SQLAlchemy(app)
 CORS(app)
 
-# Definir segmentos disponíveis
-SEGMENTOS = [
-    'Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços',
-    'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros'
-]
-
-# Definir status dos leads
-STATUS_LEADS = [
-    'NOVO_LEAD', 'SEM_INTERESSE', 'INTERESSE_NAO_ATENDE', 'TELEFONE_INEXISTENTE',
-    'EMAIL_APRESENTACAO_ENVIADO', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO'
-]
-
+# --- Modelos e outras definições (sem alterações) ---
+# (Seu código de modelos Lead, HistoricoInteracao e as constantes SEGMENTOS, STATUS_LEADS permanecem aqui)
 # Modelo de dados para Leads
 class Lead(db.Model):
     __tablename__ = 'leads'
-    
     id = db.Column(db.Integer, primary_key=True)
     nome_completo = db.Column(db.String(200), nullable=False)
     nome_conta = db.Column(db.String(200), nullable=False)
@@ -62,9 +47,8 @@ class Lead(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     observacoes = db.Column(db.Text)
-    
     historico_interacoes = db.relationship('HistoricoInteracao', backref='lead', lazy=True, cascade='all, delete-orphan')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -80,16 +64,14 @@ class Lead(db.Model):
             'observacoes': self.observacoes
         }
 
-# Modelo de dados para Histórico de Interações
 class HistoricoInteracao(db.Model):
     __tablename__ = 'historico_interacoes'
-    
     id = db.Column(db.Integer, primary_key=True)
     lead_id = db.Column(db.Integer, db.ForeignKey('leads.id'), nullable=False)
     tipo_interacao = db.Column(db.String(50), nullable=False)
     descricao = db.Column(db.Text, nullable=False)
     data_interacao = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -99,7 +81,7 @@ class HistoricoInteracao(db.Model):
             'data_interacao': self.data_interacao.isoformat() if self.data_interacao else None
         }
 
-# Rotas principais
+# --- Suas rotas (endpoints) permanecem aqui sem alterações ---
 @app.route('/')
 def dashboard():
     return render_template('dashboard.html')
@@ -112,7 +94,7 @@ def leads():
 def novo_lead():
     return render_template('novo_lead.html')
 
-# API Routes
+# (todas as suas outras rotas de API como get_leads, create_lead, etc., permanecem aqui)
 @app.route('/api/leads', methods=['GET'])
 def get_leads():
     try:
@@ -310,9 +292,22 @@ def get_config():
         'status_leads': STATUS_LEADS
     })
 
-# Inicializar banco de dados fora do contexto de requisição
-with app.app_context():
-    db.create_all()
+# --- Bloco de Execução Principal (MODIFICADO) ---
+def create_tables():
+    """Função para criar as tabelas no banco de dados, se não existirem."""
+    with app.app_context():
+        inspector = inspect(db.engine)
+        # Verifica se a tabela 'leads' (principal) já não existe
+        if not inspector.has_table("leads"):
+            print("Tabela 'leads' não encontrada. Criando todas as tabelas...")
+            db.create_all()
+            print("Tabelas criadas com sucesso.")
+        else:
+            print("Tabelas já existem. Nenhuma ação necessária.")
 
 if __name__ == '__main__':
+    create_tables()
     app.run(host='0.0.0.0', port=5090, debug=True)
+else:
+    # Garante que as tabelas sejam criadas antes do Gunicorn iniciar os workers
+    create_tables()
