@@ -2,20 +2,23 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar e instalar dependências Python
+# Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código da aplicação
+# Copy the entire backend directory
 COPY . .
 
-# Expor porta
+# Make the boot script executable
+RUN chmod +x /app/boot.sh
+
+# Expose port
 EXPOSE 5090
 
-# Comando para iniciar a aplicação
-CMD ["gunicorn", "--bind", "0.0.0.0:5090", "--workers", "4", "app:app"]
+# Set the startup command to our new script
+CMD ["/app/boot.sh"]

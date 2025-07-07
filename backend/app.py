@@ -4,7 +4,7 @@ from flask_cors import CORS
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-from sqlalchemy import inspect # <-- Adicione esta importação
+from sqlalchemy import inspect
 
 # Carrega as variáveis do arquivo .env
 load_dotenv()
@@ -21,8 +21,6 @@ DB_HOST = 'crm-azevix-db'
 DB_PORT = '5432'
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-print(f"DEBUG: Constructed DATABASE_URL: {DATABASE_URL}")
-
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'crm-azevix-secret-key-2024'
@@ -31,9 +29,18 @@ app.config['SECRET_KEY'] = 'crm-azevix-secret-key-2024'
 db = SQLAlchemy(app)
 CORS(app)
 
-# --- Modelos e outras definições (sem alterações) ---
-# (Seu código de modelos Lead, HistoricoInteracao e as constantes SEGMENTOS, STATUS_LEADS permanecem aqui)
-# Modelo de dados para Leads
+# --- Definições de Configuração ---
+SEGMENTOS = [
+    'Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços',
+    'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros'
+]
+STATUS_LEADS = [
+    'NOVO_LEAD', 'SEM_INTERESSE', 'INTERESSE_NAO_ATENDE', 'TELEFONE_INEXISTENTE',
+    'EMAIL_APRESENTACAO_ENVIADO', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO'
+]
+
+
+# --- Modelos do Banco de Dados ---
 class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,14 +58,9 @@ class Lead(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'nome_completo': self.nome_completo,
-            'nome_conta': self.nome_conta,
-            'email': self.email,
-            'telefone_fixo': self.telefone_fixo,
-            'telefone_celular': self.telefone_celular,
-            'segmento': self.segmento,
-            'status_lead': self.status_lead,
+            'id': self.id, 'nome_completo': self.nome_completo, 'nome_conta': self.nome_conta,
+            'email': self.email, 'telefone_fixo': self.telefone_fixo, 'telefone_celular': self.telefone_celular,
+            'segmento': self.segmento, 'status_lead': self.status_lead,
             'data_cadastro': self.data_cadastro.isoformat() if self.data_cadastro else None,
             'data_ultima_atualizacao': self.data_ultima_atualizacao.isoformat() if self.data_ultima_atualizacao else None,
             'observacoes': self.observacoes
@@ -74,14 +76,13 @@ class HistoricoInteracao(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'lead_id': self.lead_id,
-            'tipo_interacao': self.tipo_interacao,
-            'descricao': self.descricao,
-            'data_interacao': self.data_interacao.isoformat() if self.data_interacao else None
+            'id': self.id, 'lead_id': self.lead_id, 'tipo_interacao': self.tipo_interacao,
+            'descricao': self.descricao, 'data_interacao': self.data_interacao.isoformat() if self.data_interacao else None
         }
 
-# --- Suas rotas (endpoints) permanecem aqui sem alterações ---
+
+# --- Rotas da Aplicação e API (sem alterações) ---
+# ... (todas as suas rotas @app.route permanecem aqui) ...
 @app.route('/')
 def dashboard():
     return render_template('dashboard.html')
@@ -94,7 +95,7 @@ def leads():
 def novo_lead():
     return render_template('novo_lead.html')
 
-# (todas as suas outras rotas de API como get_leads, create_lead, etc., permanecem aqui)
+# API Routes
 @app.route('/api/leads', methods=['GET'])
 def get_leads():
     try:
@@ -292,22 +293,13 @@ def get_config():
         'status_leads': STATUS_LEADS
     })
 
-# --- Bloco de Execução Principal (MODIFICADO) ---
-def create_tables():
-    """Função para criar as tabelas no banco de dados, se não existirem."""
-    with app.app_context():
-        inspector = inspect(db.engine)
-        # Verifica se a tabela 'leads' (principal) já não existe
-        if not inspector.has_table("leads"):
-            print("Tabela 'leads' não encontrada. Criando todas as tabelas...")
-            db.create_all()
-            print("Tabelas criadas com sucesso.")
-        else:
-            print("Tabelas já existem. Nenhuma ação necessária.")
 
-if __name__ == '__main__':
-    create_tables()
-    app.run(host='0.0.0.0', port=5090, debug=True)
-else:
-    # Garante que as tabelas sejam criadas antes do Gunicorn iniciar os workers
-    create_tables()
+# --- Função de Inicialização do Banco de Dados ---
+def create_tables():
+    """Cria as tabelas no banco de dados se elas não existirem."""
+    with app.app_context():
+        # A verificação agora é feita no boot.sh, então apenas criamos.
+        db.create_all()
+
+# O bloco if __name__ == '__main__' foi removido para evitar confusão,
+# já que o Gunicorn será iniciado pelo boot.sh.
