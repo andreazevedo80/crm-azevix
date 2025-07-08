@@ -24,4 +24,5 @@ crm-azevix/
 ├── Dockerfile     # (Modificado)
 ├── requirements.txt        # (Modificado)
 ├── nginx.conf        # (Não alterado)
+├── boot.sh        # (Novo)
 └── run.py                  # (Novo) Ponto de entrada da aplicação

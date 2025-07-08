@@ -10,7 +10,9 @@ login_manager = LoginManager()
 def create_app():
     load_dotenv()
 
+    # Apontando para as pastas corretas dentro do contêiner
     app = Flask(__name__,
+                instance_relative_config=True,
                 template_folder='templates',
                 static_folder='static')
 
@@ -29,8 +31,7 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Configuração do Flask-Login
-    login_manager.login_view = 'auth.login' # Rota para onde usuários não logados são redirecionados
+    login_manager.login_view = 'auth.login'
     login_manager.login_message = "Por favor, faça o login para acessar esta página."
     login_manager.login_message_category = "info"
 
@@ -39,15 +40,13 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Registrar Blueprints
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/')
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
 
-    with app.app_context():
-        db.create_all()
-        print("Tabelas verificadas/criadas.")
+    # A CRIAÇÃO DO BANCO DE DADOS FOI REMOVIDA DAQUI
+    # O boot.sh agora cuida disso.
 
     return app

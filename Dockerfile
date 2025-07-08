@@ -1,23 +1,28 @@
-FROM python:3.11-slim
+# Use uma versão específica do Python para consistência
+FROM python:3.11.8-slim
 
+# Define o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-# Instalar dependências do sistema
+# Instala dependências do sistema
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar e instalar dependências Python
-# Copiamos primeiro para aproveitar o cache do Docker
+# Copia o arquivo de dependências primeiro para aproveitar o cache do Docker
 COPY requirements.txt .
+
+# Instala as dependências Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante da aplicação
+# Copia todo o resto do código da aplicação para o contêiner
 COPY . .
 
-# Expor porta
+# Torna o script de inicialização executável
+RUN chmod +x /app/boot.sh
+
+# Expõe a porta que a aplicação irá usar
 EXPOSE 5090
 
-# Comando para iniciar a aplicação via Gunicorn
-# O ponto de entrada agora é o objeto 'app' dentro de 'run.py'
-CMD ["gunicorn", "--bind", "0.0.0.0:5090", "--workers", "4", "run:app"]
+# Define o script de inicialização como o comando padrão do contêiner
+CMD ["/app/boot.sh"]

@@ -4,12 +4,7 @@ services:
   db:
     image: postgres:15
     container_name: crm-azevix-db
-    env_file:
-      - ./.env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -23,30 +18,18 @@ services:
       retries: 5
 
   backend:
-    # MODIFICADO: O contexto do build agora é o diretório raiz ('.')
-    # onde o Dockerfile realmente está.
-    build: .
+    build: . # Constrói a partir do diretório raiz, onde está o Dockerfile
     container_name: crm-azevix-backend
-    env_file:
-      - ./.env
-    environment:
-      FLASK_ENV: production
+    env_file: .env
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy # Espera o DB estar pronto
     ports:
       - "5090:5090"
-    volumes:
-      # O código da aplicação está em /app/backend dentro do contêiner
-      - ./backend:/app/backend
-      # O run.py está na raiz
-      - ./run.py:/app/run.py
-      # O requirements.txt também está na raiz
-      - ./requirements.txt:/app/requirements.txt
     networks:
       - crm_network
-    # Adicionando o diretório de trabalho para garantir que o Gunicorn encontre o run:app
-    working_dir: /app
+    # Não precisamos mais de volumes complexos, o Dockerfile já copia tudo.
+    # Isso é melhor para um ambiente de "produção".
 
   nginx:
     image: nginx:alpine
@@ -55,8 +38,8 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      # Nginx ainda precisa servir os arquivos estáticos
-      - ./backend/static:/usr/share/nginx/html/static
+      # O Nginx agora serve apenas como um proxy reverso.
+      # O Flask/Gunicorn cuidará de servir os arquivos estáticos durante o desenvolvimento.
     depends_on:
       - backend
     networks:
