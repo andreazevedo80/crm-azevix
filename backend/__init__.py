@@ -10,9 +10,7 @@ login_manager = LoginManager()
 def create_app():
     load_dotenv()
 
-    # Apontando para as pastas corretas dentro do contêiner
     app = Flask(__name__,
-                instance_relative_config=True,
                 template_folder='templates',
                 static_folder='static')
 
@@ -32,7 +30,6 @@ def create_app():
     login_manager.init_app(app)
 
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = "Por favor, faça o login para acessar esta página."
     login_manager.login_message_category = "info"
 
     from .models import User
@@ -40,25 +37,15 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # --- Registro de Blueprints (Módulos) ---
+    # Garante que cada um seja registrado uma única vez.
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/')
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
 
-    # Registrar Blueprints
-    from .auth import auth as auth_blueprint
-    app.register_blueprint(auth_blueprint, url_prefix='/')
-
-    from .main import main as main_blueprint
-    app.register_blueprint(main_blueprint, url_prefix='/')
-
-    # --- ADICIONE O REGISTRO DO BLUEPRINT DE LEADS ---
     from .leads import leads as leads_blueprint
     app.register_blueprint(leads_blueprint, url_prefix='/')
-
-    with app.app_context():
-        db.create_all()
-        print("Tabelas verificadas/criadas.")
 
     return app
