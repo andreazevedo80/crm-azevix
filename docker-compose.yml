@@ -37,7 +37,7 @@ services:
       - "5090:5090"
     volumes:
       - ./backend:/app
-      - ./frontend:/frontend # <-- ADICIONE ESTA LINHA
+      - ./frontend:/frontend
     networks:
       - crm_network
 
