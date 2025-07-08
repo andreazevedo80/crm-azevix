@@ -149,7 +149,6 @@ def create_lead():
     try:
         data = request.get_json()
         
-        # MODIFICADO: 'email' foi removido dos campos obrigatórios
         required_fields = ['nome_completo', 'nome_conta', 'segmento']
         for field in required_fields:
             if not data.get(field):
@@ -158,7 +157,7 @@ def create_lead():
         lead = Lead(
             nome_completo=data['nome_completo'],
             nome_conta=data['nome_conta'],
-            email=data.get('email'), # Usa .get() para não dar erro se for nulo
+            email=data.get('email'),
             telefone_fixo=data.get('telefone_fixo'),
             telefone_celular=data.get('telefone_celular'),
             segmento=data['segmento'],
