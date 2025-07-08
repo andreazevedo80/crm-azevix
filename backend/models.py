@@ -16,4 +16,39 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-# Futuramente, os modelos Lead e HistoricoInteracao virão para cá também.
+class Lead(db.Model):
+    __tablename__ = 'leads'
+    id = db.Column(db.Integer, primary_key=True)
+    nome_completo = db.Column(db.String(200), nullable=False)
+    nome_conta = db.Column(db.String(200), nullable=False) # Nome da Empresa
+    email = db.Column(db.String(200), nullable=True)
+    telefone_fixo = db.Column(db.String(20))
+    telefone_celular = db.Column(db.String(20))
+    segmento = db.Column(db.String(50), nullable=False)
+    status_lead = db.Column(db.String(50), nullable=False, default='NOVO_LEAD')
+    data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
+    data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    observacoes = db.Column(db.Text)
+    
+    historico_interacoes = db.relationship('HistoricoInteracao', backref='lead', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nome_completo': self.nome_completo,
+            'nome_conta': self.nome_conta,
+            'email': self.email,
+            'telefone_fixo': self.telefone_fixo,
+            'telefone_celular': self.telefone_celular,
+            'segmento': self.segmento,
+            'status_lead': self.status_lead,
+            'data_ultima_atualizacao': self.data_ultima_atualizacao.isoformat() if self.data_ultima_atualizacao else None,
+        }
+
+class HistoricoInteracao(db.Model):
+    __tablename__ = 'historico_interacoes'
+    id = db.Column(db.Integer, primary_key=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('leads.id'), nullable=False)
+    tipo_interacao = db.Column(db.String(50), nullable=False)
+    descricao = db.Column(db.Text, nullable=False)
+    data_interacao = db.Column(db.DateTime, default=datetime.utcnow)

@@ -46,7 +46,19 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
 
-    # A CRIAÇÃO DO BANCO DE DADOS FOI REMOVIDA DAQUI
-    # O boot.sh agora cuida disso.
+    # Registrar Blueprints
+    from .auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint, url_prefix='/')
+
+    from .main import main as main_blueprint
+    app.register_blueprint(main_blueprint, url_prefix='/')
+
+    # --- ADICIONE O REGISTRO DO BLUEPRINT DE LEADS ---
+    from .leads import leads as leads_blueprint
+    app.register_blueprint(leads_blueprint, url_prefix='/')
+
+    with app.app_context():
+        db.create_all()
+        print("Tabelas verificadas/criadas.")
 
     return app
