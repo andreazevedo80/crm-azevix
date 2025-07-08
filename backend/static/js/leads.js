@@ -1,127 +1,99 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // === ELEMENTOS DA PÁGINA PRINCIPAL ===
-    const loadingDiv = document.getElementById('loading');
-    const tableContainer = document.getElementById('leads-table-container');
-    const leadsListBody = document.getElementById('leads-list');
-    const searchInput = document.getElementById('search-filter');
-    const statusFilter = document.getElementById('status-filter');
-    const segmentFilter = document.getElementById('segment-filter');
+    const elements = {
+        displayArea: document.getElementById('leads-display-area'),
+        searchInput: document.getElementById('search-filter'),
+        statusFilter: document.getElementById('status-filter'),
+        segmentFilter: document.getElementById('segment-filter'),
+        checkModalInput: document.getElementById('check-company-name'),
+        checkResultsContainer: document.getElementById('check-results-container'),
+        proceedButton: document.getElementById('proceed-to-register-btn'),
+        checkModalInstance: document.getElementById('checkLeadModal')
+    };
 
-    // === ELEMENTOS DO MODAL DE VERIFICAÇÃO ===
-    const checkModalInput = document.getElementById('check-company-name');
-    const checkResultsContainer = document.getElementById('check-results-container');
-    const proceedButton = document.getElementById('proceed-to-register-btn');
+    const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
 
-    // Função para popular os filtros de Status e Segmento
     const populateFilters = () => {
         fetch('/api/config')
             .then(response => response.json())
             .then(data => {
-                if (!data.success) return;
-                statusFilter.innerHTML = '<option value="">Todos os Status</option>';
-                segmentFilter.innerHTML = '<option value="">Todos os Segmentos</option>';
-                data.status_leads.forEach(status => statusFilter.add(new Option(status, status)));
-                data.segmentos.forEach(seg => segmentFilter.add(new Option(seg, seg)));
+                if (data.success) {
+                    data.status_leads.forEach(status => elements.statusFilter.add(new Option(status, status)));
+                    data.segmentos.forEach(seg => elements.segmentFilter.add(new Option(seg, seg)));
+                }
             });
     };
 
-    // Função para buscar e exibir a lista principal de leads
-    const fetchLeads = () => {
-        loadingDiv.style.display = 'block';
-        tableContainer.style.display = 'none';
-
+    const fetchAndRenderLeads = () => {
+        elements.displayArea.innerHTML = loadingSpinner;
         const params = new URLSearchParams({
-            search: searchInput.value,
-            status: statusFilter.value,
-            segmento: segmentFilter.value
+            search: elements.searchInput.value,
+            status: elements.statusFilter.value,
+            segmento: elements.segmentFilter.value
         });
 
         fetch(`/api/leads?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
-                leadsListBody.innerHTML = '';
+                let tableContent = '';
                 if (data.success && data.leads.length > 0) {
-                    data.leads.forEach(lead => {
-                        leadsListBody.innerHTML += `
-                            <tr>
-                                <td>${lead.nome_completo}</td>
-                                <td>${lead.nome_conta}</td>
-                                <td>${lead.email || '-'}</td>
-                                <td>${lead.telefone_celular || '-'}</td>
-                                <td><span class="badge bg-primary">${lead.status_lead}</span></td>
-                                <td>${lead.owner_name}</td>
-                                <td><button class="btn btn-sm btn-outline-secondary" disabled>Editar</button></td>
-                            </tr>`;
-                    });
+                    const rows = data.leads.map(lead => `
+                        <tr>
+                            <td>${lead.nome_completo}</td>
+                            <td>${lead.nome_conta}</td>
+                            <td>${lead.email || '-'}</td>
+                            <td>${lead.telefone_celular || '-'}</td>
+                            <td><span class="badge bg-primary">${lead.status_lead}</span></td>
+                            <td>${lead.owner_name}</td>
+                            <td><button class="btn btn-sm btn-outline-secondary" disabled>Editar</button></td>
+                        </tr>`).join('');
+                    tableContent = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Contato</th><th>Empresa</th><th>Email</th><th>Telefone</th><th>Status</th><th>Responsável</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`;
                 } else {
-                    leadsListBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum lead encontrado.</td></tr>';
+                    tableContent = `<p class="text-center py-4">Nenhum lead encontrado para você.</p>`;
                 }
-            })
-            .catch(error => console.error('Erro ao buscar leads:', error))
-            .finally(() => {
-                loadingDiv.style.display = 'none';
-                tableContainer.style.display = 'block';
+                elements.displayArea.innerHTML = tableContent;
             });
     };
-    
-    // Função para checar duplicatas no modal
-    const checkDuplicates = () => {
-        const searchTerm = checkModalInput.value;
-        proceedButton.style.display = 'none'; // Esconde o botão de prosseguir
 
-        if (searchTerm.length < 3) {
-            checkResultsContainer.innerHTML = '<p class="text-muted">Digite pelo menos 3 caracteres para iniciar a busca.</p>';
+    const checkDuplicates = () => {
+        const term = elements.checkModalInput.value;
+        elements.proceedButton.style.display = 'none';
+        if (term.length < 3) {
+            elements.checkResultsContainer.innerHTML = `<p class="text-muted">Digite pelo menos 3 caracteres.</p>`;
             return;
         }
-
-        checkResultsContainer.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Buscando...</div>';
-
-        fetch(`/api/leads/check_duplicates?term=${encodeURIComponent(searchTerm)}`)
+        elements.checkResultsContainer.innerHTML = `<div class="spinner-border spinner-border-sm" role="status"></div>`;
+        fetch(`/api/leads/check_duplicates?term=${encodeURIComponent(term)}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.duplicates.length > 0) {
-                    let resultsHtml = '<p><strong>Atenção!</strong> Empresas com nome similar já existem:</p><ul class="list-group">';
-                    data.duplicates.forEach(lead => {
-                        resultsHtml += `<li class="list-group-item"><strong>${lead.nome_conta}</strong> (Contato: ${lead.nome_completo} | Responsável: ${lead.owner_name})</li>`;
-                    });
-                    resultsHtml += '</ul>';
-                    checkResultsContainer.innerHTML = resultsHtml;
+                    const duplicatesList = data.duplicates.map(lead => `<li class="list-group-item"><strong>${lead.nome_conta}</strong> (Responsável: ${lead.owner_name})</li>`).join('');
+                    elements.checkResultsContainer.innerHTML = `<p class="text-danger"><strong>Atenção!</strong> Empresas similares encontradas:</p><ul class="list-group">${duplicatesList}</ul>`;
                 } else {
-                    checkResultsContainer.innerHTML = '<p class="text-success">Nenhuma empresa encontrada com este nome. Você pode prosseguir.</p>';
-                    proceedButton.style.display = 'inline-block'; // Mostra o botão para prosseguir
+                    elements.checkResultsContainer.innerHTML = `<p class="text-success">Nenhuma empresa encontrada. Pode prosseguir.</p>`;
+                    elements.proceedButton.style.display = 'inline-block';
                 }
             });
     };
 
-    // --- EVENT LISTENERS ---
-
-    // Filtros da página principal
-    [searchInput, statusFilter, segmentFilter].forEach(element => {
-        element.addEventListener('change', fetchLeads);
-    });
     let searchTimeout;
-    searchInput.addEventListener('keyup', () => {
+    elements.searchInput.addEventListener('keyup', () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(fetchLeads, 500);
+        searchTimeout = setTimeout(fetchAndRenderLeads, 500);
     });
+    elements.statusFilter.addEventListener('change', fetchAndRenderLeads);
+    elements.segmentFilter.addEventListener('change', fetchAndRenderLeads);
 
-    // Input de verificação no modal
     let checkTimeout;
-    checkModalInput.addEventListener('keyup', () => {
+    elements.checkModalInput.addEventListener('keyup', () => {
         clearTimeout(checkTimeout);
         checkTimeout = setTimeout(checkDuplicates, 500);
     });
-    
-    // Limpa o modal quando ele é fechado
-    const checkModalEl = document.getElementById('checkLeadModal');
-    checkModalEl.addEventListener('hidden.bs.modal', function () {
-        checkModalInput.value = '';
-        checkResultsContainer.innerHTML = '';
-        proceedButton.style.display = 'none';
+    elements.checkModalInstance.addEventListener('hidden.bs.modal', () => {
+        elements.checkModalInput.value = '';
+        elements.checkResultsContainer.innerHTML = '';
+        elements.proceedButton.style.display = 'none';
     });
 
-
-    // --- CARGA INICIAL ---
     populateFilters();
-    fetchLeads();
+    fetchAndRenderLeads();
 });

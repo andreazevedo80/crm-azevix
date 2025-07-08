@@ -38,42 +38,24 @@
 
 <div class="card card-azevix">
     <div class="card-body">
-        <div id="loading" class="text-center py-4">
-            <div class="spinner-border text-azevix" role="status"><span class="visually-hidden">Carregando...</span></div>
-        </div>
-        <div class="table-responsive" id="leads-table-container" style="display: none;">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Contato</th>
-                        <th>Empresa (Conta)</th>
-                        <th>Email</th>
-                        <th>Telefone</th>
-                        <th>Status</th>
-                        <th>Responsável</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="leads-list"></tbody>
-            </table>
-        </div>
+        <div id="leads-display-area">
+            </div>
     </div>
 </div>
 
-<div class="modal fade" id="checkLeadModal" tabindex="-1" aria-labelledby="checkLeadModalLabel" aria-hidden="true">
+<div class="modal fade" id="checkLeadModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="checkLeadModalLabel"><i class="fas fa-search me-2"></i>Verificar Empresa Existente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Empresa Existente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-            <label for="check-company-name" class="form-label">Digite o nome da empresa para verificar se ela já existe:</label>
-            <input type="text" class="form-control" id="check-company-name" placeholder="Ex: Azevix, Coca-Cola, etc...">
+            <label for="check-company-name" class="form-label">Digite o nome da empresa:</label>
+            <input type="text" class="form-control" id="check-company-name" placeholder="Digite pelo menos 3 caracteres...">
         </div>
-        <div id="check-results-container">
-            </div>
+        <div id="check-results-container"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>

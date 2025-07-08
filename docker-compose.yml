@@ -18,18 +18,16 @@ services:
       retries: 5
 
   backend:
-    build: . # Constrói a partir do diretório raiz, onde está o Dockerfile
+    build: .
     container_name: crm-azevix-backend
     env_file: .env
     depends_on:
       db:
-        condition: service_healthy # Espera o DB estar pronto
+        condition: service_healthy
     ports:
       - "5090:5090"
     networks:
       - crm_network
-    # Não precisamos mais de volumes complexos, o Dockerfile já copia tudo.
-    # Isso é melhor para um ambiente de "produção".
 
   nginx:
     image: nginx:alpine
@@ -38,8 +36,9 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      # O Nginx agora serve apenas como um proxy reverso.
-      # O Flask/Gunicorn cuidará de servir os arquivos estáticos durante o desenvolvimento.
+      # --- LINHA CRUCIAL ADICIONADA DE VOLTA ---
+      # Mapeia a pasta estática local para dentro do contêiner Nginx
+      - ./backend/static:/usr/share/nginx/html/static
     depends_on:
       - backend
     networks:
