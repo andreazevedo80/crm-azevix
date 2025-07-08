@@ -1,7 +1,7 @@
 from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime # <-- ADICIONE ESTA LINHA
+from datetime import datetime
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -11,19 +11,24 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(50), default='vendedor')
 
+    # Adicionando a relação inversa: um usuário tem muitos leads
+    leads = db.relationship('Lead', backref='owner', lazy=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-# --- MODELOS DE LEAD ---
-
 class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
+    
+    # --- NOVA COLUNA: Ligação com o usuário dono do lead ---
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
     nome_completo = db.Column(db.String(200), nullable=False)
-    nome_conta = db.Column(db.String(200), nullable=False) # Nome da Empresa
+    nome_conta = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=True)
     telefone_fixo = db.Column(db.String(20))
     telefone_celular = db.Column(db.String(20))
@@ -41,11 +46,10 @@ class Lead(db.Model):
             'nome_completo': self.nome_completo,
             'nome_conta': self.nome_conta,
             'email': self.email,
-            'telefone_fixo': self.telefone_fixo,
             'telefone_celular': self.telefone_celular,
-            'segmento': self.segmento,
             'status_lead': self.status_lead,
-            'data_ultima_atualizacao': self.data_ultima_atualizacao.isoformat() if self.data_ultima_atualizacao else None,
+            # Adicionando o nome do dono do lead ao dicionário
+            'owner_name': self.owner.name if self.owner else 'N/D'
         }
 
 class HistoricoInteracao(db.Model):

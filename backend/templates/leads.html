@@ -5,9 +5,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="text-azevix mb-0">Meus Leads</h1>
-    <a href="{{ url_for('leads.new_lead_form') }}" class="btn btn-azevix">
+    <button type="button" class="btn btn-azevix" data-bs-toggle="modal" data-bs-target="#checkLeadModal">
         <i class="fas fa-plus me-1"></i> Novo Lead
-    </a>
+    </button>
 </div>
 
 <div class="card card-azevix mb-4">
@@ -15,9 +15,22 @@
         <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
     </div>
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label for="search-filter" class="form-label">Buscar</label>
                 <input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome, empresa ou email...">
+            </div>
+            <div class="col-md-3">
+                <label for="status-filter" class="form-label">Status</label>
+                <select id="status-filter" class="form-select">
+                    <option value="">Todos os Status</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="segment-filter" class="form-label">Segmento</label>
+                <select id="segment-filter" class="form-select">
+                    <option value="">Todos os Segmentos</option>
+                </select>
             </div>
         </div>
     </div>
@@ -25,12 +38,10 @@
 
 <div class="card card-azevix">
     <div class="card-body">
-        <div id="loading" class="text-center py-4" style="display: none;">
-            <div class="spinner-border text-azevix" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
+        <div id="loading" class="text-center py-4">
+            <div class="spinner-border text-azevix" role="status"><span class="visually-hidden">Carregando...</span></div>
         </div>
-        <div class="table-responsive" id="leads-table-container">
+        <div class="table-responsive" id="leads-table-container" style="display: none;">
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -39,14 +50,39 @@
                         <th>Email</th>
                         <th>Telefone</th>
                         <th>Status</th>
+                        <th>Responsável</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody id="leads-list">
-                    </tbody>
+                <tbody id="leads-list"></tbody>
             </table>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="checkLeadModal" tabindex="-1" aria-labelledby="checkLeadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="checkLeadModalLabel"><i class="fas fa-search me-2"></i>Verificar Empresa Existente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+            <label for="check-company-name" class="form-label">Digite o nome da empresa para verificar se ela já existe:</label>
+            <input type="text" class="form-control" id="check-company-name" placeholder="Ex: Azevix, Coca-Cola, etc...">
+        </div>
+        <div id="check-results-container">
+            </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <a href="{{ url_for('leads.new_lead_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">
+            Prosseguir com o Cadastro
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 

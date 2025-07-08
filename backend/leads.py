@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
-from flask_login import login_required
-from .models import Lead, HistoricoInteracao, db
+from flask_login import login_required, current_user
+from .models import Lead, HistoricoInteracao, User, db
 
 leads = Blueprint('leads', __name__)
 
@@ -31,18 +31,28 @@ def get_config():
         'status_leads': STATUS_LEADS
     })
 
+# --- NOVA ROTA: API para checar duplicatas ---
+@leads.route('/api/leads/check_duplicates', methods=['GET'])
+@login_required
+def check_duplicates():
+    search_term = request.args.get('term', '')
+    if not search_term or len(search_term) < 3:
+        return jsonify({'success': True, 'duplicates': []})
+
+    # Busca por correspondências no nome da conta (empresa)
+    duplicates = Lead.query.filter(Lead.nome_conta.ilike(f'%{search_term}%')).all()
+    
+    return jsonify({
+        'success': True,
+        'duplicates': [lead.to_dict() for lead in duplicates]
+    })
+
+
 @leads.route('/api/leads', methods=['GET'])
 @login_required
 def get_leads():
+    # Por enquanto, mostra todos. Futuramente, filtraremos por usuário.
     query = Lead.query
-    search = request.args.get('search')
-    if search:
-        query = query.filter(db.or_(
-            Lead.nome_completo.ilike(f'%{search}%'),
-            Lead.nome_conta.ilike(f'%{search}%'),
-            Lead.email.ilike(f'%{search}%')
-        ))
-    
     leads_list = [lead.to_dict() for lead in query.order_by(Lead.data_ultima_atualizacao.desc()).all()]
     return jsonify({'success': True, 'leads': leads_list, 'total': len(leads_list)})
 
@@ -54,10 +64,14 @@ def create_lead():
         return jsonify({'success': False, 'error': 'Nome do contato e nome da empresa são obrigatórios.'}), 400
 
     new_lead = Lead(
+        # --- LÓGICA ATUALIZADA: Atribui o dono do lead ---
+        user_id=current_user.id,
+        
         nome_completo=data['nome_completo'],
         nome_conta=data['nome_conta'],
         email=data.get('email'),
         telefone_celular=data.get('telefone_celular'),
+        telefone_fixo=data.get('telefone_fixo'),
         segmento=data.get('segmento'),
         observacoes=data.get('observacoes')
     )
