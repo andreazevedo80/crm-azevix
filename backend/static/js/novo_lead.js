@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const alertContainer = document.getElementById('alert-container');
     const segmentoSelect = document.getElementById('segmento');
 
-    // Popula o select de segmentos
+    // Popula o select de segmentos (código existente)
     fetch('/api/config')
         .then(response => response.json())
         .then(data => {
@@ -15,46 +15,48 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
+    // Listener do formulário (MODIFICADO)
     form.addEventListener('submit', function(event) {
-        event.preventDefault();
+        event.preventDefault(); // Impede o recarregamento da página
 
-        const leadData = {
-            nome_completo: document.getElementById('nome_completo').value,
-            nome_conta: document.getElementById('nome_conta').value,
-            email: document.getElementById('email').value,
-            telefone_celular: document.getElementById('telefone_celular').value,
-            segmento: document.getElementById('segmento').value,
-            observacoes: document.getElementById('observacoes').value,
-        };
+        // ---- A GRANDE MUDANÇA ESTÁ AQUI ----
+        // 1. Usamos FormData para coletar todos os campos do formulário de forma segura.
+        // Ele usa os atributos 'name' dos inputs.
+        const formData = new FormData(form);
+
+        // 2. Convertemos os dados do formulário para um objeto simples.
+        const leadData = Object.fromEntries(formData.entries());
+        // ------------------------------------
 
         fetch('/api/leads', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(leadData)
+            body: JSON.stringify(leadData) // Enviamos o objeto como JSON
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = '/leads'; // Redireciona para a lista de leads
+                // Sucesso! Redireciona para a lista de leads.
+                window.location.href = '/leads';
             } else {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <strong>Erro!</strong> ${data.error || 'Não foi possível salvar o lead.'}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
+                // Exibe o erro retornado pela API.
+                showAlert(data.error || 'Não foi possível salvar o lead.', 'danger');
             }
         })
         .catch(error => {
-            console.error('Erro:', error);
-            alertContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Erro de conexão!</strong> Verifique sua rede e tente novamente.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
+            console.error('Erro na requisição:', error);
+            showAlert('Erro de conexão! Verifique sua rede e tente novamente.', 'danger');
         });
     });
+
+    function showAlert(message, type) {
+        alertContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+    }
 });
