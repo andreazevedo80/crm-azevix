@@ -1,0 +1,69 @@
+Plano de Ação Proposto: Do CRM v1.0 para a v2.0
+Aqui está uma sugestão de como podemos organizar a implementação das suas novas e ótimas ideias em fases, começando pela mais simples e fundamental.
+
+Fase 1: Ativar o "CRUD" Completo de Leads (Editar e Deletar)
+Objetivo: Ter o ciclo de vida completo de um lead funcionando. Hoje já temos o Criar e o Ler (Read). Faltam o Atualizar (Update) e o Deletar.
+
+Ativar o Botão "Editar":
+
+Criaremos um Modal de Edição (um pop-up) que será preenchido com os dados do lead selecionado.
+
+Neste modal, você poderá alterar todos os dados do lead, incluindo o status_lead. Isso permitirá que você mova um lead de "NOVO_LEAD" para "PROPOSTA_ENVIADA", por exemplo.
+
+Implementaremos a lógica no backend para receber e salvar essas atualizações.
+
+Ativar o Botão "Deletar":
+
+Implementaremos a funcionalidade para que, ao clicar no botão de lixeira, o sistema peça uma confirmação e, se confirmado, remova o lead do banco de dados.
+
+Com isso, teremos a gestão básica de leads 100% funcional.
+
+Fase 2: Controle de Acesso e Segurança (Sua Prioridade)
+Objetivo: Garantir que apenas as pessoas certas possam se registrar e que os administradores tenham visão total.
+
+Restringir o Cadastro de Usuários:
+
+Vamos alterar a rota de registro no backend/auth.py para aceitar apenas e-mails que terminam com @azevix.com.br. Qualquer outra tentativa de cadastro será bloqueada com uma mensagem de erro.
+
+Isso resolve sua preocupação com a exposição na internet. Uma alternativa seria remover a tela de registro e permitir que apenas um admin crie novos usuários, mas a restrição por domínio é um excelente primeiro passo.
+
+Implementar a Lógica do Administrador:
+
+Ajustaremos a API que lista os leads (GET /api/leads). Ela passará a verificar a role do usuário logado:
+
+Se current_user.role == 'admin', a API retornará todos os leads.
+
+Se não, a API retornará apenas os leads daquele vendedor.
+
+Fase 3: Módulo de Vendas (O Funil)
+Objetivo: Introduzir o conceito de valor e o funil de vendas.
+
+Adicionar Valor e Motivo da Perda ao Lead:
+
+Para simplificar, em vez de criar uma tabela nova, podemos adicionar dois novos campos diretamente ao modelo Lead em models.py:
+
+valor_proposta (do tipo numérico).
+
+motivo_perda (do tipo texto, opcional).
+
+Atualizar Status:
+
+Adicionaremos o novo status que você sugeriu, como "PROPOSTA_REJEITADA", à nossa lista de status.
+
+Integrar na Interface:
+
+O "Modal de Edição" (que faremos na Fase 1) será atualizado para incluir os campos "Valor da Proposta" e, caso o status seja "PROPOSTA_REJEITADA", o campo "Motivo da Perda".
+
+Resumo e Próximo Passo
+O plano seria:
+
+Agora: Habilitar a edição e deleção de leads.
+
+Em seguida: Implementar as regras de segurança (restrição de e-mail e visão do admin).
+
+Depois: Adicionar a inteligência de vendas (valor da proposta e motivo da perda).
+
+Por último: Construir o dashboard dinâmico com os relatórios que você imaginou (ex: "ofereci 10.000, vendi 3.000, perdi 7.000").
+
+
+Fase 1: Ativar o botão "Editar"
