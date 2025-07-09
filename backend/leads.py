@@ -6,7 +6,7 @@ leads = Blueprint('leads', __name__)
 
 # --- Constantes de Configuração ---
 SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
-STATUS_LEADS = ['NOVO_LEAD', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO', 'SEM_INTERESSE']
+STATUS_LEADS = ['NOVO_LEAD', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO', 'SEM_INTERESSE', 'PROPOSTA_REJEITADA']
 
 # --- Rotas de Páginas ---
 
@@ -25,11 +25,7 @@ def new_lead_form():
 @leads.route('/api/config', methods=['GET'])
 @login_required
 def get_config():
-    return jsonify({
-        'success': True,
-        'segmentos': SEGMENTOS,
-        'status_leads': STATUS_LEADS
-    })
+    return jsonify({'success': True, 'segmentos': SEGMENTOS, 'status_leads': STATUS_LEADS})
 
 @leads.route('/api/leads/check_duplicates', methods=['GET'])
 @login_required
@@ -38,20 +34,13 @@ def check_duplicates():
     if not search_term or len(search_term) < 3:
         return jsonify({'success': True, 'duplicates': []})
     duplicates = Lead.query.filter(Lead.nome_conta.ilike(f'%{search_term}%')).all()
-    return jsonify({
-        'success': True,
-        'duplicates': [lead.to_dict() for lead in duplicates]
-    })
+    return jsonify({'success': True, 'duplicates': [lead.to_dict() for lead in duplicates]})
 
-# --- ROTA PRINCIPAL CORRIGIDA ---
 @leads.route('/api/leads', methods=['GET'])
 @login_required
 def get_leads():
     try:
-        # 1. A query base AGORA filtra pelo ID do usuário logado.
         query = Lead.query.filter_by(user_id=current_user.id)
-
-        # 2. Aplica os filtros adicionais sobre os leads do usuário.
         search = request.args.get('search', '').strip()
         status = request.args.get('status', '').strip()
         segmento = request.args.get('segmento', '').strip()
@@ -70,10 +59,8 @@ def get_leads():
         leads_list = [lead.to_dict() for lead in query.order_by(Lead.data_ultima_atualizacao.desc()).all()]
         return jsonify({'success': True, 'leads': leads_list, 'total': len(leads_list)})
     except Exception as e:
-        # Adiciona um log no terminal do Docker para facilitar o debug
         print(f"Erro na API get_leads: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-
 
 @leads.route('/api/leads', methods=['POST'])
 @login_required
@@ -95,3 +82,37 @@ def create_lead():
     db.session.add(new_lead)
     db.session.commit()
     return jsonify({'success': True, 'lead': new_lead.to_dict()}), 201
+
+# --- NOVAS ROTAS PARA EDITAR E DELETAR ---
+
+@leads.route('/api/leads/<int:lead_id>', methods=['GET'])
+@login_required
+def get_lead_details(lead_id):
+    lead = Lead.query.filter_by(id=lead_id, user_id=current_user.id).first_or_404()
+    return jsonify({'success': True, 'lead': lead.to_dict()})
+
+@leads.route('/api/leads/<int:lead_id>', methods=['PUT'])
+@login_required
+def update_lead(lead_id):
+    lead = Lead.query.filter_by(id=lead_id, user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    
+    lead.nome_completo = data.get('nome_completo', lead.nome_completo)
+    lead.nome_conta = data.get('nome_conta', lead.nome_conta)
+    lead.email = data.get('email', lead.email)
+    lead.telefone_celular = data.get('telefone_celular', lead.telefone_celular)
+    lead.telefone_fixo = data.get('telefone_fixo', lead.telefone_fixo)
+    lead.segmento = data.get('segmento', lead.segmento)
+    lead.status_lead = data.get('status_lead', lead.status_lead)
+    lead.observacoes = data.get('observacoes', lead.observacoes)
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Lead atualizado com sucesso!'})
+
+@leads.route('/api/leads/<int:lead_id>', methods=['DELETE'])
+@login_required
+def delete_lead(lead_id):
+    lead = Lead.query.filter_by(id=lead_id, user_id=current_user.id).first_or_404()
+    db.session.delete(lead)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Lead excluído com sucesso!'})

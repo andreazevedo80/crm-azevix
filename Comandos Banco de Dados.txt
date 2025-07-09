@@ -1,0 +1,17 @@
+psql -U azevix_admin -d crm_azevix
+SELECT * FROM leads;
+
+INSERT INTO leads (user_id, nome_completo, nome_conta, email, telefone_celular, segmento, status_lead, data_cadastro, data_ultima_atualizacao, observacoes) VALUES (1, 'Andre Teste CLI', 'Azevix Inc.', 'cli@test.com', '99999-8888', 'Tecnologia', 'NOVO_LEAD', NOW(), NOW(), 'Lead de teste inserido via linha de comando');
+
+SELECT id, user_id, nome_completo, nome_conta, status_lead FROM leads;
+
+crm_azevix=# SELECT id, user_id, nome_completo, nome_conta, status_lead FROM leads;
+ id | user_id |  nome_completo  | nome_conta  | status_lead 
+----+---------+-----------------+-------------+-------------
+  1 |       1 | Andre Teste CLI | Azevix Inc. | NOVO_LEAD
+(1 row)
+
+SELECT * FROM users;
+id |            email            |             name             |                                                                           password_hash                                                                            |   role   
+----+-----------------------------+------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------
+  1 | andre.azevedo@azevix.com.br | André Luiz Leitão de Azevedo | scrypt:32768:8:1$mZwuBnzAoCDD9InA$1fde5fce1a28fa2caa017e6855426e4009a8d22c237e3a110731a114fda60284adfc1c9fe7ce92f37e9d9a8216140a94eaf9ac144a2b9fed4db9c093ad53d8e0 | vendedor

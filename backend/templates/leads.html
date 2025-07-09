@@ -11,27 +11,12 @@
 </div>
 
 <div class="card card-azevix mb-4">
-    <div class="card-header">
-        <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
-    </div>
+    <div class="card-header"><h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5></div>
     <div class="card-body">
         <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-                <label for="search-filter" class="form-label">Buscar</label>
-                <input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome, empresa ou email...">
-            </div>
-            <div class="col-md-3">
-                <label for="status-filter" class="form-label">Status</label>
-                <select id="status-filter" class="form-select">
-                    <option value="">Todos os Status</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="segment-filter" class="form-label">Segmento</label>
-                <select id="segment-filter" class="form-select">
-                    <option value="">Todos os Segmentos</option>
-                </select>
-            </div>
+            <div class="col-md-6"><label for="search-filter" class="form-label">Buscar</label><input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome, empresa ou email..."></div>
+            <div class="col-md-3"><label for="status-filter" class="form-label">Status</label><select id="status-filter" class="form-select"><option value="">Todos os Status</option></select></div>
+            <div class="col-md-3"><label for="segment-filter" class="form-label">Segmento</label><select id="segment-filter" class="form-select"><option value="">Todos os Segmentos</option></select></div>
         </div>
     </div>
 </div>
@@ -39,33 +24,27 @@
 <div class="card card-azevix">
     <div class="card-body">
         <div id="leads-display-area">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Contato</th>
+                            <th>Empresa</th>
+                            <th>Segmento</th> <th>Status</th>
+                            <th>Data Cadastro</th> <th>Responsável</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
+        </div>
     </div>
 </div>
 
-<div class="modal fade" id="checkLeadModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Empresa Existente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-            <label for="check-company-name" class="form-label">Digite o nome da empresa:</label>
-            <input type="text" class="form-control" id="check-company-name" placeholder="Digite pelo menos 3 caracteres...">
-        </div>
-        <div id="check-results-container"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-        <a href="{{ url_for('leads.new_lead_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">
-            Prosseguir com o Cadastro
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
+{% include 'modals/check_lead_modal.html' %}
+{% include 'modals/edit_lead_modal.html' %}
+
 {% endblock %}
 
 {% block scripts %}
