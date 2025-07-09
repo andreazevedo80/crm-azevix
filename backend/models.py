@@ -22,6 +22,10 @@ class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # --- NOVA COLUNA ADICIONADA ---
+    tipo_conta = db.Column(db.String(50), nullable=False, default='Privada') # 'Privada' ou 'Pública'
+    
     nome_completo = db.Column(db.String(200), nullable=False)
     nome_conta = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=True)
@@ -32,6 +36,7 @@ class Lead(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     observacoes = db.Column(db.Text)
+    
     historico_interacoes = db.relationship('HistoricoInteracao', backref='lead', lazy=True, cascade='all, delete-orphan')
 
     # MODIFICADO: Agora retorna TODOS os campos necessários para o frontend
@@ -47,7 +52,8 @@ class Lead(db.Model):
             'status_lead': self.status_lead,
             'observacoes': self.observacoes,
             'data_cadastro': self.data_cadastro.isoformat() if self.data_cadastro else None,
-            'owner_name': self.owner.name if self.owner else 'N/D'
+            'owner_name': self.owner.name if self.owner else 'N/D',
+            'tipo_conta': self.tipo_conta # Adicionando o novo campo
         }
 
 class HistoricoInteracao(db.Model):

@@ -4,11 +4,8 @@ from .models import Lead, db
 
 leads = Blueprint('leads', __name__)
 
-# --- Constantes de Configuração ---
 SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
 STATUS_LEADS = ['NOVO_LEAD', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO', 'SEM_INTERESSE', 'PROPOSTA_REJEITADA']
-
-# --- Rotas de Páginas ---
 
 @leads.route('/leads')
 @login_required
@@ -19,8 +16,6 @@ def list_leads():
 @login_required
 def new_lead_form():
     return render_template('novo_lead.html')
-
-# --- Rotas de API ---
 
 @leads.route('/api/config', methods=['GET'])
 @login_required
@@ -71,6 +66,7 @@ def create_lead():
 
     new_lead = Lead(
         user_id=current_user.id,
+        tipo_conta=data.get('tipo_conta', 'Privada'), # Salva o novo campo
         nome_completo=data['nome_completo'],
         nome_conta=data['nome_conta'],
         email=data.get('email'),
@@ -82,8 +78,6 @@ def create_lead():
     db.session.add(new_lead)
     db.session.commit()
     return jsonify({'success': True, 'lead': new_lead.to_dict()}), 201
-
-# --- NOVAS ROTAS PARA EDITAR E DELETAR ---
 
 @leads.route('/api/leads/<int:lead_id>', methods=['GET'])
 @login_required
@@ -97,6 +91,7 @@ def update_lead(lead_id):
     lead = Lead.query.filter_by(id=lead_id, user_id=current_user.id).first_or_404()
     data = request.get_json()
     
+    lead.tipo_conta = data.get('tipo_conta', lead.tipo_conta) # Atualiza o novo campo
     lead.nome_completo = data.get('nome_completo', lead.nome_completo)
     lead.nome_conta = data.get('nome_conta', lead.nome_conta)
     lead.email = data.get('email', lead.email)

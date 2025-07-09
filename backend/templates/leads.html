@@ -5,64 +5,29 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="text-azevix mb-0">Meus Leads</h1>
-    <button type="button" class="btn btn-azevix" data-bs-toggle="modal" data-bs-target="#checkLeadModal">
-        <i class="fas fa-plus me-1"></i> Novo Lead
-    </button>
+    <button type="button" class="btn btn-azevix" data-bs-toggle="modal" data-bs-target="#checkLeadModal"><i class="fas fa-plus me-1"></i> Novo Lead</button>
 </div>
 
 <div class="card card-azevix mb-4">
-    <div class="card-header">
-        <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
-    </div>
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-6"><label for="search-filter" class="form-label">Buscar</label><input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome, empresa ou email..."></div>
-            <div class="col-md-3"><label for="status-filter" class="form-label">Status</label><select id="status-filter" class="form-select"><option value="">Todos os Status</option></select></div>
-            <div class="col-md-3"><label for="segment-filter" class="form-label">Segmento</label><select id="segment-filter" class="form-select"><option value="">Todos os Segmentos</option></select></div>
-        </div>
-    </div>
+    <div class="card-header"><h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5></div>
+    <div class="card-body"><div class="row g-3 align-items-end"><div class="col-md-6"><label for="search-filter" class="form-label">Buscar</label><input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome, empresa ou email..."></div><div class="col-md-3"><label for="status-filter" class="form-label">Status</label><select id="status-filter" class="form-select"><option value="">Todos os Status</option></select></div><div class="col-md-3"><label for="segment-filter" class="form-label">Segmento</label><select id="segment-filter" class="form-select"><option value="">Todos os Segmentos</option></select></div></div></div>
 </div>
 
 <div class="card card-azevix">
     <div class="card-body">
-        <div id="leads-display-area">
-            </div>
+        <div id="leads-display-area"></div>
     </div>
 </div>
 
-
 <div class="modal fade" id="checkLeadModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Empresa Existente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-            <label for="check-company-name" class="form-label">Digite o nome da empresa:</label>
-            <input type="text" class="form-control" id="check-company-name" placeholder="Digite pelo menos 3 caracteres...">
-        </div>
-        <div id="check-results-container"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-        <a href="{{ url_for('leads.new_lead_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">
-            Prosseguir com o Cadastro
-        </a>
-      </div>
-    </div>
-  </div>
+    <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Empresa</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><label for="check-company-name" class="form-label">Digite o nome da empresa:</label><input type="text" class="form-control" id="check-company-name" placeholder="Digite pelo menos 3 caracteres..."></div><div id="check-results-container"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><a href="{{ url_for('leads.new_lead_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">Prosseguir</a></div></div></div>
 </div>
 
 <div class="modal fade" id="editLeadModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="editLeadForm">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Lead</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Lead</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <input type="hidden" id="edit-lead-id">
                     <div class="row g-3">
@@ -70,20 +35,17 @@
                         <div class="col-md-6"><label for="edit-nome_completo" class="form-label">Nome do Contato</label><input type="text" id="edit-nome_completo" name="nome_completo" class="form-control" required></div>
                         <div class="col-md-6"><label for="edit-email" class="form-label">Email</label><input type="email" id="edit-email" name="email" class="form-control"></div>
                         <div class="col-md-6"><label for="edit-telefone_celular" class="form-label">Telefone Celular</label><input type="tel" id="edit-telefone_celular" name="telefone_celular" class="form-control"></div>
+                        <div class="col-md-6"><label for="edit-tipo_conta" class="form-label">Tipo de Conta</label><select id="edit-tipo_conta" name="tipo_conta" class="form-select" required><option value="Privada">Empresa Privada</option><option value="Pública">Órgão Público</option></select></div>
                         <div class="col-md-6"><label for="edit-segmento" class="form-label">Segmento</label><select id="edit-segmento" name="segmento" class="form-select" required></select></div>
                         <div class="col-md-6"><label for="edit-status_lead" class="form-label">Status</label><select id="edit-status_lead" name="status_lead" class="form-select" required></select></div>
                         <div class="col-12"><label for="edit-observacoes" class="form-label">Observações</label><textarea id="edit-observacoes" name="observacoes" class="form-control" rows="3"></textarea></div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-azevix">Salvar Alterações</button>
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-azevix">Salvar Alterações</button></div>
             </form>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}

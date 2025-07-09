@@ -1,17 +1,14 @@
 document.addEventListener("DOMContentLoaded", function() {
-    
-    // --- Mapeamento de todos os elementos da página ---
+
     const elements = {
         displayArea: document.getElementById('leads-display-area'),
         searchInput: document.getElementById('search-filter'),
         statusFilter: document.getElementById('status-filter'),
         segmentFilter: document.getElementById('segment-filter'),
-        // Elementos do Modal de Verificação
         checkModalEl: document.getElementById('checkLeadModal'),
         checkModalInput: document.getElementById('check-company-name'),
         checkResultsContainer: document.getElementById('check-results-container'),
         proceedButton: document.getElementById('proceed-to-register-btn'),
-        // Elementos do Modal de Edição
         editModalEl: document.getElementById('editLeadModal'),
         editLeadForm: document.getElementById('editLeadForm'),
         editLeadId: document.getElementById('edit-lead-id'),
@@ -19,27 +16,20 @@ document.addEventListener("DOMContentLoaded", function() {
         editNomeCompleto: document.getElementById('edit-nome_completo'),
         editEmail: document.getElementById('edit-email'),
         editTelefone: document.getElementById('edit-telefone_celular'),
+        editTipoConta: document.getElementById('edit-tipo_conta'), // Novo elemento
         editSegmento: document.getElementById('edit-segmento'),
         editStatus: document.getElementById('edit-status_lead'),
         editObservacoes: document.getElementById('edit-observacoes'),
     };
     const editModal = new bootstrap.Modal(elements.editModalEl);
 
-    // --- Template do spinner de loading ---
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
 
-    // --- FUNÇÕES ---
-
-    // Função para popular selects (filtros e modal)
     const populateSelect = (selectElement, options) => {
-        // Limpa opções antigas, mantendo a primeira
-        while (selectElement.options.length > 1) {
-            selectElement.remove(1);
-        }
+        while (selectElement.options.length > 1) selectElement.remove(1);
         options.forEach(opt => selectElement.add(new Option(opt, opt)));
     };
 
-    // Busca as configurações da API e popula todos os selects
     const fetchConfigsAndPopulateAllFilters = () => {
         fetch('/api/config')
             .then(response => response.json())
@@ -47,15 +37,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data.success) {
                     populateSelect(elements.statusFilter, data.status_leads);
                     populateSelect(elements.segmentFilter, data.segmentos);
-                    // Popula também os selects do modal de edição
                     populateSelect(elements.editStatus, data.status_leads);
                     populateSelect(elements.editSegmento, data.segmentos);
                 }
-            })
-            .catch(error => console.error('Erro ao carregar configurações:', error));
+            });
     };
     
-    // Função principal que busca e renderiza a tabela de leads
     const fetchAndRenderLeads = () => {
         elements.displayArea.innerHTML = loadingSpinner;
         const params = new URLSearchParams({
@@ -75,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <tr>
                             <td>${lead.nome_completo}</td>
                             <td>${lead.nome_conta}</td>
+                            <td>${lead.tipo_conta}</td>
                             <td>${lead.segmento}</td>
                             <td><span class="badge bg-primary">${lead.status_lead}</span></td>
                             <td>${dataCadastro}</td>
@@ -85,13 +73,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             </td>
                         </tr>`;
                     }).join('');
-                    tableContent = `
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead><tr><th>Contato</th><th>Empresa</th><th>Segmento</th><th>Status</th><th>Data Cadastro</th><th>Responsável</th><th>Ações</th></tr></thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>`;
+                    tableContent = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Contato</th><th>Empresa</th><th>Tipo</th><th>Segmento</th><th>Status</th><th>Data Cadastro</th><th>Responsável</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`;
                 } else {
                     tableContent = `<p class="text-center py-4">Nenhum lead encontrado.</p>`;
                 }
@@ -99,24 +81,19 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     };
 
-    // **LÓGICA DO MODAL DE VERIFICAÇÃO**
     const checkDuplicates = () => {
         const term = elements.checkModalInput.value;
         elements.proceedButton.style.display = 'none';
-
         if (term.length < 3) {
             elements.checkResultsContainer.innerHTML = `<p class="text-muted">Digite pelo menos 3 caracteres.</p>`;
             return;
         }
-
         elements.checkResultsContainer.innerHTML = `<div class="spinner-border spinner-border-sm" role="status"></div>`;
         fetch(`/api/leads/check_duplicates?term=${encodeURIComponent(term)}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.duplicates.length > 0) {
-                    const duplicatesList = data.duplicates.map(lead => 
-                        `<li class="list-group-item"><strong>${lead.nome_conta}</strong> (Responsável: ${lead.owner_name})</li>`
-                    ).join('');
+                    const duplicatesList = data.duplicates.map(lead => `<li class="list-group-item"><strong>${lead.nome_conta}</strong> (Responsável: ${lead.owner_name})</li>`).join('');
                     elements.checkResultsContainer.innerHTML = `<p class="text-danger"><strong>Atenção!</strong> Empresas similares encontradas:</p><ul class="list-group">${duplicatesList}</ul>`;
                 } else {
                     elements.checkResultsContainer.innerHTML = `<p class="text-success">Nenhuma empresa encontrada. Pode prosseguir.</p>`;
@@ -125,8 +102,6 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     };
 
-
-    // --- Funções Globais (chamadas pelo onclick no HTML) ---
     window.openEditModal = (leadId) => {
         fetch(`/api/leads/${leadId}`)
             .then(res => res.json())
@@ -138,13 +113,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     elements.editNomeCompleto.value = lead.nome_completo;
                     elements.editEmail.value = lead.email || '';
                     elements.editTelefone.value = lead.telefone_celular || '';
+                    elements.editTipoConta.value = lead.tipo_conta;
                     elements.editSegmento.value = lead.segmento;
                     elements.editStatus.value = lead.status_lead;
                     elements.editObservacoes.value = lead.observacoes || '';
                     editModal.show();
-                } else {
-                    alert('Erro ao carregar dados do lead.');
-                }
+                } else { alert('Erro ao carregar dados do lead.'); }
             });
     };
 
@@ -159,7 +133,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
     
-    // --- Event Listeners ---
     elements.editLeadForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const leadId = elements.editLeadId.value;
@@ -168,38 +141,30 @@ document.addEventListener("DOMContentLoaded", function() {
             nome_completo: elements.editNomeCompleto.value,
             email: elements.editEmail.value,
             telefone_celular: elements.editTelefone.value,
+            tipo_conta: elements.editTipoConta.value,
             segmento: elements.editSegmento.value,
             status_lead: elements.editStatus.value,
             observacoes: elements.editObservacoes.value,
         };
-
-        fetch(`/api/leads/${leadId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedData)
-        })
-        .then(res => res.json())
-        .then(result => {
-            if (result.success) {
-                editModal.hide();
-                fetchAndRenderLeads();
-            } else {
-                alert('Falha ao atualizar o lead.');
-            }
-        });
+        fetch(`/api/leads/${leadId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedData) })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    editModal.hide();
+                    fetchAndRenderLeads();
+                } else { alert('Falha ao atualizar o lead.'); }
+            });
     });
 
-    // Adiciona os listeners aos filtros da página principal
-    [elements.searchInput, elements.statusFilter, elements.segmentFilter].forEach(el => {
-        el.addEventListener('change', fetchAndRenderLeads);
-    });
     let searchTimeout;
     elements.searchInput.addEventListener('keyup', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(fetchAndRenderLeads, 500);
     });
+    [elements.statusFilter, elements.segmentFilter].forEach(el => {
+        el.addEventListener('change', fetchAndRenderLeads);
+    });
 
-    // **EVENTO DO MODAL DE VERIFICAÇÃO**
     let checkTimeout;
     elements.checkModalInput.addEventListener('keyup', () => {
         clearTimeout(checkTimeout);
@@ -211,8 +176,6 @@ document.addEventListener("DOMContentLoaded", function() {
         elements.proceedButton.style.display = 'none';
     });
 
-
-    // --- INICIALIZAÇÃO DA PÁGINA ---
     fetchConfigsAndPopulateAllFilters();
     fetchAndRenderLeads();
 });
