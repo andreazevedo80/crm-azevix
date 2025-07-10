@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
-        // Converte o valor para número, se existir
         if (data.lead_valor) {
             data.lead_valor = parseFloat(data.lead_valor);
         }
@@ -20,8 +19,10 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(res => res.json())
         .then(result => {
             if (result.success) {
-                window.location.href = '/contas';
+                // Redireciona para a lista de contas em caso de sucesso
+                window.location.href = result.redirect_url;
             } else {
+                // Mostra a mensagem de erro da API
                 alertContainer.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
             }
         });

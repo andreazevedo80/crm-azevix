@@ -10,7 +10,7 @@
             <div class="row g-3">
                 <div class="col-md-6"><label for="nome_fantasia" class="form-label">Nome Fantasia *</label><input type="text" class="form-control" id="nome_fantasia" name="nome_fantasia" required></div>
                 <div class="col-md-6"><label for="razao_social" class="form-label">Razão Social</label><input type="text" class="form-control" id="razao_social" name="razao_social"></div>
-                <div class="col-md-6"><label for="cnpj" class="form-label">CNPJ</label><input type="text" class="form-control" id="cnpj" name="cnpj"></div>
+                <div class="col-md-6"><label for="cnpj" class="form-label">CNPJ</label><input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="XX.XXX.XXX/XXXX-XX"></div>
                 <div class="col-md-6"><label for="tipo_conta" class="form-label">Tipo de Conta *</label><select class="form-select" id="tipo_conta" name="tipo_conta" required><option value="Privada" selected>Empresa Privada</option><option value="Pública">Órgão Público</option></select></div>
             </div>
         </div>
@@ -38,7 +38,7 @@
         </div>
     </div>
     
-    <div id="alert-container"></div>
+    <div id="alert-container" class="my-3"></div>
 
     <div class="text-end">
         <a href="{{ url_for('contas.listar_contas') }}" class="btn btn-secondary">Cancelar</a>

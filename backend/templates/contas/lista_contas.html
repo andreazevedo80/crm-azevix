@@ -5,19 +5,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="text-azevix mb-0">Contas</h1>
-    <a href="#" class="btn btn-azevix disabled" title="Em breve">
+    <a href="{{ url_for('contas.nova_conta_form') }}" class="btn btn-azevix">
         <i class="fas fa-plus me-1"></i> Nova Conta
     </a>
 </div>
 
 <div class="card card-azevix">
     <div class="card-body" id="contas-display-area">
-        <div class="text-center py-5">
-            <div class="spinner-border text-azevix" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
         </div>
-    </div>
 </div>
 {% endblock %}
 
