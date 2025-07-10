@@ -40,7 +40,7 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
     
-    # MODIFICADO: Registrando nosso novo blueprint 'contas'
+    # GARANTA QUE ESTA PARTE ESTÁ PRESENTE E CORRETA
     from .contas import contas as contas_blueprint
     app.register_blueprint(contas_blueprint, url_prefix='/')
 
