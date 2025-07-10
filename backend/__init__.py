@@ -14,7 +14,7 @@ def create_app():
     if not app.config['SECRET_KEY']:
         raise ValueError("SECRET_KEY não configurada no arquivo .env!")
 
-    # Configuração do Banco de Dados...
+    # Configuração do Banco de Dados
     DB_USER = os.getenv('POSTGRES_USER')
     DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
     DB_NAME = os.getenv('POSTGRES_DB')
@@ -40,7 +40,7 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
     
-    # --- NOVO BLUEPRINT DE CONTAS ---
+    # MODIFICADO: Registrando nosso novo blueprint 'contas'
     from .contas import contas as contas_blueprint
     app.register_blueprint(contas_blueprint, url_prefix='/')
 
