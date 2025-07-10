@@ -4,25 +4,31 @@ Nova Estrutura de Arquivos:
 
 crm-azevix/
 ├── backend/
-│   ├── __init__.py         # (Novo) Arquivo da App Factory
-│   ├── auth.py             # (Novo) Blueprint de Autenticação
-│   ├── main.py             # (Novo) Blueprint das páginas principais (Dashboard)
-│   ├── models.py           # (Novo) Onde ficarão os modelos do DB (User, Lead)
-│   ├── static/             # Pasta de CSS/JS
+│   ├── __init__.py
+│   ├── auth.py
+│   ├── leads.py
+│   ├── main.py
+│   ├── models.py
+│   ├── utils.py
+│   ├── static/
 │   │   ├──css
-│   │   │   └──main.cs # (Sem alterações)
+│   │   │   └──main.cs
 │   │   └──js
-│   └── templates/          # Pasta dos HTMLs
-│       ├── base.html       # (Novo) Template base para todas as páginas
-│       ├── login.html      # (Novo)
-│       ├── register.html   # (Novo)
-│       └── dashboard.html  # (Modificado)
-├── docker-compose.yml      # (Sem alterações)
-├── .env           
+│   │      ├──leads.js
+│   │      └──novo_lead.js
+│   └── templates/
+│       ├── base.html
+│       ├── dashboard.html
+│       ├── leads.html
+│       ├── login.html
+│       ├── novo_lead.html
+│       └── register.html
+├── .env
 ├── .gitignore
+├── Dockerfile
 ├── README.md
-├── Dockerfile     # (Modificado)
-├── requirements.txt        # (Modificado)
-├── nginx.conf        # (Não alterado)
-├── boot.sh        # (Novo)
-└── run.py                  # (Novo) Ponto de entrada da aplicação
+├── boot.sh
+├── docker-compose.yml
+├── nginx.conf
+├── requirements.txt
+└── run.py

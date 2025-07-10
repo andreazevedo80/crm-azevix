@@ -1,7 +1,125 @@
-versão 2.1
-Botões de editar e excluir lead
+## 📅 Roadmap de Desenvolvimento
 
-versão 2.2
-adicionado tipo de conta
+### ✅ Versões Concluídas
+- **1.0** – Autenticação e estrutura base
+- **2.0 a 2.2** – CRUD de Leads, associação com vendedor, tipo de conta
 
-versão 2.3
+### 🔄 Em Desenvolvimento
+
+### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 3.0)
+Introdução ao Novo Conceito: "Conta", "Contato" e "Lead"
+Para suportar suas novas ideias, vamos adotar uma arquitetura de dados profissional:
+*Conta*: A entidade central que representa a Empresa ou Órgão Público. É única e guarda dados como Razão Social, Nome Fantasia, CNPJ e telefone principal.
+*Contato*: Uma Pessoa que trabalha em uma Conta. Uma Conta pode ter múltiplos Contatos (Diretor, Gerente, Financeiro, etc.), cada um com seu próprio e-mail, telefone e cargo.
+*Lead* (Oportunidade): Representa uma Oportunidade de Negócio. É um "negócio em potencial" que você tem com uma Conta. Ex: "Venda de Sistema de TI", "Renovação de Contrato". Um Lead sempre estará ligado a uma Conta e, opcionalmente, a um Contato principal.
+
+Introdução: Conceitos Arquiteturais Chave
+Fonte Única da Verdade: O banco de dados é a fonte única da verdade. Nenhuma configuração crítica (status, segmentos, regras) será mantida no código ("hardcoded").
+
+Segurança em Primeiro Lugar: Implementaremos práticas de segurança desde o início, incluindo controle de acesso baseado em papéis (Roles), criptografia de dados sensíveis e desativação em vez de exclusão (soft delete).
+
+Performance e Escalabilidade: O design da base de dados e das APIs levará em conta a performance, utilizando índices e paginação para garantir que a aplicação permaneça rápida conforme os dados crescem.
+
+Requisitos Contínuos e Operacionais
+Estes são pontos que devem ser considerados ao longo de todo o desenvolvimento.
+
+Índices de Banco de Dados: Durante a criação de cada tabela no models.py, as colunas que serão frequentemente usadas em buscas (cnpj, email, user_id, conta_id, etc.) devem ser marcadas com index=True ou unique=True para garantir a performance das consultas.
+
+### Próximas Fases (Roadmap de Desenvolvimento Detalhado)
+
+## versão 2.03 [A Grande Reestruturação: Contas, Contatos e Integridade de Dados]
+Objetivo: Criar a base de dados profissional com as entidades "Conta" e "Contato", garantindo a integridade dos dados desde o início com validações e padronizações.
+
+# Requisitos da feature:
+- A entidade Conta deve ter Razão Social, Nome Fantasia, CNPJ (criptografado), Tipo e um campo is_active para "soft delete".
+- O CNPJ deve ser validado (formato e lógica de cálculo) e será o identificador único para evitar Contas duplicadas.
+- A entidade Contato deve ser associada a uma Conta e conter nome, email, telefone, cargo e um campo is_active.
+- Os números de telefone devem ser padronizados e normalizados no backend antes de serem salvos (ex: usando a biblioteca phonenumbers).
+- O fluxo de criação de um novo Lead (Oportunidade) deve estar atrelado à criação/seleção de uma Conta e um Contato.
+- A busca por duplicatas no fluxo de criação deve ser inteligente, normalizando os nomes para a comparação (ex: "Empresa ABC Ltda" deve ser encontrada ao buscar por "empresa abc").
+
+# O que será modificado:
+- backend/models.py: Criar os modelos Conta e Contato com os novos campos. Refatorar Lead para se conectar a Conta.
+- backend/contas.py (Novo): Criar o Blueprint e as APIs para gerenciar o CRUD de Contas e Contatos, incluindo a lógica de validação, normalização e criptografia.
+- backend/templates/: Criar as novas telas de cadastro que refletem o novo fluxo.
+
+## versão 2.04 [Segurança e Permissões Baseadas em Roles]
+Objetivo: Implementar um sistema de permissões robusto e controlar quem pode acessar o sistema e o que pode ver.
+
+# Requisitos da feature:
+- O sistema deve ter uma tabela Role (ex: 'admin', 'vendedor', 'gerente').
+- UUm usuário deve ter uma Role associada e um campo is_active (soft delete).
+- Apenas administradores poderão criar novos usuários (a tela de registro público será desativada).
+- O cadastro de novos usuários será restrito ao domínio @azevix.com.br. (deve ser uma variável sem hardcode), caso haja necessidade de adicionar outros dominios;
+- A API de listagem de Contas/Leads deve respeitar a role: admin vê tudo, vendedor vê apenas o seu.
+
+# O que será modificado:
+- backend/models.py: Criar a tabela Role e adicionar as relações e o campo is_active ao modelo User.
+- backend/auth.py: Remover a rota de registro público e criar a funcionalidade de convite no painel de admin.
+- backend/leads.py & backend/contas.py: Implementar a lógica de visualização baseada em role.
+
+## versão 2.05 [Log de Auditoria e Paginação]
+Objetivo: Rastrear alterações importantes e garantir a performance do sistema com o crescimento dos dados.
+
+# Requisitos da feature:
+- O sistema deve registrar um histórico de alterações para cada Lead (ex: "Status alterado de 'NOVO' para 'CONTATADO' por André Azevedo em 09/07/2025").
+- Todas as listas principais (Leads, Contas, etc.) devem ser paginadas, mostrando um número limitado de itens por página (ex: 20) para manter a aplicação rápida.
+
+# O que será modificado:
+- backend/models.py: Criar uma nova tabela HistoricoAlteracao.
+- backend/leads.py e backend/propostas.py: Na rota de atualização, adicionar a lógica para criar um novo registro no histórico.
+- backend/templates/: Adicionar a exibição do histórico na tela de detalhes do lead/proposta.
+- backend/static/js/ e backend/*_api.py: Implementar a lógica de paginação no backend e no frontend.
+
+## versão 3.01 [Administração: Configurações, Workflow e Motivos de Perda]
+Objetivo: Dar ao administrador controle total sobre as entidades e regras de negócio do CRM.
+
+# Requisitos da feature:
+- Admin pode gerenciar (CRUD) os Status de Lead e os Segmentos.
+- Admin pode definir as regras de transição para o Workflow de Status.
+- Admin pode gerenciar uma lista de "Motivos de Perda" (ex: "Preço", "Concorrência", "Prazo"). Este motivo será um campo obrigatório quando um Lead for movido para o status "Perdido".
+- Admin pode gerenciar as configurações de e-mail (SMTP).
+
+# O que será modificado:
+- backend/models.py: Criar as tabelas ConfigStatusLead, ConfigSegmento, ConfigMotivoPerda, ConfiguracoesGerais e adicionar o campo de regras de workflow.
+- backend/admin.py (Novo): Criar o Blueprint e as interfaces para o admin gerenciar tudo isso.
+- backend/leads.py: A rota update_lead irá validar as regras do workflow e exigir o motivo da perda.
+
+# versão 4.01 [Propostas: Estrutura, Custos e Lucratividade]
+Objetivo: Implementar o módulo de propostas, o coração financeiro do CRM.
+
+# Requisitos da feature:
+- Ser capaz de criar propostas detalhadas, com múltiplos produtos/serviços de um catálogo.
+- Adicionar custos (fixos/percentuais) para calcular a margem de lucro estimada.
+- A lógica de custos deve ser sensível ao tipo_conta (Pública vs. Privada).
+- Propostas devem ter status e prazos.
+
+# O que será modificado:
+- backend/models.py: Criar as tabelas ProdutoServico, Proposta, ItemProposta, CustoProposta.
+- backend/propostas.py (Novo): Blueprint com toda a lógica de negócio para propostas.
+- backend/templates/: Novas interfaces para criar e visualizar propostas.
+
+# versão 4.02 [Automação de Documentos e Comunicação]
+Objetivo: Automatizar a criação e o envio de propostas.
+
+# Requisitos da feature:
+- O sistema deve gerar um documento PDF profissional e personalizável a partir dos dados de uma proposta.
+- Deve ser possível enviar a proposta gerada por e-mail diretamente do sistema, usando o e-mail configurado do vendedor.
+
+# O que será modificado:
+- backend/propostas.py: Adicionar a rota para geração de PDF e a lógica de envio de e-mail.
+- backend/email.py (Novo): Módulo utilitário para envio de e-mails, lendo as configurações do banco de dados.
+
+# versão 5.01 [Módulo de Relatórios e Dashboard Inteligente]
+Objetivo: Fornecer inteligência de negócio, consolidando os dados em relatórios e em um dashboard dinâmico.
+
+# Requisitos da feature:
+- O Dashboard deve exibir um Funil de Vendas visual (quantos R$ estão em cada etapa do funil).
+- O Dashboard deve mostrar métricas chave: Taxa de Conversão, Valor Médio das Propostas, etc.
+- Deve haver uma página de Relatórios com filtros (por data, por vendedor) para analisar o desempenho de vendas.
+- Todos os relatórios devem ser exportáveis para PDF.
+
+# O que será modificado:
+- backend/relatorios.py (Novo): Blueprint para gerar os dados para os relatórios.
+- backend/main.py: Rota do dashboard será modificada para consumir os dados da API de relatórios.
+- backend/templates/dashboard.html: Substituição do conteúdo estático por gráficos dinâmicos.
