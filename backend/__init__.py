@@ -9,23 +9,18 @@ login_manager = LoginManager()
 
 def create_app():
     load_dotenv()
-
-    app = Flask(__name__,
-                template_folder='templates',
-                static_folder='static')
-
-    # MODIFICADO: Lendo a chave secreta do .env e tratando erro
+    app = Flask(__name__, template_folder='templates', static_folder='static')
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     if not app.config['SECRET_KEY']:
         raise ValueError("SECRET_KEY não configurada no arquivo .env!")
 
+    # Configuração do Banco de Dados...
     DB_USER = os.getenv('POSTGRES_USER')
     DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
     DB_NAME = os.getenv('POSTGRES_DB')
     DB_HOST = 'crm-azevix-db'
     DB_PORT = '5432'
     DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -44,12 +39,11 @@ def create_app():
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
+    
+    # --- NOVO BLUEPRINT DE CONTAS ---
+    from .contas import contas as contas_blueprint
+    app.register_blueprint(contas_blueprint, url_prefix='/')
 
-    # REMOVIDO TEMPORARIAMENTE: O antigo blueprint de leads não existe mais.
-    # from .leads import leads as leads_blueprint
-    # app.register_blueprint(leads_blueprint, url_prefix='/')
-
-    # Criação das tabelas no banco de dados
     with app.app_context():
         db.create_all()
 

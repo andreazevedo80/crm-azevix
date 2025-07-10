@@ -6,6 +6,7 @@ crm-azevix/
 ├── backend/
 │   ├── __init__.py
 │   ├── auth.py
+│   ├── contas.py
 │   ├── leads.py
 │   ├── main.py
 │   ├── models.py
@@ -14,9 +15,12 @@ crm-azevix/
 │   │   ├──css
 │   │   │   └──main.cs
 │   │   └──js
-│   │      ├──leads.js
-│   │      └──novo_lead.js
+│   │      ├──contas.js
+│   │      └──nova_conta.js
 │   └── templates/
+│       ├──contas
+│       │   └──lista_contas.html
+│       │   └──nova_conta.html
 │       ├── base.html
 │       ├── dashboard.html
 │       ├── leads.html

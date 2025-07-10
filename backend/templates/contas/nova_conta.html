@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Conta{% endblock %}
+
+{% block content %}
+<form id="novaContaForm">
+    <div class="card card-azevix mb-4">
+        <div class="card-header"><h5 class="card-title mb-0">1. Dados da Empresa (Conta)</h5></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6"><label for="nome_fantasia" class="form-label">Nome Fantasia *</label><input type="text" class="form-control" id="nome_fantasia" name="nome_fantasia" required></div>
+                <div class="col-md-6"><label for="razao_social" class="form-label">Razão Social</label><input type="text" class="form-control" id="razao_social" name="razao_social"></div>
+                <div class="col-md-6"><label for="cnpj" class="form-label">CNPJ</label><input type="text" class="form-control" id="cnpj" name="cnpj"></div>
+                <div class="col-md-6"><label for="tipo_conta" class="form-label">Tipo de Conta *</label><select class="form-select" id="tipo_conta" name="tipo_conta" required><option value="Privada" selected>Empresa Privada</option><option value="Pública">Órgão Público</option></select></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-azevix mb-4">
+        <div class="card-header"><h5 class="card-title mb-0">2. Contato Principal</h5></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6"><label for="contato_nome" class="form-label">Nome do Contato *</label><input type="text" class="form-control" id="contato_nome" name="contato_nome" required></div>
+                <div class="col-md-4"><label for="contato_email" class="form-label">Email</label><input type="email" class="form-control" id="contato_email" name="contato_email"></div>
+                <div class="col-md-4"><label for="contato_telefone" class="form-label">Telefone</label><input type="text" class="form-control" id="contato_telefone" name="contato_telefone"></div>
+                <div class="col-md-4"><label for="contato_cargo" class="form-label">Cargo</label><input type="text" class="form-control" id="contato_cargo" name="contato_cargo"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-azevix mb-4">
+        <div class="card-header"><h5 class="card-title mb-0">3. Primeira Oportunidade (Lead)</h5></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-8"><label for="lead_titulo" class="form-label">Título da Oportunidade *</label><input type="text" class="form-control" id="lead_titulo" name="lead_titulo" required placeholder="Ex: Venda de Sistema de TI, Renovação de Contrato..."></div>
+                <div class="col-md-4"><label for="lead_valor" class="form-label">Valor Estimado (R$)</label><input type="number" step="0.01" class="form-control" id="lead_valor" name="lead_valor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="alert-container"></div>
+
+    <div class="text-end">
+        <a href="{{ url_for('contas.listar_contas') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-azevix">Salvar Tudo</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/nova_conta.js') }}"></script>
+{% endblock %}
