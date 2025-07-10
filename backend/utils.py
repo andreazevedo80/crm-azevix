@@ -3,14 +3,22 @@ from validate_docbr import CNPJ
 import os
 
 # --- Lógica de Criptografia ---
-# A chave de criptografia deve ser a mesma durante a vida da aplicação.
-# Idealmente, ela também deveria vir de uma variável de ambiente.
-# Por simplicidade, vamos gerá-la a partir da SECRET_KEY do Flask.
-# ATENÇÃO: Se a SECRET_KEY mudar, os dados criptografados antigos não poderão ser lidos.
-key = os.getenv('SECRET_KEY', 'default-key-for-dev-must-be-32-bytes').encode()
-# A chave Fernet precisa ter 32 bytes. Vamos ajustá-la.
-fernet_key = (key[:32]).ljust(32, b'\0')
-cipher_suite = Fernet(fernet_key)
+
+# 1. Pega a chave diretamente do seu arquivo .env
+#    A chave já deve estar no formato correto (url-safe base64-encoded de 32 bytes)
+key = os.getenv('SECRET_KEY')
+
+# 2. Validação para garantir que a chave foi configurada
+if not key:
+    raise ValueError("Nenhuma SECRET_KEY foi encontrada no arquivo .env. Por favor, adicione a chave gerada.")
+
+# 3. Cria o objeto de criptografia usando a chave
+#    O .encode() a transforma em bytes, como a biblioteca espera.
+try:
+    cipher_suite = Fernet(key.encode())
+except Exception:
+    raise ValueError("A SECRET_KEY no arquivo .env não é uma chave Fernet válida.")
+
 
 def encrypt_data(data: str) -> str:
     if not data:
@@ -25,7 +33,7 @@ def decrypt_data(encrypted_data: str) -> str:
     except Exception:
         return None # Retorna None se a descriptografia falhar
 
-# --- Lógica de Validação ---
+# --- Lógica de Validação de Documentos ---
 cnpj_validator = CNPJ()
 
 def is_valid_cnpj(cnpj: str) -> bool:
