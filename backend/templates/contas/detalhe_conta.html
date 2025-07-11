@@ -22,7 +22,14 @@
                         <div class="col-md-6 mb-3"><label for="edit-razao-social" class="form-label">Razão Social</label><input type="text" id="edit-razao-social" name="razao_social" class="form-control" disabled></div>
                         <div class="col-md-6 mb-3"><label for="edit-cnpj" class="form-label">CNPJ</label><input type="text" id="edit-cnpj" name="cnpj" class="form-control" disabled></div>
                         <div class="col-md-6 mb-3"><label for="edit-tipo_conta" class="form-label">Tipo de Conta</label><select id="edit-tipo_conta" name="tipo_conta" class="form-select" disabled><option value="Privada">Privada</option><option value="Pública">Pública</option></select></div>
-                        <div class="col-12 mb-3"><label for="edit-segmento" class="form-label">Segmento</label><select id="edit-segmento" name="segmento" class="form-select" disabled></select></div>
+                        <div class="col-md-6 mb-3"><label for="edit-segmento" class="form-label">Segmento</label><select id="edit-segmento" name="segmento" class="form-select" disabled></select></div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-matriz-search" class="form-label">Conta Matriz</label>
+                            <input type="text" id="edit-matriz-search" class="form-control" placeholder="Digite para buscar..." disabled>
+                            <input type="hidden" id="edit-matriz-id" name="matriz_id">
+                            <div id="edit-matriz-results" class="list-group position-absolute" style="z-index: 1000;"></div>
+                        </div>
                     </div>
                     
                     {% if current_user.role == 'admin' %}
@@ -30,7 +37,6 @@
                         <hr><h6 class="text-azevix">Painel do Administrador</h6>
                         <div class="row g-3">
                             <div class="col-md-6 mb-3"><label for="edit-owner" class="form-label">Responsável</label><select id="edit-owner" name="owner_id" class="form-select" disabled></select></div>
-                            <div class="col-md-6 mb-3"><label for="edit-matriz" class="form-label">Conta Matriz</label><select id="edit-matriz" name="matriz_id" class="form-select" disabled><option value="">Nenhuma</option></select></div>
                         </div>
                     </div>
                     {% endif %}

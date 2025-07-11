@@ -9,16 +9,17 @@ document.addEventListener("DOMContentLoaded", function() {
     const formNovoContato = document.getElementById('form-novo-contato');
     const hierarchyInfo = document.getElementById('hierarchy-info');
     const hierarchyHr = document.getElementById('hierarchy-hr');
-
+    const matrizSearchInput = document.getElementById('edit-matriz-search');
+    const matrizIdInput = document.getElementById('edit-matriz-id');
+    const matrizResults = document.getElementById('edit-matriz-results');
+    
     let originalContaData = {};
 
     const populateSelect = (selectElement, options, selectedValue) => {
         selectElement.innerHTML = '';
-        if (selectElement.id === 'edit-matriz' || selectElement.id === 'edit-segmento') {
-            selectElement.add(new Option('Selecione...', ''));
-        }
+        if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
         options.forEach(opt => {
-            const text = opt.name || opt.nome_fantasia || opt;
+            const text = opt.name || opt;
             const value = opt.id || opt;
             selectElement.add(new Option(text, value));
         });
@@ -33,7 +34,11 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-segmento').value = conta.segmento || '';
         if (CURRENT_USER_ROLE === 'admin') {
             document.getElementById('edit-owner').value = conta.owner_id || '';
-            document.getElementById('edit-matriz').value = conta.matriz_id || '';
+            matrizSearchInput.value = conta.matriz_nome || '';
+            matrizIdInput.value = conta.matriz_id || '';
+        } else {
+            matrizSearchInput.value = conta.matriz_nome || '';
+            matrizIdInput.value = conta.matriz_id || '';
         }
     };
 
@@ -41,20 +46,16 @@ document.addEventListener("DOMContentLoaded", function() {
         listaContatos.innerHTML = '';
         if (contatos && contatos.length > 0) {
             contatos.forEach(c => { listaContatos.innerHTML += `<li class="list-group-item"><strong>${c.nome}</strong> (${c.cargo || 'N/A'})<br><small class="text-muted">${c.email || ''} | ${c.telefone || ''}</small></li>`; });
-        } else {
-            listaContatos.innerHTML = '<li class="list-group-item text-center">Nenhum contato cadastrado.</li>';
-        }
+        } else { listaContatos.innerHTML = '<li class="list-group-item text-center">Nenhum contato cadastrado.</li>'; }
     };
 
     const renderLeads = (leads) => {
         listaLeads.innerHTML = '';
         if (leads && leads.length > 0) {
             leads.forEach(l => { listaLeads.innerHTML += `<tr><td>${l.titulo}</td><td><span class="badge bg-info">${l.status_lead}</span></td><td>${l.valor_estimado}</td><td>${l.contato_principal_nome}</td><td><a href="#" class="btn btn-sm btn-outline-secondary disabled">Ver</a></td></tr>`; });
-        } else {
-            listaLeads.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma oportunidade encontrada.</td></tr>';
-        }
+        } else { listaLeads.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma oportunidade encontrada.</td></tr>'; }
     };
-    
+
     const renderHierarchy = (conta) => {
         let hierarchyHtml = '';
         if (conta.matriz_id && conta.matriz_nome) {
@@ -64,31 +65,19 @@ document.addEventListener("DOMContentLoaded", function() {
             const filiaisLinks = conta.filiais.map(f => `<a href="/contas/${f.id}">${f.nome_fantasia}</a>`).join(', ');
             hierarchyHtml += `<p><strong>Filiais:</strong> ${filiaisLinks}</p>`;
         }
-        
-        if (hierarchyHtml) {
-            hierarchyInfo.innerHTML = hierarchyHtml;
-            hierarchyHr.style.display = 'block';
-        } else {
-            hierarchyInfo.innerHTML = '';
-            hierarchyHr.style.display = 'none';
-        }
+        hierarchyInfo.innerHTML = hierarchyHtml;
+        hierarchyHr.style.display = hierarchyHtml ? 'block' : 'none';
     };
 
     const populateDropdownsAndFetchDetails = async () => {
         const configResponse = await fetch('/api/contas/config');
         const configData = await configResponse.json();
-        if (configData.success) {
-            populateSelect(document.getElementById('edit-segmento'), configData.segmentos);
-        }
+        if (configData.success) { populateSelect(document.getElementById('edit-segmento'), configData.segmentos); }
 
         if (CURRENT_USER_ROLE === 'admin') {
             const adminResponse = await fetch('/api/admin/form_data');
             const adminData = await adminResponse.json();
-            if (adminData.success) {
-                populateSelect(document.getElementById('edit-owner'), adminData.vendedores);
-                const contasParaMatriz = adminData.contas.filter(c => c.id !== CONTA_ID);
-                populateSelect(document.getElementById('edit-matriz'), contasParaMatriz);
-            }
+            if (adminData.success) { populateSelect(document.getElementById('edit-owner'), adminData.vendedores); }
         }
         
         if (typeof CONTA_ID === 'undefined') return;
@@ -100,26 +89,16 @@ document.addEventListener("DOMContentLoaded", function() {
             renderContatos(data.contatos);
             renderLeads(data.leads);
             renderHierarchy(data.conta);
-            document.getElementById('edit-segmento').value = originalContaData.segmento || '';
-            if (CURRENT_USER_ROLE === 'admin') {
-                document.getElementById('edit-owner').value = originalContaData.owner_id || '';
-                document.getElementById('edit-matriz').value = originalContaData.matriz_id || '';
-            }
         }
     };
 
     const toggleEditMode = (isEditing) => {
-        const fields = formEditConta.querySelectorAll('input, select');
-        fields.forEach(field => {
-            if(field.id !== 'edit-cnpj') { field.disabled = !isEditing; }
-        });
+        formEditConta.querySelectorAll('input, select').forEach(field => field.disabled = !isEditing);
         editButtons.style.display = isEditing ? 'block' : 'none';
         btnEditConta.style.display = isEditing ? 'none' : 'block';
-        hierarchyHr.style.display = isEditing ? 'none' : 'block';
+        hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
         hierarchyInfo.style.display = isEditing ? 'none' : 'block';
-        if (CURRENT_USER_ROLE === 'admin' && adminFields) {
-            adminFields.style.display = isEditing ? 'block' : 'none';
-        }
+        if (CURRENT_USER_ROLE === 'admin' && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
     };
 
     btnEditConta.addEventListener('click', () => toggleEditMode(true));
@@ -136,12 +115,11 @@ document.addEventListener("DOMContentLoaded", function() {
             cnpj: document.getElementById('edit-cnpj').value,
             tipo_conta: document.getElementById('edit-tipo_conta').value,
             segmento: document.getElementById('edit-segmento').value,
+            matriz_id: matrizIdInput.value,
         };
         if (CURRENT_USER_ROLE === 'admin') {
             updatedData.owner_id = document.getElementById('edit-owner').value;
-            updatedData.matriz_id = document.getElementById('edit-matriz').value;
         }
-
         const response = await fetch(`/api/contas/${CONTA_ID}`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatedData)
@@ -153,6 +131,36 @@ document.addEventListener("DOMContentLoaded", function() {
             toggleEditMode(false);
             alert('Conta atualizada com sucesso!');
         } else { alert(`Falha ao atualizar: ${result.error || 'Erro desconhecido'}`); }
+    });
+
+    let searchTimeout;
+    matrizSearchInput.addEventListener('keyup', () => {
+        clearTimeout(searchTimeout);
+        const term = matrizSearchInput.value;
+        matrizIdInput.value = '';
+        if (term.length < 3) { matrizResults.innerHTML = ''; return; }
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/contas/search?term=${encodeURIComponent(term)}`)
+                .then(res => res.json())
+                .then(data => {
+                    matrizResults.innerHTML = '';
+                    if (data.success && data.contas.length > 0) {
+                        data.contas.filter(c => c.id !== CONTA_ID).forEach(conta => {
+                            const item = document.createElement('a');
+                            item.href = '#';
+                            item.className = 'list-group-item list-group-item-action';
+                            item.textContent = `${conta.nome_fantasia}`;
+                            item.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                matrizSearchInput.value = conta.nome_fantasia;
+                                matrizIdInput.value = conta.id;
+                                matrizResults.innerHTML = '';
+                            });
+                            matrizResults.appendChild(item);
+                        });
+                    }
+                });
+        }, 500);
     });
 
     formNovoContato.addEventListener('submit', async function(e) {
