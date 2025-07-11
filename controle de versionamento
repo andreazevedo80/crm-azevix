@@ -43,7 +43,35 @@ Objetivo: Criar a base de dados profissional com as entidades "Conta" e "Contato
 - backend/contas.py (Novo): Criar o Blueprint e as APIs para gerenciar o CRUD de Contas e Contatos, incluindo a lógica de validação, normalização e criptografia.
 - backend/templates/: Criar as novas telas de cadastro que refletem o novo fluxo.
 
-## versão 2.04 [Segurança e Permissões Baseadas em Roles]
+### versão 2.04 [Visualização e Gestão de Contas e Contatos]
+Objetivo: Criar a página de "Detalhes da Conta", que será o hub central para todas as interações com um cliente, e permitir a gestão de múltiplos contatos.
+
+# Requisitos da feature:
+- Na lista de contas, o botão "Detalhes" (atualmente desativado) deverá funcionar, levando para uma nova página (/contas/<id>).
+- A página de detalhes deve exibir todas as informações da Conta.
+- A página deve ter uma seção para listar todos os Contatos associados àquela Conta.
+- Nesta mesma seção, deve haver um formulário ou botão para adicionar novos Contatos a uma Conta já existente.
+- A página também deve ter uma seção para listar todas as Oportunidades (Leads) associadas àquela Conta.
+
+# O que será modificado:
+- backend/contas.py: Criar a nova rota /contas/<id> e a API para buscar os detalhes completos de uma conta, incluindo seus contatos e leads.
+- backend/templates/contas/detalhe_conta.html (Novo): Criar a nova tela de visualização.
+- backend/static/js/detalhe_conta.js (Novo): Criar o JavaScript para gerenciar a interatividade da página de detalhes (como adicionar um novo contato via API sem recarregar a página).
+
+### versão 2.05 [Hierarquia de Contas e Gestão de Vendedores]
+Objetivo: Implementar a lógica de Matriz/Filial e permitir que administradores reatribuam a responsabilidade de uma conta.
+
+# Requisitos da feature:
+- Deve ser possível definir uma Conta como "filial" de outra Conta ("matriz").
+- Na página de "Detalhes da Conta", um administrador deve ver um campo para selecionar a "Conta Matriz".
+- Na mesma página, um administrador deve ver um campo para alterar o "Responsável" (o vendedor) por aquela conta.
+
+# O que será modificado:
+- backend/models.py: Adicionar a coluna matriz_id na tabela Conta, que se auto-referencia.
+- backend/contas.py: Atualizar a API de edição de contas para permitir a alteração do user_id (dono) e do matriz_id.
+- backend/templates/contas/detalhe_conta.html: Adicionar os campos de edição para o admin.
+
+## versão 2.06 [Segurança e Permissões Baseadas em Roles]
 Objetivo: Implementar um sistema de permissões robusto e controlar quem pode acessar o sistema e o que pode ver.
 
 # Requisitos da feature:
@@ -58,7 +86,7 @@ Objetivo: Implementar um sistema de permissões robusto e controlar quem pode ac
 - backend/auth.py: Remover a rota de registro público e criar a funcionalidade de convite no painel de admin.
 - backend/leads.py & backend/contas.py: Implementar a lógica de visualização baseada em role.
 
-## versão 2.05 [Log de Auditoria e Paginação]
+## versão 2.07 [Log de Auditoria e Paginação]
 Objetivo: Rastrear alterações importantes e garantir a performance do sistema com o crescimento dos dados.
 
 # Requisitos da feature:
