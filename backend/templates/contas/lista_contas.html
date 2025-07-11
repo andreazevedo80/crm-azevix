@@ -10,6 +10,25 @@
     </button>
 </div>
 
+<div class="card card-azevix mb-4">
+    <div class="card-header"><h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5></div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5"><label for="search-filter" class="form-label">Buscar por Nome</label><input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome fantasia ou razão social..."></div>
+            <div class="col-md-4"><label for="segment-filter" class="form-label">Segmento</label><select id="segment-filter" class="form-select"><option value="">Todos os Segmentos</option></select></div>
+            
+            {% if current_user.role == 'admin' %}
+            <div class="col-md-3">
+                <label for="owner-filter" class="form-label">Vendedor</label>
+                <select id="owner-filter" class="form-select">
+                    <option value="">Todos os Vendedores</option>
+                </select>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 <div class="card card-azevix">
     <div class="card-body" id="contas-display-area">
         </div>
@@ -24,7 +43,7 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-            <label for="check-conta-input" class="form-label">Busque por Nome Fantasia ou Razão Social:</label>
+            <label for="check-conta-input" class="form-label">Busque por Nome Fantasia:</label>
             <input type="text" class="form-control" id="check-conta-input" placeholder="Digite pelo menos 3 caracteres...">
         </div>
         <div id="check-results-container"></div>
@@ -41,5 +60,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    // Passa a role do usuário para o JavaScript, para que ele saiba se deve mostrar o filtro de vendedor
+    const CURRENT_USER_ROLE = "{{ current_user.role }}";
+</script>
 <script src="{{ url_for('static', filename='js/lista_contas.js') }}"></script>
 {% endblock %}

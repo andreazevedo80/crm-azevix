@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(50), default='vendedor', nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    contas = db.relationship('Conta', backref='owner', lazy=True)
+    contas = db.relationship('Conta', backref='owner', lazy=True, foreign_keys='Conta.user_id')
     leads = db.relationship('Lead', backref='owner', lazy=True)
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
@@ -23,8 +23,9 @@ class Conta(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     
-    # --- NOVO CAMPO PARA HIERARQUIA ---
+    # --- RELACIONAMENTO MATRIZ/FILIAL CORRIGIDO ---
     matriz_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=True)
+    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='dynamic')
     
     razao_social = db.Column(db.String(255))
     nome_fantasia = db.Column(db.String(255), nullable=False, index=True)
@@ -34,11 +35,8 @@ class Conta(db.Model):
     segmento = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relações
     contatos = db.relationship('Contato', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
     leads = db.relationship('Lead', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
-    filiais = db.relationship('Conta', backref='matriz', remote_side=[id], lazy=True)
 
     @property
     def cnpj(self):
@@ -63,7 +61,9 @@ class Conta(db.Model):
             'segmento': self.segmento,
             'owner_id': self.user_id,
             'owner_name': self.owner.name if self.owner else 'N/D',
-            'matriz_id': self.matriz_id
+            'matriz_id': self.matriz_id,
+            'matriz_nome': self.matriz.nome_fantasia if self.matriz else None,
+            'filiais': [{'id': f.id, 'nome_fantasia': f.nome_fantasia} for f in self.filiais]
         }
 
 class Contato(db.Model):

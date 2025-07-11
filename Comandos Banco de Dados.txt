@@ -15,3 +15,6 @@ SELECT * FROM users;
 id |            email            |             name             |                                                                           password_hash                                                                            |   role   
 ----+-----------------------------+------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------
   1 | andre.azevedo@azevix.com.br | André Luiz Leitão de Azevedo | scrypt:32768:8:1$mZwuBnzAoCDD9InA$1fde5fce1a28fa2caa017e6855426e4009a8d22c237e3a110731a114fda60284adfc1c9fe7ce92f37e9d9a8216140a94eaf9ac144a2b9fed4db9c093ad53d8e0 | vendedor
+
+SELECT id, name, email, role FROM users;
+UPDATE users SET role = 'admin' WHERE id = 1;

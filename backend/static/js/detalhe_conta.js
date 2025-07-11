@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // --- Referências aos elementos da página ---
     const formEditConta = document.getElementById('form-edit-conta');
     const btnEditConta = document.getElementById('btn-edit-conta');
     const btnCancelEdit = document.getElementById('btn-cancel-edit');
@@ -8,6 +7,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const listaContatos = document.getElementById('lista-contatos');
     const listaLeads = document.getElementById('lista-leads');
     const formNovoContato = document.getElementById('form-novo-contato');
+    const hierarchyInfo = document.getElementById('hierarchy-info');
+    const hierarchyHr = document.getElementById('hierarchy-hr');
 
     let originalContaData = {};
 
@@ -17,8 +18,9 @@ document.addEventListener("DOMContentLoaded", function() {
             selectElement.add(new Option('Selecione...', ''));
         }
         options.forEach(opt => {
-            const option = new Option(opt.name || opt, opt.id || opt);
-            selectElement.add(option);
+            const text = opt.name || opt.nome_fantasia || opt;
+            const value = opt.id || opt;
+            selectElement.add(new Option(text, value));
         });
         selectElement.value = selectedValue || '';
     };
@@ -52,50 +54,69 @@ document.addEventListener("DOMContentLoaded", function() {
             listaLeads.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma oportunidade encontrada.</td></tr>';
         }
     };
-
-    const populateDropdowns = async () => {
-        try {
-            const configResponse = await fetch('/api/contas/config');
-            const configData = await configResponse.json();
-            if (configData.success) {
-                populateSelect(document.getElementById('edit-segmento'), configData.segmentos);
-            }
-
-            if (CURRENT_USER_ROLE === 'admin') {
-                const adminResponse = await fetch('/api/admin/form_data');
-                const adminData = await adminResponse.json();
-                if (adminData.success) {
-                    populateSelect(document.getElementById('edit-owner'), adminData.vendedores);
-                    populateSelect(document.getElementById('edit-matriz'), adminData.contas);
-                }
-            }
-        } catch (error) { console.error('Erro ao popular dropdowns:', error); }
-    };
     
-    const fetchDetalhesConta = async () => {
-        if (typeof CONTA_ID === 'undefined') return;
-        try {
-            const response = await fetch(`/api/contas/${CONTA_ID}/details`);
-            const data = await response.json();
-            if (data.success) {
-                originalContaData = data.conta;
-                renderInfoForm(data.conta);
-                renderContatos(data.contatos);
-                renderLeads(data.leads);
-                // Repopula os selects com os valores corretos após ter os dados
-                populateSelect(document.getElementById('edit-segmento'), SEGMENTOS, originalContaData.segmento);
-                if (CURRENT_USER_ROLE === 'admin') {
-                    // Aqui você pode recarregar os dados de admin se necessário
-                }
+    const renderHierarchy = (conta) => {
+        let hierarchyHtml = '';
+        if (conta.matriz_id && conta.matriz_nome) {
+            hierarchyHtml += `<p><strong>Conta Matriz:</strong> <a href="/contas/${conta.matriz_id}">${conta.matriz_nome}</a></p>`;
+        }
+        if (conta.filiais && conta.filiais.length > 0) {
+            const filiaisLinks = conta.filiais.map(f => `<a href="/contas/${f.id}">${f.nome_fantasia}</a>`).join(', ');
+            hierarchyHtml += `<p><strong>Filiais:</strong> ${filiaisLinks}</p>`;
+        }
+        
+        if (hierarchyHtml) {
+            hierarchyInfo.innerHTML = hierarchyHtml;
+            hierarchyHr.style.display = 'block';
+        } else {
+            hierarchyInfo.innerHTML = '';
+            hierarchyHr.style.display = 'none';
+        }
+    };
+
+    const populateDropdownsAndFetchDetails = async () => {
+        const configResponse = await fetch('/api/contas/config');
+        const configData = await configResponse.json();
+        if (configData.success) {
+            populateSelect(document.getElementById('edit-segmento'), configData.segmentos);
+        }
+
+        if (CURRENT_USER_ROLE === 'admin') {
+            const adminResponse = await fetch('/api/admin/form_data');
+            const adminData = await adminResponse.json();
+            if (adminData.success) {
+                populateSelect(document.getElementById('edit-owner'), adminData.vendedores);
+                const contasParaMatriz = adminData.contas.filter(c => c.id !== CONTA_ID);
+                populateSelect(document.getElementById('edit-matriz'), contasParaMatriz);
             }
-        } catch (error) { console.error('Erro ao buscar detalhes da conta:', error); }
+        }
+        
+        if (typeof CONTA_ID === 'undefined') return;
+        const response = await fetch(`/api/contas/${CONTA_ID}/details`);
+        const data = await response.json();
+        if (data.success) {
+            originalContaData = data.conta;
+            renderInfoForm(originalContaData);
+            renderContatos(data.contatos);
+            renderLeads(data.leads);
+            renderHierarchy(data.conta);
+            document.getElementById('edit-segmento').value = originalContaData.segmento || '';
+            if (CURRENT_USER_ROLE === 'admin') {
+                document.getElementById('edit-owner').value = originalContaData.owner_id || '';
+                document.getElementById('edit-matriz').value = originalContaData.matriz_id || '';
+            }
+        }
     };
 
     const toggleEditMode = (isEditing) => {
         const fields = formEditConta.querySelectorAll('input, select');
-        fields.forEach(field => field.disabled = !isEditing);
+        fields.forEach(field => {
+            if(field.id !== 'edit-cnpj') { field.disabled = !isEditing; }
+        });
         editButtons.style.display = isEditing ? 'block' : 'none';
         btnEditConta.style.display = isEditing ? 'none' : 'block';
+        hierarchyHr.style.display = isEditing ? 'none' : 'block';
+        hierarchyInfo.style.display = isEditing ? 'none' : 'block';
         if (CURRENT_USER_ROLE === 'admin' && adminFields) {
             adminFields.style.display = isEditing ? 'block' : 'none';
         }
@@ -127,9 +148,9 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         const result = await response.json();
         if (result.success) {
-            toggleEditMode(false);
             document.querySelector('h1.text-azevix').innerHTML = `<i class="fas fa-building me-2"></i>${updatedData.nome_fantasia}`;
-            await fetchDetalhesConta();
+            await populateDropdownsAndFetchDetails();
+            toggleEditMode(false);
             alert('Conta atualizada com sucesso!');
         } else { alert(`Falha ao atualizar: ${result.error || 'Erro desconhecido'}`); }
     });
@@ -143,13 +164,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const result = await response.json();
         if (result.success) {
             formNovoContato.reset();
-            await fetchDetalhesConta();
+            await populateDropdownsAndFetchDetails();
         } else { alert('Erro ao adicionar contato: ' + result.error); }
     });
 
-    const initPage = async () => {
-        await populateDropdowns();
-        await fetchDetalhesConta();
-    };
-    initPage();
+    populateDropdownsAndFetchDetails();
 });
