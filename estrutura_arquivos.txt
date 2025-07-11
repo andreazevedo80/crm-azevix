@@ -7,7 +7,6 @@ crm-azevix/
 │   ├── __init__.py
 │   ├── auth.py
 │   ├── contas.py
-│   ├── leads.py
 │   ├── main.py
 │   ├── models.py
 │   ├── utils.py
@@ -16,23 +15,25 @@ crm-azevix/
 │   │   │   └──main.cs
 │   │   └──js
 │   │      ├──contas.js
+│   │      ├──detalhe_conta.js
+│   │      ├──lista_contas.js
 │   │      └──nova_conta.js
 │   └── templates/
 │       ├──contas
-│       │   └──lista_contas.html
+│       │   ├──detalhe_conta.html
+│       │   ├──lista_contas.html
 │       │   └──nova_conta.html
 │       ├── base.html
 │       ├── dashboard.html
-│       ├── leads.html
 │       ├── login.html
-│       ├── novo_lead.html
 │       └── register.html
 ├── .env
+├── .env.example
 ├── .gitignore
-├── Dockerfile
-├── README.md
 ├── boot.sh
 ├── docker-compose.yml
+├── Dockerfile
 ├── nginx.conf
+├── README.md
 ├── requirements.txt
 └── run.py

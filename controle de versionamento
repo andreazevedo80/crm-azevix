@@ -34,6 +34,18 @@ Objetivo: Criar a página de "Detalhes da Conta", que será o hub central para t
 - backend/templates/contas/detalhe_conta.html (Novo): Criar a nova tela de visualização.
 - backend/static/js/detalhe_conta.js (Novo): Criar o JavaScript para gerenciar a interatividade da página de detalhes (como adicionar um novo contato via API sem recarregar a página).
 
+# Requisitos da feature:
+- Deve ser possível definir uma Conta como "filial" de outra Conta ("matriz").
+- Na página de "Detalhes da Conta", um administrador deve ver um campo para selecionar a "Conta Matriz".
+- Na mesma página, um administrador deve ver um campo para alterar o "Responsável" (o vendedor) por aquela conta.
+- Na página de "Detalhes da conta", o vendedor ou administrador pode editar todos os campos da conta, contato e leads.
+- No botão de ação do Leads o vendedor pode editar o Status do Lead, preço e Título da Oportunidade.
+
+# O que será modificado:
+- backend/models.py: Adicionar a coluna matriz_id na tabela Conta, que se auto-referencia.
+- backend/contas.py: Atualizar a API de edição de contas para permitir a alteração do user_id (dono) e do matriz_id.
+- backend/templates/contas/detalhe_conta.html: Adicionar os campos de edição para o admin.
+
 ### 🔄 Em Desenvolvimento
 
 ### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 3.0)
@@ -61,19 +73,7 @@ Estes são pontos que devem ser considerados ao longo de todo o desenvolvimento.
 
 Objetivo: Implementar a lógica de Matriz/Filial e permitir que administradores reatribuam a responsabilidade de uma conta.
 
-# Requisitos da feature:
-- Deve ser possível definir uma Conta como "filial" de outra Conta ("matriz").
-- Na página de "Detalhes da Conta", um administrador deve ver um campo para selecionar a "Conta Matriz".
-- Na mesma página, um administrador deve ver um campo para alterar o "Responsável" (o vendedor) por aquela conta.
-- Na página de "Detalhes da conta", o vendedor ou administrador pode editar todos os campos da conta, contato e leads.
-- No botão de ação do Leads o vendedor pode editar o Status do Lead, preço e Título da Oportunidade.
-
-# O que será modificado:
-- backend/models.py: Adicionar a coluna matriz_id na tabela Conta, que se auto-referencia.
-- backend/contas.py: Atualizar a API de edição de contas para permitir a alteração do user_id (dono) e do matriz_id.
-- backend/templates/contas/detalhe_conta.html: Adicionar os campos de edição para o admin.
-
-## versão 2.07 [Segurança e Permissões Baseadas em Roles]
+## versão 2.06 [Segurança e Permissões Baseadas em Roles]
 Objetivo: Implementar um sistema de permissões robusto e controlar quem pode acessar o sistema e o que pode ver.
 
 # Requisitos da feature:
