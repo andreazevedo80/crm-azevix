@@ -1,67 +1,75 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 from .models import Conta, Contato, Lead, db
-from .utils import is_valid_cnpj
+from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
 
 contas = Blueprint('contas', __name__)
 
-# --- ROTAS DE PÁGINAS ---
+SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
+
 @contas.route('/contas')
 @login_required
 def listar_contas():
-    """Renderiza a página principal que lista todas as contas."""
     return render_template('contas/lista_contas.html')
 
 @contas.route('/contas/nova')
 @login_required
 def nova_conta_form():
-    """Renderiza o formulário para criar uma nova conta, contato e lead."""
     return render_template('contas/nova_conta.html')
 
-# --- ROTAS DE API ---
+@contas.route('/api/contas/config', methods=['GET'])
+@login_required
+def get_contas_config():
+    return jsonify({'success': True, 'segmentos': SEGMENTOS})
+
+@contas.route('/api/contas/search', methods=['GET'])
+@login_required
+def search_contas():
+    term = request.args.get('term', '').strip()
+    if len(term) < 3:
+        return jsonify({'success': True, 'contas': []})
+    
+    normalized_term = normalize_name(term)
+    query = Conta.query.filter(Conta.nome_fantasia.ilike(f'%{normalized_term}%'))
+    
+    found_contas = [{'id': c.id, 'nome_fantasia': c.nome_fantasia, 'cnpj': c.cnpj, 'owner_name': c.owner.name} for c in query.limit(10).all()]
+    return jsonify({'success': True, 'contas': found_contas})
 
 @contas.route('/api/contas', methods=['GET'])
 @login_required
 def get_contas():
-    """API que retorna a lista de contas para o frontend."""
     query = Conta.query.filter_by(user_id=current_user.id).order_by(Conta.nome_fantasia)
-    
-    contas_list = []
-    for conta in query.all():
-        contas_list.append({
-            'id': conta.id, 'nome_fantasia': conta.nome_fantasia,
-            'razao_social': conta.razao_social, 'cnpj': conta.cnpj,
-            'tipo_conta': conta.tipo_conta,
-            'owner_name': conta.owner.name if conta.owner else 'N/D'
-        })
+    contas_list = [
+        {'id': c.id, 'nome_fantasia': c.nome_fantasia, 'razao_social': c.razao_social, 'cnpj': c.cnpj, 'tipo_conta': c.tipo_conta, 'segmento': c.segmento, 'owner_name': c.owner.name}
+        for c in query.all()
+    ]
     return jsonify({'success': True, 'contas': contas_list})
 
 @contas.route('/api/contas', methods=['POST'])
 @login_required
 def criar_conta():
-    """API para criar uma nova Conta, com o primeiro Contato e a primeira Oportunidade (Lead)."""
     data = request.get_json()
 
     if not data or not data.get('nome_fantasia'):
         return jsonify({'success': False, 'error': 'Nome Fantasia é obrigatório.'}), 400
     
     cnpj = data.get('cnpj')
-    if cnpj and not is_valid_cnpj(cnpj):
-        return jsonify({'success': False, 'error': 'O CNPJ fornecido é inválido.'}), 400
-
     if cnpj:
-        # A biblioteca pode retornar o CNPJ com pontuação, então limpamos para a busca
-        clean_cnpj = ''.join(filter(str.isdigit, cnpj))
-        existing_conta = Conta.query.filter_by(cnpj=clean_cnpj).first()
+        if not is_valid_cnpj(cnpj):
+            return jsonify({'success': False, 'error': 'O CNPJ fornecido é inválido.'}), 400
+        
+        cnpj_hash = get_cnpj_hash(cnpj)
+        existing_conta = Conta.query.filter_by(cnpj_hash=cnpj_hash).first()
         if existing_conta:
-            return jsonify({'success': False, 'error': f'Uma conta com este CNPJ já existe (ID: {existing_conta.id}).'}), 409
+            return jsonify({'success': False, 'error': f'Este CNPJ já está cadastrado para a conta "{existing_conta.nome_fantasia}", sob responsabilidade de {existing_conta.owner.name}.'}), 409
 
     nova_conta = Conta(
         user_id=current_user.id,
         nome_fantasia=data['nome_fantasia'],
         razao_social=data.get('razao_social'),
         cnpj=cnpj,
-        tipo_conta=data.get('tipo_conta', 'Privada')
+        tipo_conta=data.get('tipo_conta', 'Privada'),
+        segmento=data.get('segmento')
     )
     db.session.add(nova_conta)
     db.session.commit()

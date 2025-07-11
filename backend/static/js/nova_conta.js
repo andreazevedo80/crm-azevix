@@ -1,6 +1,18 @@
 document.addEventListener("DOMContentLoaded", function() {
     const form = document.getElementById('novaContaForm');
     const alertContainer = document.getElementById('alert-container');
+    const segmentoSelect = document.getElementById('segmento');
+
+    // Popula o select de segmentos
+    fetch('/api/contas/config')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.segmentos) {
+                data.segmentos.forEach(seg => {
+                    segmentoSelect.add(new Option(seg, seg));
+                });
+            }
+        });
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -19,10 +31,8 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(res => res.json())
         .then(result => {
             if (result.success) {
-                // Redireciona para a lista de contas em caso de sucesso
                 window.location.href = result.redirect_url;
             } else {
-                // Mostra a mensagem de erro da API
                 alertContainer.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
             }
         });

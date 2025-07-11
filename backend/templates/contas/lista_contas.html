@@ -5,14 +5,38 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="text-azevix mb-0">Contas</h1>
-    <a href="{{ url_for('contas.nova_conta_form') }}" class="btn btn-azevix">
+    <button type="button" class="btn btn-azevix" data-bs-toggle="modal" data-bs-target="#checkContaModal">
         <i class="fas fa-plus me-1"></i> Nova Conta
-    </a>
+    </button>
 </div>
 
 <div class="card card-azevix">
     <div class="card-body" id="contas-display-area">
         </div>
+</div>
+
+<div class="modal fade" id="checkContaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Conta Existente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+            <label for="check-conta-input" class="form-label">Busque por Nome Fantasia ou Razão Social:</label>
+            <input type="text" class="form-control" id="check-conta-input" placeholder="Digite pelo menos 3 caracteres...">
+        </div>
+        <div id="check-results-container"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <a href="{{ url_for('contas.nova_conta_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">
+            Prosseguir com Cadastro
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
