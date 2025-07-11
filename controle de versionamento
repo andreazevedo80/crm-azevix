@@ -57,22 +57,23 @@ Estes são pontos que devem ser considerados ao longo de todo o desenvolvimento.
 
 ### Próximas Fases (Roadmap de Desenvolvimento Detalhado)
 
+### versão 2.05: Hierarquia de Contas e Gestão de Vendedores
 
-
-### versão 2.05 [Hierarquia de Contas e Gestão de Vendedores]
 Objetivo: Implementar a lógica de Matriz/Filial e permitir que administradores reatribuam a responsabilidade de uma conta.
 
 # Requisitos da feature:
 - Deve ser possível definir uma Conta como "filial" de outra Conta ("matriz").
 - Na página de "Detalhes da Conta", um administrador deve ver um campo para selecionar a "Conta Matriz".
 - Na mesma página, um administrador deve ver um campo para alterar o "Responsável" (o vendedor) por aquela conta.
+- Na página de "Detalhes da conta", o vendedor ou administrador pode editar todos os campos da conta, contato e leads.
+- No botão de ação do Leads o vendedor pode editar o Status do Lead, preço e Título da Oportunidade.
 
 # O que será modificado:
 - backend/models.py: Adicionar a coluna matriz_id na tabela Conta, que se auto-referencia.
 - backend/contas.py: Atualizar a API de edição de contas para permitir a alteração do user_id (dono) e do matriz_id.
 - backend/templates/contas/detalhe_conta.html: Adicionar os campos de edição para o admin.
 
-## versão 2.06 [Segurança e Permissões Baseadas em Roles]
+## versão 2.07 [Segurança e Permissões Baseadas em Roles]
 Objetivo: Implementar um sistema de permissões robusto e controlar quem pode acessar o sistema e o que pode ver.
 
 # Requisitos da feature:
@@ -87,7 +88,7 @@ Objetivo: Implementar um sistema de permissões robusto e controlar quem pode ac
 - backend/auth.py: Remover a rota de registro público e criar a funcionalidade de convite no painel de admin.
 - backend/leads.py & backend/contas.py: Implementar a lógica de visualização baseada em role.
 
-## versão 2.07 [Log de Auditoria e Paginação]
+## versão 2.08 [Log de Auditoria e Paginação]
 Objetivo: Rastrear alterações importantes e garantir a performance do sistema com o crescimento dos dados.
 
 # Requisitos da feature:

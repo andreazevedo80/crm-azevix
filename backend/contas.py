@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Conta, Contato, Lead, db
+from .models import Conta, Contato, Lead, User, db
 from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
 
 contas = Blueprint('contas', __name__)
@@ -8,7 +8,6 @@ contas = Blueprint('contas', __name__)
 SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
 
 # --- ROTAS DE PÁGINAS ---
-
 @contas.route('/contas')
 @login_required
 def listar_contas():
@@ -22,41 +21,71 @@ def nova_conta_form():
 @contas.route('/contas/<int:conta_id>')
 @login_required
 def detalhe_conta(conta_id):
-    """Renderiza a página de detalhes de uma conta específica."""
-    conta = Conta.query.filter_by(id=conta_id, user_id=current_user.id).first_or_404()
+    query = Conta.query.filter_by(id=conta_id)
+    if current_user.role != 'admin':
+        query = query.filter_by(user_id=current_user.id)
+    conta = query.first_or_404()
     return render_template('contas/detalhe_conta.html', conta=conta)
 
 # --- ROTAS DE API ---
 
+@contas.route('/api/contas/<int:conta_id>', methods=['PUT'])
+@login_required
+def update_conta(conta_id):
+    query = Conta.query.filter_by(id=conta_id)
+    if current_user.role != 'admin':
+        query = query.filter_by(user_id=current_user.id)
+    conta = query.first_or_404("Conta não encontrada ou você não tem permissão para editá-la.")
+    data = request.get_json()
+
+    if 'cnpj' in data and data.get('cnpj') and data.get('cnpj') != conta.cnpj:
+        if not is_valid_cnpj(data['cnpj']): return jsonify({'success': False, 'error': 'O CNPJ fornecido é inválido.'}), 400
+        cnpj_hash = get_cnpj_hash(data['cnpj'])
+        existing_conta = Conta.query.filter(Conta.id != conta_id, Conta.cnpj_hash == cnpj_hash).first()
+        if existing_conta: return jsonify({'success': False, 'error': f'Este CNPJ já pertence à conta "{existing_conta.nome_fantasia}".'}), 409
+        conta.cnpj = data['cnpj']
+
+    conta.nome_fantasia = data.get('nome_fantasia', conta.nome_fantasia)
+    conta.razao_social = data.get('razao_social', conta.razao_social)
+    conta.segmento = data.get('segmento', conta.segmento)
+    conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
+    
+    if current_user.role == 'admin':
+        if 'owner_id' in data and data.get('owner_id'): conta.user_id = int(data['owner_id'])
+        if 'matriz_id' in data:
+            matriz_id = data['matriz_id']
+            conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Conta atualizada com sucesso!'})
+
+@contas.route('/api/admin/form_data', methods=['GET'])
+@login_required
+def get_admin_form_data():
+    if current_user.role != 'admin':
+        return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
+
+    vendedores = User.query.filter_by(is_active=True).all()
+    contas = Conta.query.filter_by(is_active=True).order_by(Conta.nome_fantasia).all()
+    return jsonify({'success': True, 'vendedores': [{'id': v.id, 'name': v.name} for v in vendedores], 'contas': [{'id': c.id, 'nome_fantasia': c.nome_fantasia} for c in contas]})
+
 @contas.route('/api/contas/<int:conta_id>/details')
 @login_required
 def get_conta_details(conta_id):
-    """API que retorna todos os detalhes de uma conta (contatos, leads)."""
-    conta = Conta.query.filter_by(id=conta_id, user_id=current_user.id).first_or_404()
+    query = Conta.query.filter_by(id=conta_id)
+    if current_user.role != 'admin':
+        query = query.filter_by(user_id=current_user.id)
+    conta = query.first_or_404()
     
-    conta_data = conta.to_dict()
-    contatos_data = [c.to_dict() for c in conta.contatos.all()]
-    leads_data = [l.to_dict() for l in conta.leads.all()]
-
-    return jsonify({'success': True, 'conta': conta_data, 'contatos': contatos_data, 'leads': leads_data})
+    return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in conta.contatos.all()], 'leads': [l.to_dict() for l in conta.leads.all()]})
 
 @contas.route('/api/contas/<int:conta_id>/contatos', methods=['POST'])
 @login_required
 def adicionar_contato(conta_id):
-    """API para adicionar um novo contato a uma conta existente."""
     conta = Conta.query.filter_by(id=conta_id, user_id=current_user.id).first_or_404()
     data = request.get_json()
-
-    if not data or not data.get('nome'):
-        return jsonify({'success': False, 'error': 'O nome do contato é obrigatório.'}), 400
-
-    novo_contato = Contato(
-        conta_id=conta.id,
-        nome=data['nome'],
-        email=data.get('email'),
-        telefone=data.get('telefone'),
-        cargo=data.get('cargo')
-    )
+    if not data or not data.get('nome'): return jsonify({'success': False, 'error': 'O nome do contato é obrigatório.'}), 400
+    novo_contato = Contato(conta_id=conta.id, nome=data['nome'], email=data.get('email'), telefone=data.get('telefone'), cargo=data.get('cargo'))
     db.session.add(novo_contato)
     db.session.commit()
     return jsonify({'success': True, 'contato': novo_contato.to_dict()})
@@ -94,11 +123,9 @@ def criar_conta():
         cnpj_hash = get_cnpj_hash(cnpj)
         existing_conta = Conta.query.filter_by(cnpj_hash=cnpj_hash).first()
         if existing_conta: return jsonify({'success': False, 'error': f'Este CNPJ já está cadastrado para a conta "{existing_conta.nome_fantasia}", sob responsabilidade de {existing_conta.owner.name}.'}), 409
-    
     nova_conta = Conta(user_id=current_user.id, nome_fantasia=data['nome_fantasia'], razao_social=data.get('razao_social'), cnpj=cnpj, tipo_conta=data.get('tipo_conta', 'Privada'), segmento=data.get('segmento'))
     db.session.add(nova_conta)
     db.session.commit()
-    
     novo_contato, novo_lead = None, None
     if data.get('contato_nome'):
         novo_contato = Contato(conta_id=nova_conta.id, nome=data.get('contato_nome'), email=data.get('contato_email'), telefone=data.get('contato_telefone'), cargo=data.get('contato_cargo'))
@@ -107,7 +134,6 @@ def criar_conta():
     if data.get('lead_titulo'):
         novo_lead = Lead(conta_id=nova_conta.id, user_id=current_user.id, contato_id=novo_contato.id if novo_contato else None, titulo=data.get('lead_titulo'), valor_estimado=data.get('lead_valor') or None)
         db.session.add(novo_lead)
-    
     db.session.commit()
     flash('Conta criada com sucesso!', 'success')
     return jsonify({'success': True, 'redirect_url': url_for('contas.listar_contas')})
