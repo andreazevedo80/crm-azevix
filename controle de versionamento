@@ -3,30 +3,6 @@
 ### ✅ Versões Concluídas
 - **1.0** – Autenticação e estrutura base
 - **2.0 a 2.2** – CRUD de Leads, associação com vendedor, tipo de conta
-
-### 🔄 Em Desenvolvimento
-
-### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 3.0)
-Introdução ao Novo Conceito: "Conta", "Contato" e "Lead"
-Para suportar suas novas ideias, vamos adotar uma arquitetura de dados profissional:
-*Conta*: A entidade central que representa a Empresa ou Órgão Público. É única e guarda dados como Razão Social, Nome Fantasia, CNPJ e telefone principal.
-*Contato*: Uma Pessoa que trabalha em uma Conta. Uma Conta pode ter múltiplos Contatos (Diretor, Gerente, Financeiro, etc.), cada um com seu próprio e-mail, telefone e cargo.
-*Lead* (Oportunidade): Representa uma Oportunidade de Negócio. É um "negócio em potencial" que você tem com uma Conta. Ex: "Venda de Sistema de TI", "Renovação de Contrato". Um Lead sempre estará ligado a uma Conta e, opcionalmente, a um Contato principal.
-
-Introdução: Conceitos Arquiteturais Chave
-Fonte Única da Verdade: O banco de dados é a fonte única da verdade. Nenhuma configuração crítica (status, segmentos, regras) será mantida no código ("hardcoded").
-
-Segurança em Primeiro Lugar: Implementaremos práticas de segurança desde o início, incluindo controle de acesso baseado em papéis (Roles), criptografia de dados sensíveis e desativação em vez de exclusão (soft delete).
-
-Performance e Escalabilidade: O design da base de dados e das APIs levará em conta a performance, utilizando índices e paginação para garantir que a aplicação permaneça rápida conforme os dados crescem.
-
-Requisitos Contínuos e Operacionais
-Estes são pontos que devem ser considerados ao longo de todo o desenvolvimento.
-
-Índices de Banco de Dados: Durante a criação de cada tabela no models.py, as colunas que serão frequentemente usadas em buscas (cnpj, email, user_id, conta_id, etc.) devem ser marcadas com index=True ou unique=True para garantir a performance das consultas.
-
-### Próximas Fases (Roadmap de Desenvolvimento Detalhado)
-
 ## versão 2.03 [A Grande Reestruturação: Contas, Contatos e Integridade de Dados]
 Objetivo: Criar a base de dados profissional com as entidades "Conta" e "Contato", garantindo a integridade dos dados desde o início com validações e padronizações.
 
@@ -57,6 +33,31 @@ Objetivo: Criar a página de "Detalhes da Conta", que será o hub central para t
 - backend/contas.py: Criar a nova rota /contas/<id> e a API para buscar os detalhes completos de uma conta, incluindo seus contatos e leads.
 - backend/templates/contas/detalhe_conta.html (Novo): Criar a nova tela de visualização.
 - backend/static/js/detalhe_conta.js (Novo): Criar o JavaScript para gerenciar a interatividade da página de detalhes (como adicionar um novo contato via API sem recarregar a página).
+
+### 🔄 Em Desenvolvimento
+
+### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 3.0)
+Introdução ao Novo Conceito: "Conta", "Contato" e "Lead"
+Para suportar suas novas ideias, vamos adotar uma arquitetura de dados profissional:
+*Conta*: A entidade central que representa a Empresa ou Órgão Público. É única e guarda dados como Razão Social, Nome Fantasia, CNPJ e telefone principal.
+*Contato*: Uma Pessoa que trabalha em uma Conta. Uma Conta pode ter múltiplos Contatos (Diretor, Gerente, Financeiro, etc.), cada um com seu próprio e-mail, telefone e cargo.
+*Lead* (Oportunidade): Representa uma Oportunidade de Negócio. É um "negócio em potencial" que você tem com uma Conta. Ex: "Venda de Sistema de TI", "Renovação de Contrato". Um Lead sempre estará ligado a uma Conta e, opcionalmente, a um Contato principal.
+
+Introdução: Conceitos Arquiteturais Chave
+Fonte Única da Verdade: O banco de dados é a fonte única da verdade. Nenhuma configuração crítica (status, segmentos, regras) será mantida no código ("hardcoded").
+
+Segurança em Primeiro Lugar: Implementaremos práticas de segurança desde o início, incluindo controle de acesso baseado em papéis (Roles), criptografia de dados sensíveis e desativação em vez de exclusão (soft delete).
+
+Performance e Escalabilidade: O design da base de dados e das APIs levará em conta a performance, utilizando índices e paginação para garantir que a aplicação permaneça rápida conforme os dados crescem.
+
+Requisitos Contínuos e Operacionais
+Estes são pontos que devem ser considerados ao longo de todo o desenvolvimento.
+
+Índices de Banco de Dados: Durante a criação de cada tabela no models.py, as colunas que serão frequentemente usadas em buscas (cnpj, email, user_id, conta_id, etc.) devem ser marcadas com index=True ou unique=True para garantir a performance das consultas.
+
+### Próximas Fases (Roadmap de Desenvolvimento Detalhado)
+
+
 
 ### versão 2.05 [Hierarquia de Contas e Gestão de Vendedores]
 Objetivo: Implementar a lógica de Matriz/Filial e permitir que administradores reatribuam a responsabilidade de uma conta.
