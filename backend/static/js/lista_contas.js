@@ -24,11 +24,11 @@ document.addEventListener("DOMContentLoaded", function() {
                             <td><span class="badge bg-secondary">${conta.tipo_conta}</span></td>
                             <td>${conta.segmento || '-'}</td>
                             <td>${conta.owner_name}</td>
-                            <td><a href="#" class="btn btn-sm btn-outline-primary disabled">Detalhes</a></td>
+                            <td><a href="/contas/${conta.id}" class="btn btn-sm btn-outline-primary">Detalhes</a></td>
                         </tr>`).join('');
                     tableContent = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nome Fantasia</th><th>CNPJ</th><th>Tipo</th><th>Segmento</th><th>Responsável</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`;
                 } else {
-                    tableContent = `<p class="text-center py-4">Nenhuma conta encontrada.</p>`;
+                    tableContent = `<p class="text-center py-4">Nenhuma conta encontrada. Clique em "Nova Conta" para começar.</p>`;
                 }
                 displayArea.innerHTML = tableContent;
             });
@@ -63,14 +63,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // --- EVENT LISTENERS ---
     
-    // Limpa o modal quando ele é fechado para a próxima busca
     checkModalEl.addEventListener('hidden.bs.modal', function () {
         checkModalInput.value = '';
         checkResultsContainer.innerHTML = '';
         proceedButton.style.display = 'none';
     });
     
-    // Inicia a busca no modal após o usuário parar de digitar
     let checkTimeout;
     checkModalInput.addEventListener('keyup', () => {
         clearTimeout(checkTimeout);

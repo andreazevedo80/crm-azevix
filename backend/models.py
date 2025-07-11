@@ -24,11 +24,8 @@ class Conta(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     razao_social = db.Column(db.String(255))
     nome_fantasia = db.Column(db.String(255), nullable=False, index=True)
-    
-    # --- ARMAZENAMENTO CORRIGIDO ---
     _cnpj_encrypted = db.Column("cnpj_encrypted", db.String(255), nullable=True)
     cnpj_hash = db.Column(db.String(64), unique=True, nullable=True, index=True)
-    
     tipo_conta = db.Column(db.String(50), nullable=False, default='Privada')
     segmento = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
@@ -38,18 +35,27 @@ class Conta(db.Model):
 
     @property
     def cnpj(self):
-        """Descriptografa e formata o CNPJ para exibição."""
         return format_cnpj(decrypt_data(self._cnpj_encrypted))
 
     @cnpj.setter
     def cnpj(self, value):
-        """Normaliza, criptografa e cria o hash do CNPJ para armazenamento."""
         if value:
             self._cnpj_encrypted = encrypt_data(value)
             self.cnpj_hash = get_cnpj_hash(value)
         else:
             self._cnpj_encrypted = None
             self.cnpj_hash = None
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nome_fantasia': self.nome_fantasia,
+            'razao_social': self.razao_social,
+            'cnpj': self.cnpj,
+            'tipo_conta': self.tipo_conta,
+            'segmento': self.segmento,
+            'owner_name': self.owner.name if self.owner else 'N/D'
+        }
 
 class Contato(db.Model):
     __tablename__ = 'contatos'
@@ -60,6 +66,15 @@ class Contato(db.Model):
     telefone = db.Column(db.String(50), nullable=True)
     cargo = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'email': self.email,
+            'telefone': self.telefone,
+            'cargo': self.cargo
+        }
 
 class Lead(db.Model):
     __tablename__ = 'leads'
@@ -72,6 +87,17 @@ class Lead(db.Model):
     valor_estimado = db.Column(db.Numeric(10, 2), nullable=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        contato_principal = Contato.query.get(self.contato_id) if self.contato_id else None
+        return {
+            'id': self.id,
+            'titulo': self.titulo,
+            'status_lead': self.status_lead,
+            'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00',
+            'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'),
+            'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A'
+        }
 
 class HistoricoAlteracao(db.Model):
     __tablename__ = 'historico_alteracoes'
