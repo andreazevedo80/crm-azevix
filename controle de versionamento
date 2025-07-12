@@ -46,6 +46,8 @@ Objetivo: Criar a página de "Detalhes da Conta", que será o hub central para t
 - backend/contas.py: Atualizar a API de edição de contas para permitir a alteração do user_id (dono) e do matriz_id.
 - backend/templates/contas/detalhe_conta.html: Adicionar os campos de edição para o admin.
 
+### versão 2.05: Hierarquia de Contas e Gestão de Vendedores
+
 ### 🔄 Em Desenvolvimento
 
 ### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 3.0)
@@ -69,51 +71,78 @@ Estes são pontos que devem ser considerados ao longo de todo o desenvolvimento.
 
 ### Próximas Fases (Roadmap de Desenvolvimento Detalhado)
 
-### versão 2.05: Hierarquia de Contas e Gestão de Vendedores
-
 Objetivo: Implementar a lógica de Matriz/Filial e permitir que administradores reatribuam a responsabilidade de uma conta.
 
-## versão 2.06 [Segurança e Permissões Baseadas em Roles]
-Objetivo: Implementar um sistema de permissões robusto e controlar quem pode acessar o sistema e o que pode ver.
+### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 4.0)
+Introdução e Conceitos Chave
+O sistema será construído sobre uma arquitetura Single-Tenant, ideal para ser implantado em ambientes como a Google Cloud para clientes específicos. O primeiro usuário a se registrar em uma nova implantação se tornará o Admin daquela instância, que então gerenciará os demais usuários.
+
+Hierarquia de Usuários:
+
+Admin: Superusuário com controle total sobre configurações, usuários e dados.
+
+Gerente: Líder de equipe que visualiza os dados de seus liderados. Pode gerenciar usuários do tipo "Vendedor".
+
+Vendedor: Usuário padrão que gerencia apenas suas próprias contas e oportunidades.
+
+### Roadmap de Desenvolvimento Detalhado
+
+### versão 2.06 [Segurança e Hierarquia de Usuários]
+Objetivo: Implementar um sistema de permissões robusto com diferentes papéis (Roles) e uma estrutura de gestão de equipes.
 
 # Requisitos da feature:
-- O sistema deve ter uma tabela Role (ex: 'admin', 'vendedor', 'gerente').
-- UUm usuário deve ter uma Role associada e um campo is_active (soft delete).
-- Apenas administradores poderão criar novos usuários (a tela de registro público será desativada).
-- O cadastro de novos usuários será restrito ao domínio @azevix.com.br. (deve ser uma variável sem hardcode), caso haja necessidade de adicionar outros dominios;
-- A API de listagem de Contas/Leads deve respeitar a role: admin vê tudo, vendedor vê apenas o seu.
+- O sistema deve ter uma tabela Role no banco para armazenar os papéis ('admin', 'gerente', 'vendedor').
+- O modelo User será modificado: o campo de texto role será substituído por um relacionamento com a tabela Role, e um campo gerente_id (auto-relacionamento) será adicionado para definir a hierarquia de equipes.
+- O modelo User terá um campo is_active para permitir a desativação (soft delete) em vez da exclusão.
 
 # O que será modificado:
-- backend/models.py: Criar a tabela Role e adicionar as relações e o campo is_active ao modelo User.
-- backend/auth.py: Remover a rota de registro público e criar a funcionalidade de convite no painel de admin.
-- backend/leads.py & backend/contas.py: Implementar a lógica de visualização baseada em role.
+- backend/models.py: Criar a nova tabela Role e refatorar o modelo User para incluir a relação com Role, o campo gerente_id e o campo is_active.
 
-## versão 2.08 [Log de Auditoria e Paginação]
-Objetivo: Rastrear alterações importantes e garantir a performance do sistema com o crescimento dos dados.
+### versão 2.07 [Novo Fluxo de Cadastro e Perfil de Usuário]
+Objetivo: Substituir o registro público por um sistema seguro de auto-inicialização para o primeiro administrador e um fluxo de convites para os demais usuários, além de permitir que todos gerenciem suas próprias senhas.
 
 # Requisitos da feature:
-- O sistema deve registrar um histórico de alterações para cada Lead (ex: "Status alterado de 'NOVO' para 'CONTATADO' por André Azevedo em 09/07/2025").
-- Todas as listas principais (Leads, Contas, etc.) devem ser paginadas, mostrando um número limitado de itens por página (ex: 20) para manter a aplicação rápida.
+- O sistema deve permitir o registro público na rota /register apenas se não houver nenhum usuário cadastrado no banco de dados.
+- O primeiro usuário a se registrar no sistema será automaticamente designado com a role de 'admin'.
+- Após o primeiro registro, a rota /register será efetivamente desativada para o público, redirecionando qualquer acesso futuro para a tela de login.
+- Admins e Gerentes terão uma opção "Convidar Usuário" em um futuro painel de administração.
+- Ao convidar, o sistema enviará um e-mail com um link de convite seguro e de uso único.
+- O novo usuário clicará no link para definir sua própria senha e ativar a conta.
+- Todos os usuários terão acesso a uma página /perfil onde poderão alterar a própria senha.
 
 # O que será modificado:
-- backend/models.py: Criar uma nova tabela HistoricoAlteracao.
-- backend/leads.py e backend/propostas.py: Na rota de atualização, adicionar a lógica para criar um novo registro no histórico.
-- backend/templates/: Adicionar a exibição do histórico na tela de detalhes do lead/proposta.
-- backend/static/js/ e backend/*_api.py: Implementar a lógica de paginação no backend e no frontend.
+- backend/auth.py: Modificar a rota /register para implementar a lógica de "primeiro usuário é admin" e desativar o acesso público após o primeiro registro. Adicionar a lógica para o novo fluxo de convite (geração de token e a nova rota para a página de definição de senha).
+- backend/templates/auth/: Criar a nova tela set_password.html para o usuário definir sua senha a partir do convite.
+- backend/user.py (Novo): Criar um novo Blueprint para a página de perfil do usuário.
+- backend/templates/user/: Criar a nova tela perfil.html.
+- backend/email.py (Novo): Criar um módulo utilitário para o envio de e-mails de convite.
 
-## versão 3.01 [Administração: Configurações, Workflow e Motivos de Perda]
-Objetivo: Dar ao administrador controle total sobre as entidades e regras de negócio do CRM.
+### versão 3.01 [Módulo de Administração: Gestão Centralizada]
+Objetivo: Criar o painel de administração para centralizar a gestão de usuários e configurações, eliminando dados "hardcoded".
 
 # Requisitos da feature:
-- Admin pode gerenciar (CRUD) os Status de Lead e os Segmentos.
-- Admin pode definir as regras de transição para o Workflow de Status.
-- Admin pode gerenciar uma lista de "Motivos de Perda" (ex: "Preço", "Concorrência", "Prazo"). Este motivo será um campo obrigatório quando um Lead for movido para o status "Perdido".
-- Admin pode gerenciar as configurações de e-mail (SMTP).
+- Criar uma área /admin acessível apenas para a role 'admin'.
+- Gestão de Usuários: O admin poderá listar, convidar, editar (alterar role e gerente_id) e desativar/ativar usuários.
+- Gestão de Configurações: O admin poderá gerenciar (CRUD) as listas de Status de Leads, Segmentos de Mercado e Motivos de Perda.
+- Gestão de Domínios: O admin poderá gerenciar uma lista de domínios de e-mail permitidos para convites (deixando-a em branco para permitir qualquer domínio).
+- Gestão de SMTP: O admin poderá configurar os dados do servidor de e-mail (SMTP) que o sistema usará para enviar e-mails.
 
 # O que será modificado:
-- backend/models.py: Criar as tabelas ConfigStatusLead, ConfigSegmento, ConfigMotivoPerda, ConfiguracoesGerais e adicionar o campo de regras de workflow.
-- backend/admin.py (Novo): Criar o Blueprint e as interfaces para o admin gerenciar tudo isso.
-- backend/leads.py: A rota update_lead irá validar as regras do workflow e exigir o motivo da perda.
+- backend/models.py: Criar as tabelas ConfigStatusLead, ConfigSegmento, ConfigMotivoPerda, ConfiguracaoEmail, DominiosPermitidos.
+- backend/admin.py (Novo): Criar o Blueprint com todas as rotas e lógicas do painel de administração.
+- backend/templates/admin/: Criar as várias telas de gestão para o painel.
+
+### versão 3.02 [Workflow Inteligente de Status]
+Objetivo: Guiar o vendedor no processo de vendas com regras de transição.
+
+# Requisitos da feature:
+- No painel de administração, ao editar um Status de Lead, o admin poderá definir quais são os "próximos status permitidos".
+- O sistema validará essa regra ao tentar alterar o status de uma oportunidade, impedindo transições inválidas.
+
+# O que será modificado:
+- backend/models.py: Adicionar um campo na tabela ConfigStatusLead para armazenar as transições permitidas.
+- backend/contas.py ou backend/leads.py: A rota de atualização de oportunidade irá validar a transição.
+- backend/static/js/: O dropdown de status no frontend só mostrará as opções de status permitidas.
 
 # versão 4.01 [Propostas: Estrutura, Custos e Lucratividade]
 Objetivo: Implementar o módulo de propostas, o coração financeiro do CRM.
