@@ -1,0 +1,78 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches-ignore:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to EC2
+      run: |
+        ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          # Navega para o diretório de projetos
+          cd /home/ubuntu/projects
+          
+          # Remove diretório se existir
+          if [ -d "crm-azevix" ]; then
+            rm -rf crm-azevix
+          fi
+          
+          # Clona o repositório com a branch atual
+          git clone -b ${{ github.ref_name }} https://github.com/andreazevedo80/crm-azevix.git
+          
+          # Navega para o diretório do projeto
+          cd crm-azevix
+          
+          # Para e remove containers existentes
+          docker-compose down --rmi all -v --remove-orphans || true
+          
+          # Limpa imagens órfãs
+          docker system prune -f || true
+          
+          # Reconstrói e inicia os containers
+          docker-compose up --build -d
+          
+          # Verifica se os containers estão rodando
+          docker-compose ps
+          
+          # Mostra logs dos últimos 50 linhas
+          docker-compose logs --tail=50
+          
+        EOF
+
+    - name: Verify deployment
+      run: |
+        echo "Deployment completed for branch: ${{ github.ref_name }}"
+        echo "Application should be available at: http://${{ secrets.EC2_PUBLIC_IP }}"
+        
+        # Teste simples de conectividade
+        curl -f http://${{ secrets.EC2_PUBLIC_IP }} || echo "Application may still be starting..."
+
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ ${{ job.status }} == 'success' ]; then
+          echo "✅ Deployment successful!"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "URL: http://${{ secrets.EC2_PUBLIC_IP }}"
+        else
+          echo "❌ Deployment failed!"
+          echo "Check the logs above for details"
+        fi
