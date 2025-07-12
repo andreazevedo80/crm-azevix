@@ -1,0 +1,57 @@
+Categoria
+
+Tecnologia/Framework
+
+O que faz no nosso projeto?
+
+Backend
+
+Flask
+
+É o "cérebro" do nosso sistema. Um micro-framework Python que usamos para criar as rotas, a lógica de negócio e as APIs.
+
+Flask-SQLAlchemy
+
+É a extensão do Flask que usamos para nos comunicar com o banco de dados de forma fácil e segura, usando objetos Python em vez de SQL puro.
+
+Gunicorn
+
+É o nosso servidor de aplicação. Quando colocamos o sistema em produção, é ele quem realmente executa o código Flask de forma eficiente e robusta.
+
+Werkzeug
+
+Uma biblioteca fundamental que o Flask usa por baixo dos panos para lidar com requisições, respostas e rotas.
+
+Frontend
+
+Bootstrap 5
+
+É o nosso framework de CSS. Ele nos fornece todos os componentes visuais (botões, cards, formulários) e garante que o sistema seja responsivo (funcione bem em celulares).
+
+Jinja2
+
+É o motor de templates do Flask. É ele que nos permite misturar HTML com lógicas de programação (como {% if %} e {{ variavel }}) nos nossos arquivos .html.
+
+JavaScript (Vanilla)
+
+Usamos JavaScript "puro" (sem frameworks como React ou Vue) para dar vida às páginas, fazendo as chamadas para as APIs e atualizando a interface dinamicamente.
+
+Banco de Dados
+
+PostgreSQL
+
+É o nosso sistema de banco de dados relacional. Robusto, confiável e excelente para armazenar os dados de forma estruturada.
+
+Infraestrutura
+
+Docker
+
+É a tecnologia que usamos para "empacotar" nossa aplicação e suas dependências em contêineres, garantindo que ela rode da mesma forma em qualquer lugar.
+
+Docker Compose
+
+É a ferramenta que orquestra nossos múltiplos contêineres (backend, db, nginx), definindo como eles se comunicam e sobem juntos.
+
+Nginx
+
+Atua como nosso "porteiro" (ou proxy reverso). Ele recebe as requisições do mundo exterior e as direciona de forma eficiente para o nosso servidor Gunicorn.

@@ -5,28 +5,58 @@ from datetime import datetime
 from sqlalchemy import Index
 from .utils import encrypt_data, decrypt_data, format_cnpj, get_cnpj_hash
 
+# --- ADIÇÃO: Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
+user_roles = db.Table('user_roles',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True)
+)
+
+# --- ADIÇÃO: Novo modelo para os Papéis (Roles) ---
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    description = db.Column(db.String(255))
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     name = db.Column(db.String(150), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(50), default='vendedor', nullable=False)
+    
+    # --- REMOVIDO: O campo de texto 'role' foi removido ---
+    # role = db.Column(db.String(50), default='vendedor', nullable=False)
+    
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    
+    # --- ADIÇÃO: Novos campos e relações para hierarquia e permissões ---
+    gerente_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    roles = db.relationship('Role', secondary=user_roles, lazy='subquery',
+                            backref=db.backref('users', lazy=True))
+    liderados = db.relationship('User', backref=db.backref('gerente', remote_side=[id]), lazy='dynamic')
+    
+    # Relações existentes preservadas
     contas = db.relationship('Conta', backref='owner', lazy=True, foreign_keys='Conta.user_id')
     leads = db.relationship('Lead', backref='owner', lazy=True)
+    
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
 
+    # --- ADIÇÃO: Função auxiliar para verificar o papel do usuário ---
+    def has_role(self, role_name):
+        """Verifica se o usuário possui um determinado papel."""
+        for role in self.roles:
+            if role.name == role_name:
+                return True
+        return False
+
 class Conta(db.Model):
+    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'contas'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    
-    # --- RELACIONAMENTO MATRIZ/FILIAL CORRIGIDO ---
     matriz_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=True)
-    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='dynamic')
-    
     razao_social = db.Column(db.String(255))
     nome_fantasia = db.Column(db.String(255), nullable=False, index=True)
     _cnpj_encrypted = db.Column("cnpj_encrypted", db.String(255), nullable=True)
@@ -37,6 +67,7 @@ class Conta(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     contatos = db.relationship('Contato', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
     leads = db.relationship('Lead', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
+    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='dynamic')
 
     @property
     def cnpj(self):
@@ -67,6 +98,7 @@ class Conta(db.Model):
         }
 
 class Contato(db.Model):
+    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'contatos'
     id = db.Column(db.Integer, primary_key=True)
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
@@ -78,6 +110,7 @@ class Contato(db.Model):
     def to_dict(self): return {'id': self.id, 'nome': self.nome, 'email': self.email, 'telefone': self.telefone, 'cargo': self.cargo}
 
 class Lead(db.Model):
+    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
@@ -93,6 +126,7 @@ class Lead(db.Model):
         return {'id': self.id, 'titulo': self.titulo, 'status_lead': self.status_lead, 'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00', 'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'), 'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A'}
 
 class HistoricoAlteracao(db.Model):
+    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'historico_alteracoes'
     id = db.Column(db.Integer, primary_key=True)
     data_alteracao = db.Column(db.DateTime, default=datetime.utcnow, index=True)
