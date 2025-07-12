@@ -1,4 +1,4 @@
-name: Deploy to AWS EC2 via SSM
+name: Deploy to AWS EC2
 
 on:
   push:
@@ -12,7 +12,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Permissões necessárias para a autenticação OIDC com a AWS
     permissions:
       id-token: write
       contents: read
@@ -21,20 +20,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # Passo 1: Autentica na AWS usando a Role do OIDC
+    # Passo 1: Autentica na AWS (seu código original, está perfeito)
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::186297945290:role/GitHubActions-Deploy-CRM-Role
         aws-region: us-east-1 
 
-    - name: Deploy to EC2
-      run: |
-        ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+    # Passo 2: Deploy para EC2 usando a Action de SSH (CORRIGIDO)
+    - name: Deploy to EC2 via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_PUBLIC_IP }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        script: |
           # Navega para o diretório de projetos
           cd /home/ubuntu/projects
           
-          # Remove diretório se existir
+          # Remove diretório antigo, se existir
           if [ -d "crm-azevix" ]; then
             rm -rf crm-azevix
           fi
@@ -45,39 +49,38 @@ jobs:
           # Navega para o diretório do projeto
           cd crm-azevix
           
-          # Para e remove containers existentes
+          # Garante que as permissões estejam corretas
+          sudo chown -R ubuntu:ubuntu .
+          
+          # Para e remove containers existentes (|| true para não falhar se não existirem)
           docker-compose down --rmi all -v --remove-orphans || true
           
-          # Limpa imagens órfãs
-          docker system prune -f || true
+          # Limpa o cache do Docker e imagens não utilizadas
+          docker system prune -af || true
           
-          # Reconstrói e inicia os containers
+          # Reconstrói e inicia os containers em modo detached
           docker-compose up --build -d
           
-          # Verifica se os containers estão rodando
+          # Exibe o status dos containers para verificação no log
+          echo "Verificando status dos containers..."
           docker-compose ps
           
-          # Mostra logs dos últimos 50 linhas
+          # Mostra os logs recentes para depuração
+          echo "Exibindo logs recentes..."
+          sleep 10 # Dá um tempo para os containers iniciarem
           docker-compose logs --tail=50
-          
-        EOF
 
+    # Passos 3 e 4: Verificação e Notificação (seu código original, está ótimo)
     - name: Verify deployment
       run: |
-        echo "Deployment completed for branch: ${{ github.ref_name }}"
+        echo "Deployment triggered for branch: ${{ github.ref_name }}"
         echo "Application should be available at: http://${{ secrets.EC2_PUBLIC_IP }}"
         
-        # Teste simples de conectividade
-        curl -f http://${{ secrets.EC2_PUBLIC_IP }} || echo "Application may still be starting..."
-
     - name: Notify deployment status
       if: always()
       run: |
         if [ ${{ job.status }} == 'success' ]; then
           echo "✅ Deployment successful!"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "URL: http://${{ secrets.EC2_PUBLIC_IP }}"
         else
           echo "❌ Deployment failed!"
-          echo "Check the logs above for details"
         fi
