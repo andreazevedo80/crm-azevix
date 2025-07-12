@@ -1,4 +1,4 @@
-name: Deploy to AWS EC2
+name: Deploy to AWS EC2 via SSM
 
 on:
   push:
@@ -12,19 +12,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    # Permissões necessárias para a autenticação OIDC com a AWS
+    permissions:
+      id-token: write
+      contents: read
+      
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH key
-      run: |
-        set -x
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        touch ~/.ssh/known_hosts
-        ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+    # Passo 1: Autentica na AWS usando a Role do OIDC
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::186297945290:role/GitHubActions-Deploy-CRM-Role
+        aws-region: us-east-1 
 
     - name: Deploy to EC2
       run: |
