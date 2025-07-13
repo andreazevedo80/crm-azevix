@@ -70,13 +70,12 @@ def update_conta(conta_id):
     conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
     
     # Todos os usuários podem editar a matriz
+    if current_user.has_role('admin'):
+        if 'owner_id' in data and data.get('owner_id'): conta.user_id = int(data['owner_id'])
     if 'matriz_id' in data:
         matriz_id = data['matriz_id']
         conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
-    
-    if current_user.has_role('admin'):
-        if 'owner_id' in data and data.get('owner_id'): conta.user_id = int(data['owner_id'])
-    
+        
     db.session.commit()
     return jsonify({'success': True, 'message': 'Conta atualizada com sucesso!'})
 

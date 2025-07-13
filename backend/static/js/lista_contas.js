@@ -3,16 +3,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const displayArea = document.getElementById('contas-display-area');
     const searchInput = document.getElementById('search-filter');
     const segmentFilter = document.getElementById('segment-filter');
-    const ownerFilter = document.getElementById('owner-filter'); // Filtro de Vendedor (pode ser nulo se não for admin)
+    const ownerFilter = document.getElementById('owner-filter');
     const checkModalInput = document.getElementById('check-conta-input');
     const checkResultsContainer = document.getElementById('check-results-container');
     const proceedButton = document.getElementById('proceed-to-register-btn');
     const checkModalEl = document.getElementById('checkContaModal');
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
-
-    // --- FUNÇÕES ---
-
     const populateFilters = async () => {
         try {
             const response = await fetch('/api/contas/config');
@@ -23,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function() {
         } catch (error) { console.error("Erro ao carregar segmentos:", error); }
 
         // Popula o filtro de vendedores apenas se o elemento existir (ou seja, se o usuário for admin)
-        if (ownerFilter) {
+        if (IS_ADMIN && ownerFilter) {
             try {
                 const response = await fetch('/api/admin/form_data');
                 const data = await response.json();
@@ -41,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function() {
             segmento: segmentFilter.value
         });
 
-        if (ownerFilter && ownerFilter.value) {
+        if (IS_ADMIN && ownerFilter && ownerFilter.value) {
             params.append('owner_id', ownerFilter.value);
         }
 
@@ -52,14 +49,14 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data.success && data.contas.length > 0) {
                     const rows = data.contas.map(conta => `
                         <tr>
-                            <td>${conta.nome_fantasia}</td>
+                            <td><a href="/contas/${conta.id}">${conta.nome_fantasia}</a></td>
                             <td>${conta.cnpj || '-'}</td>
                             <td><span class="badge bg-secondary">${conta.tipo_conta}</span></td>
                             <td>${conta.segmento || '-'}</td>
                             <td>${conta.owner_name}</td>
                             <td><a href="/contas/${conta.id}" class="btn btn-sm btn-outline-primary">Detalhes</a></td>
                         </tr>`).join('');
-                    tableContent = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nome Fantasia</th><th>CNPJ</th><th>Tipo</th><th>Segmento</th><th>Responsável</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                    tableContent = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nome Fantasia</th><th>CNPJ</th><th>Tipo</th><th>Segmento</th><th>Responsável</th></tr></thead><tbody>${rows}</tbody></table></div>`;
                 } else {
                     // CORRIGIDO: O link agora abre o modal de busca, não vai direto para o cadastro.
                     tableContent = `<p class="text-center py-4">Nenhuma conta encontrada. <a href="#" data-bs-toggle="modal" data-bs-target="#checkContaModal">Cadastre a primeira!</a></p>`;
