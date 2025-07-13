@@ -74,17 +74,17 @@ jobs:
         cd crm-azevix
 
         echo "Stopping old containers..." | tee -a "$LOG_FILE"
-        docker-compose down --rmi all -v --remove-orphans || true
+        docker compose down --rmi all -v --remove-orphans || true
         
         echo "Pruning Docker system..." | tee -a "$LOG_FILE"
         docker system prune -af || true
 
         echo "Building and starting new containers..." | tee -a "$LOG_FILE"
-        docker-compose up --build -d
+        docker compose up --build -d
 
         echo "--- Deployment completed at $(date) ---" | tee -a "$LOG_FILE"
         
-        docker-compose ps
+        docker compose ps
         EOF
         )
 
