@@ -39,9 +39,9 @@ jobs:
         aws sts get-caller-identity
         echo "✅ AWS connection successful"
 # Passo de deploy com a criação do diretório
-    - name: Deploy and Monitor via SSM
+    - name: Deploy e Monitoramento via SSM
       run: |
-        echo "🚀 Starting deployment of branch '${{ github.ref_name }}'..."
+        echo "🚀 Iniciando deployment da branch '${{ github.ref_name }}'..."
 
         # 1. Define o script de deploy
         DEPLOY_SCRIPT=$(cat <<'EOF'
