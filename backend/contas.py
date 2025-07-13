@@ -23,7 +23,8 @@ def nova_conta_form():
 @login_required
 def detalhe_conta(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    if current_user.role != 'admin':
+    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    if not current_user.has_role('admin'):
         query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404()
     return render_template('contas/detalhe_conta.html', conta=conta)
@@ -34,7 +35,8 @@ def detalhe_conta(conta_id):
 @login_required
 def get_contas():
     query = Conta.query
-    if current_user.role != 'admin':
+    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    if not current_user.has_role('admin'):
         query = query.filter_by(user_id=current_user.id)
     else:
         owner_id = request.args.get('owner_id')
@@ -53,7 +55,8 @@ def get_contas():
 @login_required
 def update_conta(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    if current_user.role != 'admin': query = query.filter_by(user_id=current_user.id)
+    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404("Conta não encontrada ou você não tem permissão para editá-la.")
     data = request.get_json()
 
@@ -69,7 +72,8 @@ def update_conta(conta_id):
     conta.segmento = data.get('segmento', conta.segmento)
     conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
     
-    if current_user.role == 'admin':
+    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    if current_user.has_role('admin'):
         if 'owner_id' in data and data.get('owner_id'): conta.user_id = int(data['owner_id'])
         if 'matriz_id' in data:
             matriz_id = data['matriz_id']
@@ -81,7 +85,8 @@ def update_conta(conta_id):
 @contas.route('/api/admin/form_data', methods=['GET'])
 @login_required
 def get_admin_form_data():
-    if current_user.role != 'admin': return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
+    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    if not current_user.has_role('admin'): return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
     vendedores = User.query.filter_by(is_active=True).all()
     contas = Conta.query.filter_by(is_active=True).order_by(Conta.nome_fantasia).all()
     return jsonify({'success': True, 'vendedores': [{'id': v.id, 'name': v.name} for v in vendedores], 'contas': [{'id': c.id, 'nome_fantasia': c.nome_fantasia} for c in contas]})
@@ -90,14 +95,18 @@ def get_admin_form_data():
 @login_required
 def get_conta_details(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    if current_user.role != 'admin': query = query.filter_by(user_id=current_user.id)
+    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404()
     return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in conta.contatos.all()], 'leads': [l.to_dict() for l in conta.leads.all()]})
 
 @contas.route('/api/contas/<int:conta_id>/contatos', methods=['POST'])
 @login_required
 def adicionar_contato(conta_id):
-    conta = Conta.query.filter_by(id=current_user.id, user_id=current_user.id).first_or_404()
+    query = Conta.query.filter_by(id=conta_id)
+    if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
+    conta = query.first_or_404()
+    
     data = request.get_json()
     if not data or not data.get('nome'): return jsonify({'success': False, 'error': 'O nome do contato é obrigatório.'}), 400
     novo_contato = Contato(conta_id=conta.id, nome=data['nome'], email=data.get('email'), telefone=data.get('telefone'), cargo=data.get('cargo'))
