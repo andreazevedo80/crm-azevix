@@ -61,7 +61,7 @@
 
 {% block scripts %}
 <script>
-    // --- ALTERAÇÃO: Passando a role do usuário de forma segura para o JavaScript ---
+    // --- CORREÇÃO: Passando um booleano (true/false) para o JavaScript ---
     const IS_ADMIN = {{ current_user.has_role('admin')|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/lista_contas.js') }}"></script>
