@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const matrizIdInput = document.getElementById('edit-matriz-id');
     const matrizResults = document.getElementById('edit-matriz-results');
     
+    // Estado da aplicação
     let originalContaData = {};
 
     const populateSelect = (selectElement, options, selectedValue) => {
