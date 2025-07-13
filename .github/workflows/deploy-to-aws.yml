@@ -38,7 +38,7 @@ jobs:
       run: |
         aws sts get-caller-identity
         echo "✅ AWS connection successful"
-# Passo de deploy com captura de log aprimorada
+# Passo de deploy com a criação do diretório
     - name: Deploy and Monitor via SSM
       run: |
         echo "🚀 Starting deployment of branch '${{ github.ref_name }}'..."
@@ -47,25 +47,43 @@ jobs:
         DEPLOY_SCRIPT=$(cat <<'EOF'
         #!/bin/bash
         set -ex
+
+        # Variáveis
         REPO_URL="https://github.com/andreazevedo80/crm-azevix.git"
         BRANCH="${{ github.ref_name }}"
+        PROJECT_BASE_DIR="/home/ubuntu/projects"
         LOG_FILE="/tmp/deploy_log.txt"
+
         echo "--- Starting deployment at $(date) ---" > "$LOG_FILE"
-        cd /home/ubuntu/projects
+        
+        # --- CORREÇÃO AQUI ---
+        # Cria o diretório de projetos se ele não existir
+        mkdir -p "$PROJECT_BASE_DIR"
+        
+        # Navega para o diretório de projetos
+        cd "$PROJECT_BASE_DIR"
+
         if [ -d "crm-azevix" ]; then
           echo "Removing old project directory..."
           rm -rf crm-azevix
         fi
+
         echo "Cloning branch '$BRANCH' from '$REPO_URL'..."
         git clone --depth 1 -b "$BRANCH" "$REPO_URL" crm-azevix
+        
         cd crm-azevix
+
         echo "Stopping old containers..." | tee -a "$LOG_FILE"
         docker-compose down --rmi all -v --remove-orphans || true
+        
         echo "Pruning Docker system..." | tee -a "$LOG_FILE"
         docker system prune -af || true
+
         echo "Building and starting new containers..." | tee -a "$LOG_FILE"
         docker-compose up --build -d
+
         echo "--- Deployment completed at $(date) ---" | tee -a "$LOG_FILE"
+        
         docker-compose ps
         EOF
         )
@@ -87,12 +105,11 @@ jobs:
         echo "SSM Command sent with ID: $COMMAND_ID"
         echo "Waiting for deployment to complete..."
         
-        # 4. Aguarda a conclusão, mas não para o workflow em caso de falha (|| true)
         aws ssm wait command-executed \
           --command-id "$COMMAND_ID" \
           --instance-id "${{ env.INSTANCE_ID }}" || true
 
-        # 5. Obtém e exibe os logs, não importa o resultado
+        # 4. Obtém e exibe os logs, não importa o resultado
         STATUS=$(aws ssm get-command-invocation \
           --command-id "$COMMAND_ID" \
           --instance-id "${{ env.INSTANCE_ID }}" \
@@ -115,7 +132,7 @@ jobs:
           --query "StandardErrorContent" \
           --output text
 
-        # 6. Falha o workflow se o comando SSM não foi bem-sucedido
+        # 5. Falha o workflow se o comando SSM não foi bem-sucedido
         if [ "$STATUS" != "Success" ]; then
           echo "❌ Deployment failed!"
           exit 1
