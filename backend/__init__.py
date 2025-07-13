@@ -7,6 +7,32 @@ import os
 db = SQLAlchemy()
 login_manager = LoginManager()
 
+# --- ADIÇÃO: Função para inicializar o banco de dados e os papéis ---
+def setup_database(app):
+    """Cria as tabelas e popula os dados iniciais, como os papéis (Roles)."""
+    with app.app_context():
+        db.create_all()
+
+        # Importa o modelo Role aqui dentro para evitar importação circular
+        from .models import Role
+        
+        # Lista de papéis essenciais que o sistema precisa para funcionar
+        initial_roles = {
+            'admin': 'Administrador do Sistema com acesso total.',
+            'gerente': 'Líder de equipe com visão sobre seus liderados.',
+            'vendedor': 'Usuário padrão que gerencia suas próprias contas.'
+        }
+
+        for role_name, role_description in initial_roles.items():
+            role = Role.query.filter_by(name=role_name).first()
+            if not role:
+                new_role = Role(name=role_name, description=role_description)
+                db.session.add(new_role)
+        
+        db.session.commit()
+        print("Tabelas e papéis essenciais verificados/criados.")
+
+
 def create_app():
     load_dotenv()
     app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -40,11 +66,10 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
     
-    # GARANTA QUE ESTA PARTE ESTÁ PRESENTE E CORRETA
     from .contas import contas as contas_blueprint
     app.register_blueprint(contas_blueprint, url_prefix='/')
 
-    with app.app_context():
-        db.create_all()
+    # --- ALTERAÇÃO: Chama a função de setup do banco de dados ---
+    setup_database(app)
 
     return app
