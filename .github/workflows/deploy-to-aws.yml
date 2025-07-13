@@ -1,54 +1,288 @@
-@echo off
-echo ===============================================
-echo    AZEVIX - Teste de Conectividade SSM
-echo ===============================================
-echo.
+name: Deploy to AWS EC2
 
-:: Verifica se o AWS CLI está configurado
-aws sts get-caller-identity >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERRO: AWS CLI não está configurado ou não tem permissões adequadas.
-    echo Execute: aws configure
-    pause
-    exit /b 1
-)
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches-ignore:
+      - main
 
-:: Obtém o Instance ID do Terraform
-echo [INFO] Obtendo Instance ID...
-for /f "tokens=*" %%i in ('terraform output -raw instance_id') do set INSTANCE_ID=%%i
-echo [INFO] Instance ID: %INSTANCE_ID%
+env:
+  AWS_REGION: us-east-1
+  INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+  GITHUB_REPOSITORY: andreazevedo80/crm-azevix
 
-:: Verifica se a instância está no SSM
-echo.
-echo [INFO] Verificando status da instância no SSM...
-aws ssm describe-instance-information --filters "Key=InstanceIds,Values=%INSTANCE_ID%" --query "InstanceInformationList[0].[InstanceId,PingStatus,LastPingDateTime]" --output table
+# Configuração de permissões necessárias para OIDC
+permissions:
+  id-token: write
+  contents: read
 
-:: Teste básico de conectividade
-echo.
-echo [INFO] Testando conectividade básica...
-for /f "tokens=*" %%i in ('aws ssm send-command --instance-ids "%INSTANCE_ID%" --document-name "AWS-RunShellScript" --parameters "commands=[\"echo SSM is working; whoami; pwd\"]" --query "Command.CommandId" --output text') do set COMMAND_ID=%%i
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-echo [INFO] Command ID: %COMMAND_ID%
-echo [INFO] Aguardando execução...
+    - name: Configure AWS credentials using OIDC
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
 
-:: Aguarda 5 segundos
-timeout /t 5 /nobreak >nul
+    - name: Verify AWS connection
+      run: |
+        aws sts get-caller-identity
+        echo "✅ AWS connection successful"
 
-:: Verifica o resultado
-aws ssm get-command-invocation --command-id "%COMMAND_ID%" --instance-id "%INSTANCE_ID%" --query "StandardOutputContent" --output text
+    - name: Check SSM Agent status
+      run: |
+        echo "Checking SSM Agent status..."
+        aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=${{ env.INSTANCE_ID }}" \
+          --query 'InstanceInformationList[0].[InstanceId,PingStatus,LastPingDateTime]' \
+          --output table
 
-echo.
-echo [INFO] Se você viu "SSM is working" acima, o SSM está funcionando corretamente.
-echo [INFO] Se não, verifique os logs de erro:
+    - name: Debug SSM connectivity
+      run: |
+        echo "Debugging SSM connectivity..."
+        
+        # Verifica se a instância está disponível no SSM
+        echo "=== SSM INSTANCE STATUS ==="
+        aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=${{ env.INSTANCE_ID }}" \
+          --query 'InstanceInformationList[0]' \
+          --output table || echo "Instance not found in SSM"
+        
+        # Testa conectividade básica
+        echo "=== BASIC CONNECTIVITY TEST ==="
+        TEST_COMMAND_ID=$(aws ssm send-command \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --document-name "AWS-RunShellScript" \
+          --parameters 'commands=["echo \"SSM is working\"; whoami; pwd; ls -la /home/ubuntu/"]' \
+          --timeout-seconds 30 \
+          --query 'Command.CommandId' \
+          --output text)
+        
+        # Aguarda teste básico
+        sleep 5
+        aws ssm wait command-executed \
+          --command-id "$TEST_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --timeout-seconds 60 || echo "Basic test timeout"
+        
+        # Mostra resultado do teste
+        echo "=== TEST RESULTS ==="
+        aws ssm get-command-invocation \
+          --command-id "$TEST_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'StandardOutputContent' \
+          --output text
+        
+        aws ssm get-command-invocation \
+          --command-id "$TEST_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'StandardErrorContent' \
+          --output text
 
-aws ssm get-command-invocation --command-id "%COMMAND_ID%" --instance-id "%INSTANCE_ID%" --query "StandardErrorContent" --output text
+    - name: Deploy to EC2 using SSM
+      run: |
+        echo "Starting deployment via SSM..."
+        
+        # Primeiro, cria o script de deploy diretamente na instância
+        echo "=== CREATING DEPLOY SCRIPT ==="
+        CREATE_SCRIPT_ID=$(aws ssm send-command \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --document-name "AWS-RunShellScript" \
+          --parameters 'commands=[
+            "cat > /tmp/deploy.sh << \"EOF\"",
+            "#!/bin/bash",
+            "set -e",
+            "set -x",
+            "",
+            "REPO_URL=\"$1\"",
+            "BRANCH=\"$2\"",
+            "PROJECT_DIR=\"/home/ubuntu/projects/crm-azevix\"",
+            "",
+            "echo \"Starting deployment at $(date)\" | tee -a /tmp/deploy.log",
+            "echo \"Repository: $REPO_URL\" | tee -a /tmp/deploy.log",
+            "echo \"Branch: $BRANCH\" | tee -a /tmp/deploy.log",
+            "",
+            "# Navega para o diretório de projetos",
+            "cd /home/ubuntu/projects",
+            "",
+            "# Remove diretório se existir",
+            "if [ -d \"crm-azevix\" ]; then",
+            "  rm -rf crm-azevix",
+            "fi",
+            "",
+            "# Clona o repositório com a branch especificada",
+            "git clone -b \"$BRANCH\" \"$REPO_URL\" crm-azevix",
+            "",
+            "# Navega para o diretório do projeto",
+            "cd crm-azevix",
+            "",
+            "# Para e remove containers existentes",
+            "docker-compose down --rmi all -v --remove-orphans || true",
+            "",
+            "# Limpa imagens órfãs",
+            "docker system prune -f || true",
+            "",
+            "# Reconstrói e inicia os containers",
+            "docker-compose up --build -d",
+            "",
+            "# Verifica se os containers estão rodando",
+            "docker-compose ps | tee -a /tmp/deploy.log",
+            "",
+            "# Mostra logs dos últimos 50 linhas",
+            "docker-compose logs --tail=50 | tee -a /tmp/deploy.log",
+            "",
+            "echo \"Deployment completed at $(date)\" | tee -a /tmp/deploy.log",
+            "EOF",
+            "",
+            "chmod +x /tmp/deploy.sh",
+            "chown ubuntu:ubuntu /tmp/deploy.sh"
+          ]' \
+          --timeout-seconds 60 \
+          --query 'Command.CommandId' \
+          --output text)
+        
+        # Aguarda criação do script
+        echo "Creating deploy script..."
+        aws ssm wait command-executed \
+          --command-id "$CREATE_SCRIPT_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}"
+        
+        # Verifica se o script foi criado
+        aws ssm get-command-invocation \
+          --command-id "$CREATE_SCRIPT_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'StandardOutputContent' \
+          --output text
+        
+        # Agora executa o deployment
+        echo "=== EXECUTING DEPLOYMENT ==="
+        DEPLOY_COMMAND_ID=$(aws ssm send-command \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --document-name "AWS-RunShellScript" \
+          --parameters "commands=[
+            \"sudo -u ubuntu /tmp/deploy.sh https://github.com/${{ env.GITHUB_REPOSITORY }}.git ${{ github.ref_name }}\"
+          ]" \
+          --timeout-seconds 600 \
+          --query 'Command.CommandId' \
+          --output text)
+        
+        echo "Deploy Command ID: $DEPLOY_COMMAND_ID"
+        
+        # Aguarda a conclusão do comando
+        echo "Waiting for deployment to complete..."
+        aws ssm wait command-executed \
+          --command-id "$DEPLOY_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}"
+        
+        # Verifica o status do comando
+        STATUS=$(aws ssm get-command-invocation \
+          --command-id "$DEPLOY_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'Status' \
+          --output text)
+        
+        echo "Deployment Status: $STATUS"
+        
+        # Mostra os logs da execução
+        echo "=== DEPLOYMENT OUTPUT ==="
+        aws ssm get-command-invocation \
+          --command-id "$DEPLOY_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'StandardOutputContent' \
+          --output text
+        
+        echo "=== DEPLOYMENT ERRORS ==="
+        aws ssm get-command-invocation \
+          --command-id "$DEPLOY_COMMAND_ID" \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'StandardErrorContent' \
+          --output text
+        
+        # Mostra logs do deploy
+        echo "=== DEPLOY LOG ==="
+        aws ssm send-command \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --document-name "AWS-RunShellScript" \
+          --parameters 'commands=["cat /tmp/deploy.log 2>/dev/null || echo \"No deploy log found\""]' \
+          --timeout-seconds 30 \
+          --query 'Command.CommandId' \
+          --output text | \
+        xargs -I {} sh -c 'sleep 3 && aws ssm wait command-executed --command-id {} --instance-id "${{ env.INSTANCE_ID }}" && aws ssm get-command-invocation --command-id {} --instance-id "${{ env.INSTANCE_ID }}" --query "StandardOutputContent" --output text'
+        
+        # Falha se o comando não foi bem-sucedido
+        if [ "$STATUS" != "Success" ]; then
+          echo "❌ Deployment failed with status: $STATUS"
+          exit 1
+        fi
 
-echo.
-echo [INFO] Status do comando:
-aws ssm get-command-invocation --command-id "%COMMAND_ID%" --instance-id "%INSTANCE_ID%" --query "Status" --output text
+    - name: Verify deployment
+      run: |
+        echo "Verifying deployment..."
+        
+        # Obtém o IP público da instância
+        PUBLIC_IP=$(aws ec2 describe-instances \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text)
+        
+        echo "Instance Public IP: $PUBLIC_IP"
+        echo "Application URL: http://$PUBLIC_IP"
+        
+        # Teste simples de conectividade
+        echo "Testing connectivity..."
+        for i in {1..10}; do
+          if curl -f "http://$PUBLIC_IP" --connect-timeout 5 --max-time 10; then
+            echo "✅ Application is responding!"
+            break
+          else
+            echo "⏳ Attempt $i/10: Application not ready yet, waiting..."
+            sleep 10
+          fi
+        done
 
-echo.
-echo ===============================================
-echo    TESTE CONCLUÍDO
-echo ===============================================
-pause
+    - name: Get deployment logs
+      if: always()
+      run: |
+        echo "=== DEPLOYMENT LOGS ==="
+        aws ssm send-command \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --document-name "AWS-RunShellScript" \
+          --parameters 'commands=["tail -n 100 /var/log/deploy.log"]' \
+          --query 'Command.CommandId' \
+          --output text | \
+        xargs -I {} aws ssm wait command-executed --command-id {} --instance-id "${{ env.INSTANCE_ID }}" && \
+        aws ssm get-command-invocation \
+          --command-id $(aws ssm send-command \
+            --instance-ids "${{ env.INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["tail -n 100 /var/log/deploy.log"]' \
+            --query 'Command.CommandId' \
+            --output text) \
+          --instance-id "${{ env.INSTANCE_ID }}" \
+          --query 'StandardOutputContent' \
+          --output text
+
+    - name: Notify deployment status
+      if: always()
+      run: |
+        PUBLIC_IP=$(aws ec2 describe-instances \
+          --instance-ids "${{ env.INSTANCE_ID }}" \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text)
+        
+        if [ ${{ job.status }} == 'success' ]; then
+          echo "✅ Deployment successful!"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "URL: http://$PUBLIC_IP"
+        else
+          echo "❌ Deployment failed!"
+          echo "Check the logs above for details"
+        fi
