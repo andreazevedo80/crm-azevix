@@ -18,8 +18,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const populateSelect = (selectElement, options, selectedValue) => {
         selectElement.innerHTML = '';
         if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
+        if (selectElement.id === 'edit-owner') selectElement.innerHTML = ''; // Limpa antes de popular
+        
         options.forEach(opt => {
-            const text = opt.name || opt;
+            const text = opt.name || opt.nome_fantasia || opt;
             const value = opt.id || opt;
             selectElement.add(new Option(text, value));
         });
@@ -32,14 +34,10 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-cnpj').value = conta.cnpj || '';
         document.getElementById('edit-tipo_conta').value = conta.tipo_conta || 'Privada';
         document.getElementById('edit-segmento').value = conta.segmento || '';
-        // --- CORREÇÃO: Usando a nova variável IS_ADMIN ---
+        matrizSearchInput.value = conta.matriz_nome || '';
+        matrizIdInput.value = conta.matriz_id || '';
         if (IS_ADMIN) {
             document.getElementById('edit-owner').value = conta.owner_id || '';
-            matrizSearchInput.value = conta.matriz_nome || '';
-            matrizIdInput.value = conta.matriz_id || '';
-        } else {
-            matrizSearchInput.value = conta.matriz_nome || '';
-            matrizIdInput.value = conta.matriz_id || '';
         }
     };
 
@@ -95,14 +93,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const toggleEditMode = (isEditing) => {
         formEditConta.querySelectorAll('input, select').forEach(field => {
-            if(field.id === 'edit-owner' && !IS_ADMIN) return;
+            if (field.id === 'edit-owner' && !IS_ADMIN) return;
             field.disabled = !isEditing;
         });
         editButtons.style.display = isEditing ? 'block' : 'none';
         btnEditConta.style.display = isEditing ? 'none' : 'block';
         hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
         hierarchyInfo.style.display = isEditing ? 'none' : 'block';
-        if (IS_ADMIN && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
+        if (IS_ADMIN) { adminFields.style.display = isEditing ? 'block' : 'none'; }
     };
 
     btnEditConta.addEventListener('click', () => toggleEditMode(true));
@@ -141,7 +139,6 @@ document.addEventListener("DOMContentLoaded", function() {
     matrizSearchInput.addEventListener('keyup', () => {
         clearTimeout(searchTimeout);
         const term = matrizSearchInput.value;
-        matrizIdInput.value = '';
         if (term.length < 3) { matrizResults.innerHTML = ''; return; }
         searchTimeout = setTimeout(() => {
             fetch(`/api/contas/search?term=${encodeURIComponent(term)}`)

@@ -23,7 +23,6 @@ def nova_conta_form():
 @login_required
 def detalhe_conta(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
     if not current_user.has_role('admin'):
         query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404()
@@ -35,7 +34,6 @@ def detalhe_conta(conta_id):
 @login_required
 def get_contas():
     query = Conta.query
-    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
     if not current_user.has_role('admin'):
         query = query.filter_by(user_id=current_user.id)
     else:
@@ -55,7 +53,6 @@ def get_contas():
 @login_required
 def update_conta(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
     if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404("Conta não encontrada ou você não tem permissão para editá-la.")
     data = request.get_json()
@@ -72,20 +69,20 @@ def update_conta(conta_id):
     conta.segmento = data.get('segmento', conta.segmento)
     conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
     
-    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
+    # Todos os usuários podem editar a matriz
+    if 'matriz_id' in data:
+        matriz_id = data['matriz_id']
+        conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
+    
     if current_user.has_role('admin'):
         if 'owner_id' in data and data.get('owner_id'): conta.user_id = int(data['owner_id'])
-        if 'matriz_id' in data:
-            matriz_id = data['matriz_id']
-            conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
-
+    
     db.session.commit()
     return jsonify({'success': True, 'message': 'Conta atualizada com sucesso!'})
 
 @contas.route('/api/admin/form_data', methods=['GET'])
 @login_required
 def get_admin_form_data():
-    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
     if not current_user.has_role('admin'): return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
     vendedores = User.query.filter_by(is_active=True).all()
     contas = Conta.query.filter_by(is_active=True).order_by(Conta.nome_fantasia).all()
@@ -95,7 +92,6 @@ def get_admin_form_data():
 @login_required
 def get_conta_details(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    # --- ALTERAÇÃO: Usando a nova verificação de papel ---
     if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404()
     return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in conta.contatos.all()], 'leads': [l.to_dict() for l in conta.leads.all()]})
