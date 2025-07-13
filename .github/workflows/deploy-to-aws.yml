@@ -56,7 +56,6 @@ jobs:
 
         echo "--- Starting deployment at $(date) ---" > "$LOG_FILE"
         
-        # --- CORREÇÃO AQUI ---
         # Cria o diretório de projetos se ele não existir
         mkdir -p "$PROJECT_BASE_DIR"
         
@@ -70,9 +69,12 @@ jobs:
 
         echo "Cloning branch '$BRANCH' from '$REPO_URL'..."
         git clone --depth 1 -b "$BRANCH" "$REPO_URL" crm-azevix
-        
         cd crm-azevix
 
+        # Cria o arquivo .env a partir do Secret do GitHub
+        echo "${{ secrets.DOT_ENV }}" > .env
+
+        # Inicia os serviços com o Docker Compose
         echo "Stopping old containers..." | tee -a "$LOG_FILE"
         docker compose down --rmi all -v --remove-orphans || true
         
