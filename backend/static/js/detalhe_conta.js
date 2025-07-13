@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-cnpj').value = conta.cnpj || '';
         document.getElementById('edit-tipo_conta').value = conta.tipo_conta || 'Privada';
         document.getElementById('edit-segmento').value = conta.segmento || '';
-        if (CURRENT_USER_ROLE === 'admin') {
+        if (IS_ADMIN) {
             document.getElementById('edit-owner').value = conta.owner_id || '';
             matrizSearchInput.value = conta.matriz_nome || '';
             matrizIdInput.value = conta.matriz_id || '';
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const configData = await configResponse.json();
         if (configData.success) { populateSelect(document.getElementById('edit-segmento'), configData.segmentos); }
 
-        if (CURRENT_USER_ROLE === 'admin') {
+        if (IS_ADMIN) {
             const adminResponse = await fetch('/api/admin/form_data');
             const adminData = await adminResponse.json();
             if (adminData.success) { populateSelect(document.getElementById('edit-owner'), adminData.vendedores); }
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function() {
         btnEditConta.style.display = isEditing ? 'none' : 'block';
         hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
         hierarchyInfo.style.display = isEditing ? 'none' : 'block';
-        if (CURRENT_USER_ROLE === 'admin' && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
+        if (IS_ADMIN && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
     };
 
     btnEditConta.addEventListener('click', () => toggleEditMode(true));
@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function() {
             segmento: document.getElementById('edit-segmento').value,
             matriz_id: matrizIdInput.value,
         };
-        if (CURRENT_USER_ROLE === 'admin') {
+        if (IS_ADMIN) {
             updatedData.owner_id = document.getElementById('edit-owner').value;
         }
         const response = await fetch(`/api/contas/${CONTA_ID}`, {
