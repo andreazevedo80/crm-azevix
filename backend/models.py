@@ -24,11 +24,10 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     name = db.Column(db.String(150), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
     # --- REMOVIDO: O campo de texto 'role' foi removido ---
     # role = db.Column(db.String(50), default='vendedor', nullable=False)
-    
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
     
     # --- ADIÇÃO: Novos campos e relações para hierarquia e permissões ---
     gerente_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -52,7 +51,6 @@ class User(UserMixin, db.Model):
         return False
 
 class Conta(db.Model):
-    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'contas'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
@@ -98,7 +96,6 @@ class Conta(db.Model):
         }
 
 class Contato(db.Model):
-    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'contatos'
     id = db.Column(db.Integer, primary_key=True)
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
@@ -110,7 +107,6 @@ class Contato(db.Model):
     def to_dict(self): return {'id': self.id, 'nome': self.nome, 'email': self.email, 'telefone': self.telefone, 'cargo': self.cargo}
 
 class Lead(db.Model):
-    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
@@ -126,7 +122,6 @@ class Lead(db.Model):
         return {'id': self.id, 'titulo': self.titulo, 'status_lead': self.status_lead, 'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00', 'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'), 'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A'}
 
 class HistoricoAlteracao(db.Model):
-    # --- NENHUMA ALTERAÇÃO NESTA CLASSE ---
     __tablename__ = 'historico_alteracoes'
     id = db.Column(db.Integer, primary_key=True)
     data_alteracao = db.Column(db.DateTime, default=datetime.utcnow, index=True)

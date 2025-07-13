@@ -17,9 +17,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const populateSelect = (selectElement, options, selectedValue) => {
         selectElement.innerHTML = '';
+        if (selectElement.id === 'edit-matriz') selectElement.add(new Option('Nenhuma', ''));
         if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
+        
         options.forEach(opt => {
-            const text = opt.name || opt;
+            const text = opt.name || opt.nome_fantasia || opt;
             const value = opt.id || opt;
             selectElement.add(new Option(text, value));
         });
@@ -32,13 +34,10 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-cnpj').value = conta.cnpj || '';
         document.getElementById('edit-tipo_conta').value = conta.tipo_conta || 'Privada';
         document.getElementById('edit-segmento').value = conta.segmento || '';
+        matrizSearchInput.value = conta.matriz_nome || '';
+        matrizIdInput.value = conta.matriz_id || '';
         if (IS_ADMIN) {
             document.getElementById('edit-owner').value = conta.owner_id || '';
-            matrizSearchInput.value = conta.matriz_nome || '';
-            matrizIdInput.value = conta.matriz_id || '';
-        } else {
-            matrizSearchInput.value = conta.matriz_nome || '';
-            matrizIdInput.value = conta.matriz_id || '';
         }
     };
 
@@ -93,7 +92,11 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     const toggleEditMode = (isEditing) => {
-        formEditConta.querySelectorAll('input, select').forEach(field => field.disabled = !isEditing);
+        formEditConta.querySelectorAll('input, select').forEach(field => {
+            // O campo de reatribuição de dono só é habilitado para admin
+            if(field.id === 'edit-owner' && !IS_ADMIN) return;
+            field.disabled = !isEditing;
+        });
         editButtons.style.display = isEditing ? 'block' : 'none';
         btnEditConta.style.display = isEditing ? 'none' : 'block';
         hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
