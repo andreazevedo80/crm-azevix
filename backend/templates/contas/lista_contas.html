@@ -30,38 +30,17 @@
 </div>
 
 <div class="card card-azevix">
-    <div class="card-body" id="contas-display-area">
-        </div>
+    <div class="card-body" id="contas-display-area"></div>
 </div>
 
 <div class="modal fade" id="checkContaModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Conta Existente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-            <label for="check-conta-input" class="form-label">Busque por Nome Fantasia:</label>
-            <input type="text" class="form-control" id="check-conta-input" placeholder="Digite pelo menos 3 caracteres...">
-        </div>
-        <div id="check-results-container"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-        <a href="{{ url_for('contas.nova_conta_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">
-            Prosseguir com Cadastro
-        </a>
-      </div>
-    </div>
-  </div>
+  <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-search me-2"></i>Verificar Conta Existente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><label for="check-conta-input" class="form-label">Busque por Nome Fantasia:</label><input type="text" class="form-control" id="check-conta-input" placeholder="Digite pelo menos 3 caracteres..."></div><div id="check-results-container"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><a href="{{ url_for('contas.nova_conta_form') }}" id="proceed-to-register-btn" class="btn btn-azevix" style="display: none;">Prosseguir com Cadastro</a></div></div></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // --- CORREÇÃO: Passando um booleano (true/false) para o JavaScript ---
+    // --- CORREÇÃO: Passando um booleano (true/false) de forma segura para o JavaScript ---
     const IS_ADMIN = {{ current_user.has_role('admin')|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/lista_contas.js') }}"></script>

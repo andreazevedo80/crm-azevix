@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const populateSelect = (selectElement, options, selectedValue) => {
         selectElement.innerHTML = '';
         if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
-        if (selectElement.id === 'edit-owner') selectElement.innerHTML = ''; // Limpa antes de popular
+        if (selectElement.id === 'edit-matriz') selectElement.add(new Option('Nenhuma', ''));
         
         options.forEach(opt => {
             const text = opt.name || opt.nome_fantasia || opt;
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function() {
             leads.forEach(l => { listaLeads.innerHTML += `<tr><td>${l.titulo}</td><td><span class="badge bg-info">${l.status_lead}</span></td><td>${l.valor_estimado}</td><td>${l.contato_principal_nome}</td><td><a href="#" class="btn btn-sm btn-outline-secondary disabled">Ver</a></td></tr>`; });
         } else { listaLeads.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma oportunidade encontrada.</td></tr>'; }
     };
-
+    
     const renderHierarchy = (conta) => {
         let hierarchyHtml = '';
         if (conta.matriz_id && conta.matriz_nome) {
@@ -76,7 +76,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (IS_ADMIN) {
             const adminResponse = await fetch('/api/admin/form_data');
             const adminData = await adminResponse.json();
-            if (adminData.success) { populateSelect(document.getElementById('edit-owner'), adminData.vendedores); }
+            if (adminData.success) {
+                populateSelect(document.getElementById('edit-owner'), adminData.vendedores);
+            }
         }
         
         if (typeof CONTA_ID === 'undefined') return;
