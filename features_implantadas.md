@@ -58,3 +58,17 @@ Objetivo: Implementar um sistema de permissões robusto com diferentes papéis (
 
 # O que será modificado:
 - backend/models.py: Criar a nova tabela Role e refatorar o modelo User para incluir a relação com Role, o campo gerente_id e o campo is_active.
+
+## versão 2.07 [Finalização da Gestão de Contas]
+# Objetivo
+- Concluir o ciclo de vida completo da entidade Conta, permitindo a desativação de contatos e a gestão segura da hierarquia.
+
+# Requisitos da feature:
+- Um admin/gerente/vendedor poderá "excluir" (desativar)  e "editar" um contato da página de detalhes da conta.
+- Um admin/gerente poderá "excluir" (desativar) um contato da página de detalhes da conta.
+- A busca por "Conta Matriz" (tanto no cadastro quanto na edição) deve impedir que uma conta seja definida como sua própria matriz.
+
+# O que será modificado:
+- backend/models.py: Adicionar a regra ondelete='SET NULL' no relacionamento matriz_id.
+- backend/contas.py: Adicionar a rota DELETE /api/contatos/<int:id> e a lógica para desativação de contas e tratamento de filiais.
+- backend/static/js/detalhe_conta.js: Adicionar a lógica para o botão de exclusão de contato e o filtro na busca por matriz.
