@@ -72,3 +72,33 @@ Objetivo: Implementar um sistema de permissões robusto com diferentes papéis (
 - backend/models.py: Adicionar a regra ondelete='SET NULL' no relacionamento matriz_id.
 - backend/contas.py: Adicionar a rota DELETE /api/contatos/<int:id> e a lógica para desativação de contas e tratamento de filiais.
 - backend/static/js/detalhe_conta.js: Adicionar a lógica para o botão de exclusão de contato e o filtro na busca por matriz.
+
+# versão 3.0: Estrutura de Permissões e Hierarquia
+# Objetivo:
+- Modificar o banco de dados para suportar o novo sistema de permissões e gestão de equipes. Esta é a fundação de tudo.
+
+# Requisitos:
+- Criar a nova tabela Role para armazenar os papéis ('admin', 'gerente', 'vendedor').
+- Refatorar o modelo User para:
+- Substituir o campo de texto role por um relacionamento com a tabela Role.
+- Adicionar o campo gerente_id para definir a hierarquia de equipes.
+- Implementar o "seeding" automático para que os papéis essenciais sejam criados na inicialização do sistema.
+
+# O que será modificado:
+- backend/models.py: Criar a tabela Role e refatorar User.
+- backend/__init__.py: Adicionar a lógica de "seeding".
+
+## versão 3.1: Fluxo de Cadastro Seguro e Perfil do Usuário
+- Objetivo:
+Implementar o ciclo de vida inicial do usuário: o "onboarding" seguro através de convites e a autogestão de senha.
+
+#Requisitos:
+- Implementar a lógica de "primeiro usuário é admin" e desativar o registro público após isso.
+- Criar o fluxo de convite por e-mail com link seguro e de uso único (token + tempo de expiração).
+- Criar a página /perfil onde qualquer usuário logado pode alterar sua própria senha. (Este é o ponto que você sentiu falta, e ele se encaixa perfeitamente aqui).
+
+# O que será modificado:
+- backend/auth.py: Implementar toda a nova lógica de convite e ativação de conta.
+- backend/user.py (Novo): Criar o Blueprint para a página de perfil.
+- backend/templates/: Criar as novas telas set_password.html e perfil.html.
+- backend/email.py (Novo): Módulo para o envio de e-mails.
