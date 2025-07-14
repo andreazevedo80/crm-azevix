@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const data = await response.json();
         if (data.success) {
             originalContaData = data.conta;
+            contatosData = data.contatos;
             renderInfoForm(originalContaData);
             renderContatos(data.contatos);
             renderLeads(data.leads);

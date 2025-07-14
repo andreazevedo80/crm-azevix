@@ -118,12 +118,7 @@ def adicionar_contato(conta_id):
 @login_required
 def update_contato(contato_id):
     contato = Contato.query.get_or_404(contato_id)
-    # Verifica se o usuário tem permissão para editar a conta pai deste contato
-    conta = Conta.query.filter_by(id=contato.conta_id)
-    if not current_user.has_role('admin'):
-        conta = conta.filter_by(user_id=current_user.id)
-    conta.first_or_404("Você não tem permissão para editar este contato.")
-
+    conta = Conta.query.filter_by(id=contato.conta_id, user_id=current_user.id).first_or_404()
     data = request.get_json()
     contato.nome = data.get('nome', contato.nome)
     contato.email = data.get('email', contato.email)
@@ -136,12 +131,7 @@ def update_contato(contato_id):
 @contas.route('/api/contatos/<int:contato_id>', methods=['DELETE'])
 @login_required
 def delete_contato(contato_id):
-    contato = Contato.query.get_or_404(contato_id)
-    conta = Conta.query.filter_by(id=contato.conta_id)
-    if not current_user.has_role('admin'):
-        conta = conta.filter_by(user_id=current_user.id)
-    conta.first_or_404("Você não tem permissão para excluir este contato.")
-
+    conta = Conta.query.filter_by(id=contato.conta_id, user_id=current_user.id).first_or_404()
     contato.is_active = False
     db.session.commit()
     return jsonify({'success': True, 'message': 'Contato desativado.'})
