@@ -17,7 +17,7 @@
             <div class="col-md-5"><label for="search-filter" class="form-label">Buscar por Nome</label><input type="text" class="form-control" id="search-filter" placeholder="Buscar por nome fantasia ou razão social..."></div>
             <div class="col-md-4"><label for="segment-filter" class="form-label">Segmento</label><select id="segment-filter" class="form-select"><option value="">Todos os Segmentos</option></select></div>
             
-            {% if current_user.has_role('admin') %}
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             <div class="col-md-3">
                 <label for="owner-filter" class="form-label">Vendedor</label>
                 <select id="owner-filter" class="form-select">
