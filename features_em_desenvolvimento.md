@@ -1,20 +1,5 @@
 ### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 5.0)
 
-## versão 3.2: Lógica de Negócio, Permissões e Ciclo de Vida
-#Objetivo:
-- Fazer a aplicação "entender" as novas regras de permissão e implementar o ciclo de vida completo para Contas e Usuários.
-
-# Requisitos:
-- Visão por Papel: A API de listagem de Contas deve respeitar a hierarquia: Admin vê tudo, Gerente vê sua equipe, Vendedor vê apenas o seu.
-- Ciclo de Vida de Usuários: No futuro painel de admin, será possível desativar um usuário (soft delete, is_active = False).
-- Ciclo de Vida de Contas:
-- Implementar a função de desativar uma Conta.
-- Implementar a lógica de tratar filiais órfãs: ao desativar uma conta matriz, suas filiais terão o matriz_id definido como NULL.
-
-# O que será modificado:
-- backend/contas.py: Ajustar a query da rota get_contas para respeitar a hierarquia gerente_id. Implementar a rota para desativar contas.
-- backend/models.py: Adicionar a regra ondelete='SET NULL' ao campo matriz_id como uma camada extra de proteção no banco de dados.
-
 ## versão 4.01 [Log de Auditoria e Paginação]
 # Objetivo
 - Rastrear alterações importantes e garantir a performance do sistema.

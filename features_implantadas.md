@@ -102,3 +102,19 @@ Implementar o ciclo de vida inicial do usuário: o "onboarding" seguro através 
 - backend/user.py (Novo): Criar o Blueprint para a página de perfil.
 - backend/templates/: Criar as novas telas set_password.html e perfil.html.
 - backend/email.py (Novo): Módulo para o envio de e-mails.
+
+
+## versão 3.2: Lógica de Negócio, Permissões e Ciclo de Vida
+#Objetivo:
+- Fazer a aplicação "entender" as novas regras de permissão e implementar o ciclo de vida completo para Contas e Usuários.
+
+# Requisitos:
+- Visão por Papel: A API de listagem de Contas deve respeitar a hierarquia: Admin vê tudo, Gerente vê sua equipe, Vendedor vê apenas o seu.
+- Ciclo de Vida de Usuários: No futuro painel de admin, será possível desativar um usuário (soft delete, is_active = False).
+- Ciclo de Vida de Contas:
+- Implementar a função de desativar uma Conta.
+- Implementar a lógica de tratar filiais órfãs: ao desativar uma conta matriz, suas filiais terão o matriz_id definido como NULL.
+
+# O que será modificado:
+- backend/contas.py: Ajustar a query da rota get_contas para respeitar a hierarquia gerente_id. Implementar a rota para desativar contas.
+- backend/models.py: Adicionar a regra ondelete='SET NULL' ao campo matriz_id como uma camada extra de proteção no banco de dados.
