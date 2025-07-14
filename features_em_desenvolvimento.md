@@ -1,27 +1,51 @@
-### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão Final)
+### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 5.0)
 
-## versão 2.08 [Segurança, Permissões e Hierarquia de Usuários]
-# Objetivo
-- Implementar um sistema de permissões robusto com diferentes papéis (Roles), uma estrutura de gestão de equipes e um fluxo de cadastro seguro.
+# versão 3.0: Estrutura de Permissões e Hierarquia
+# Objetivo:
+- Modificar o banco de dados para suportar o novo sistema de permissões e gestão de equipes. Esta é a fundação de tudo.
 
-# Requisitos da feature:
-- O sistema deve ter uma tabela Role no banco para armazenar os papéis ('admin', 'gerente', 'vendedor'). (JÁ TEM)
-- O modelo User será refatorado para usar um relacionamento com a tabela Role e terá um campo gerente_id para a hierarquia de equipes.
-- A tela de registro público será desativada após o primeiro usuário (o admin) ser criado.
-- Admins e Gerentes poderão convidar novos usuários através de um link seguro enviado por e-mail.
-- No envio de convite, terá expiração automática e talvez um uso único (token + tempo).
-- A API de listagem de Contas respeitará a role: admin vê tudo, gerente vê sua equipe, vendedor vê apenas o seu.
-- Todos os usuários terão uma página /perfil para alterar a própria senha.
-- A lógica de negócio para tratar filiais órfãs (quando uma matriz for desativada) será implementada.
+# Requisitos:
+- Criar a nova tabela Role para armazenar os papéis ('admin', 'gerente', 'vendedor').
+- Refatorar o modelo User para:
+- Substituir o campo de texto role por um relacionamento com a tabela Role.
+- Adicionar o campo gerente_id para definir a hierarquia de equipes.
+- Implementar o "seeding" automático para que os papéis essenciais sejam criados na inicialização do sistema.
 
 # O que será modificado:
-- backend/models.py: Criar a tabela Role e refatorar o modelo User.
-- backend/auth.py: Implementar a lógica de "primeiro admin" e o novo fluxo de convite.
-- backend/user.py (Novo): Criar o Blueprint e a tela para o perfil do usuário.
-- backend/email.py (Novo): Criar o módulo para envio de e-mails.
-- backend/contas.py e backend/templates/: Ajustar todas as verificações de permissão para usar o novo sistema has_role('admin').
+- backend/models.py: Criar a tabela Role e refatorar User.
+- backend/__init__.py: Adicionar a lógica de "seeding".
 
-## versão 2.09 [Log de Auditoria e Paginação]
+## versão 3.1: Fluxo de Cadastro Seguro e Perfil do Usuário
+- Objetivo:
+Implementar o ciclo de vida inicial do usuário: o "onboarding" seguro através de convites e a autogestão de senha.
+
+#Requisitos:
+- Implementar a lógica de "primeiro usuário é admin" e desativar o registro público após isso.
+- Criar o fluxo de convite por e-mail com link seguro e de uso único (token + tempo de expiração).
+- Criar a página /perfil onde qualquer usuário logado pode alterar sua própria senha. (Este é o ponto que você sentiu falta, e ele se encaixa perfeitamente aqui).
+
+# O que será modificado:
+- backend/auth.py: Implementar toda a nova lógica de convite e ativação de conta.
+- backend/user.py (Novo): Criar o Blueprint para a página de perfil.
+- backend/templates/: Criar as novas telas set_password.html e perfil.html.
+- backend/email.py (Novo): Módulo para o envio de e-mails.
+
+## versão 3.2: Lógica de Negócio, Permissões e Ciclo de Vida
+#Objetivo:
+- Fazer a aplicação "entender" as novas regras de permissão e implementar o ciclo de vida completo para Contas e Usuários.
+
+# Requisitos:
+- Visão por Papel: A API de listagem de Contas deve respeitar a hierarquia: Admin vê tudo, Gerente vê sua equipe, Vendedor vê apenas o seu.
+- Ciclo de Vida de Usuários: No futuro painel de admin, será possível desativar um usuário (soft delete, is_active = False).
+- Ciclo de Vida de Contas:
+- Implementar a função de desativar uma Conta.
+- Implementar a lógica de tratar filiais órfãs: ao desativar uma conta matriz, suas filiais terão o matriz_id definido como NULL.
+
+# O que será modificado:
+- backend/contas.py: Ajustar a query da rota get_contas para respeitar a hierarquia gerente_id. Implementar a rota para desativar contas.
+- backend/models.py: Adicionar a regra ondelete='SET NULL' ao campo matriz_id como uma camada extra de proteção no banco de dados.
+
+## versão 4.01 [Log de Auditoria e Paginação]
 # Objetivo
 - Rastrear alterações importantes e garantir a performance do sistema.
 
@@ -34,7 +58,7 @@
 - backend/contas.py, backend/propostas.py: Adicionar a lógica para registrar o histórico nas rotas de atualização.
 - backend/static/js/ e backend/*_api.py: Implementar a lógica de paginação no frontend e backend.
 
-## versão 3.01 [Módulo de Administração Centralizado]
+## versão 5.01 [Módulo de Administração Centralizado]
 # Objetivo
 - Dar ao administrador controle total sobre as regras de negócio e configurações do sistema.
 
@@ -47,7 +71,7 @@
 - backend/models.py: Criar as tabelas de configuração (ConfigStatusLead, ConfigSegmento, etc.).
 - backend/admin.py (Novo): Criar o Blueprint e as interfaces do painel de administração.
 
-## versão 4.01 [Propostas: Estrutura, Custos e Lucratividade]
+## versão 6.01 [Propostas: Estrutura, Custos e Lucratividade]
 # Objetivo
 - Implementar o módulo de propostas, o coração financeiro do CRM.
 
@@ -62,7 +86,7 @@
 - backend/propostas.py (Novo): Blueprint com toda a lógica de negócio para propostas.
 - backend/templates/: Novas interfaces para criar e visualizar propostas.
 
-# versão 4.02 [Automação de Documentos e Comunicação]
+# versão 7.01 [Automação de Documentos e Comunicação]
 # Objetivo
 - Automatizar a criação e o envio de propostas.
 
@@ -75,7 +99,7 @@
 - backend/propostas.py: Adicionar a rota para geração de PDF e a lógica de envio de e-mail.
 - backend/email.py (Novo): Módulo utilitário para envio de e-mails, lendo as configurações do banco de dados.
 
-# versão 5.01 [Módulo de Relatórios e Dashboard Inteligente]
+# versão 8.01 [Módulo de Relatórios e Dashboard Inteligente]
 # Objetivo
 - Fornecer inteligência de negócio, consolidando os dados em relatórios e em um dashboard dinâmico.
 

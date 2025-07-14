@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Meu Perfil{% endblock %}
+{% block content %}
+<h1 class="text-azevix mb-4">Meu Perfil</h1>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card card-azevix">
+            <div class="card-header"><h5 class="card-title mb-0">Alterar Senha</h5></div>
+            <div class="card-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3"><label for="current_password" class="form-label">Senha Atual</label><input type="password" id="current_password" class="form-control" required></div>
+                    <div class="mb-3"><label for="new_password" class="form-label">Nova Senha</label><input type="password" id="new_password" class="form-control" required></div>
+                    <button type="submit" class="btn btn-azevix">Salvar Nova Senha</button>
+                </form>
+                <div id="password-alert-container" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const alertContainer = document.getElementById('password-alert-container');
+    const data = {
+        current_password: this.querySelector('#current_password').value,
+        new_password: this.querySelector('#new_password').value,
+    };
+    fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+        const alertType = result.success ? 'success' : 'danger';
+        alertContainer.innerHTML = `<div class="alert alert-${alertType}">${result.message}</div>`;
+        if(result.success) {
+            this.reset();
+        }
+    });
+});
+</script>
+{% endblock %}

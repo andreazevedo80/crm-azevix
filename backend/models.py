@@ -23,8 +23,8 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     name = db.Column(db.String(150), nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=True)
+    is_active = db.Column(db.Boolean, default=False, nullable=False)
 
     # --- REMOVIDO: O campo de texto 'role' foi removido ---
     # role = db.Column(db.String(50), default='vendedor', nullable=False)
@@ -35,12 +35,21 @@ class User(UserMixin, db.Model):
                             backref=db.backref('users', lazy=True))
     liderados = db.relationship('User', backref=db.backref('gerente', remote_side=[id]), lazy='dynamic')
     
+    # --- ADIÇÃO: Novos campos para o fluxo de convite ---
+    invitation_token = db.Column(db.String(255), unique=True, nullable=True)
+    invitation_expiration = db.Column(db.DateTime, nullable=True)
+    
+    
     # Relações existentes preservadas
     contas = db.relationship('Conta', backref='owner', lazy=True, foreign_keys='Conta.user_id')
     leads = db.relationship('Lead', backref='owner', lazy=True)
     
     def set_password(self, password): self.password_hash = generate_password_hash(password)
-    def check_password(self, password): return check_password_hash(self.password_hash, password)
+    def check_password(self, password):
+        # Garante que o password_hash não é nulo antes de verificar
+        if self.password_hash is None:
+            return False
+        return check_password_hash(self.password_hash, password)
 
     # --- ADIÇÃO: Função auxiliar para verificar o papel do usuário ---
     def has_role(self, role_name):

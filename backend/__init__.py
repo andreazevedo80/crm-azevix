@@ -69,6 +69,10 @@ def create_app():
     from .contas import contas as contas_blueprint
     app.register_blueprint(contas_blueprint, url_prefix='/')
 
+    # --- ADIÇÃO: Novo Blueprint de Perfil ---
+    from .user import user as user_blueprint
+    app.register_blueprint(user_blueprint, url_prefix='/')
+
     # --- ALTERAÇÃO: Chama a função de setup do banco de dados ---
     setup_database(app)
 
