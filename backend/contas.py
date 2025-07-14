@@ -93,7 +93,11 @@ def get_conta_details(conta_id):
     query = Conta.query.filter_by(id=conta_id)
     if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404()
-    return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in conta.contatos.all()], 'leads': [l.to_dict() for l in conta.leads.all()]})
+    
+    # --- ALTERAÇÃO V2.07: Busca apenas contatos ativos ---
+    contatos_ativos = conta.contatos.filter_by(is_active=True).all()
+    
+    return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in contatos_ativos], 'leads': [l.to_dict() for l in conta.leads.all()]})
 
 @contas.route('/api/contas/<int:conta_id>/contatos', methods=['POST'])
 @login_required
@@ -108,6 +112,39 @@ def adicionar_contato(conta_id):
     db.session.add(novo_contato)
     db.session.commit()
     return jsonify({'success': True, 'contato': novo_contato.to_dict()})
+
+# --- ADIÇÃO V2.07: Rota para editar um contato específico ---
+@contas.route('/api/contatos/<int:contato_id>', methods=['PUT'])
+@login_required
+def update_contato(contato_id):
+    contato = Contato.query.get_or_404(contato_id)
+    # Verifica se o usuário tem permissão para editar a conta pai deste contato
+    conta = Conta.query.filter_by(id=contato.conta_id)
+    if not current_user.has_role('admin'):
+        conta = conta.filter_by(user_id=current_user.id)
+    conta.first_or_404("Você não tem permissão para editar este contato.")
+
+    data = request.get_json()
+    contato.nome = data.get('nome', contato.nome)
+    contato.email = data.get('email', contato.email)
+    contato.telefone = data.get('telefone', contato.telefone)
+    contato.cargo = data.get('cargo', contato.cargo)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Contato atualizado.'})
+
+# --- ADIÇÃO V2.07: Rota para desativar (soft delete) um contato ---
+@contas.route('/api/contatos/<int:contato_id>', methods=['DELETE'])
+@login_required
+def delete_contato(contato_id):
+    contato = Contato.query.get_or_404(contato_id)
+    conta = Conta.query.filter_by(id=contato.conta_id)
+    if not current_user.has_role('admin'):
+        conta = conta.filter_by(user_id=current_user.id)
+    conta.first_or_404("Você não tem permissão para excluir este contato.")
+
+    contato.is_active = False
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Contato desativado.'})
 
 @contas.route('/api/contas/config', methods=['GET'])
 @login_required

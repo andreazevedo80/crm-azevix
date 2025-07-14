@@ -12,6 +12,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const matrizSearchInput = document.getElementById('edit-matriz-search');
     const matrizIdInput = document.getElementById('edit-matriz-id');
     const matrizResults = document.getElementById('edit-matriz-results');
+    const editContatoModalEl = document.getElementById('editContatoModal');
+    const editContatoModal = new bootstrap.Modal(editContatoModalEl);
+    const formEditContato = document.getElementById('form-edit-contato');
     
     // Estado da aplicação
     let originalContaData = {};
@@ -45,8 +48,23 @@ document.addEventListener("DOMContentLoaded", function() {
     const renderContatos = (contatos) => {
         listaContatos.innerHTML = '';
         if (contatos && contatos.length > 0) {
-            contatos.forEach(c => { listaContatos.innerHTML += `<li class="list-group-item"><strong>${c.nome}</strong> (${c.cargo || 'N/A'})<br><small class="text-muted">${c.email || ''} | ${c.telefone || ''}</small></li>`; });
-        } else { listaContatos.innerHTML = '<li class="list-group-item text-center">Nenhum contato cadastrado.</li>'; }
+            contatos.forEach(c => {
+                // --- ALTERAÇÃO: Adicionados botões de ação para cada contato ---
+                listaContatos.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${c.nome}</strong> (${c.cargo || 'N/A'})<br>
+                            <small class="text-muted">${c.email || ''} | ${c.telefone || ''}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditContatoModal(${c.id})"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteContato(${c.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>`;
+            });
+        } else {
+            listaContatos.innerHTML = '<li class="list-group-item text-center">Nenhum contato cadastrado.</li>';
+        }
     };
 
     const renderLeads = (leads) => {
@@ -94,11 +112,39 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
+    // --- ADIÇÃO V2.07: Funções globais para gerenciar contatos ---
+    window.openEditContatoModal = (contatoId) => {
+        const contato = contatosData.find(c => c.id === contatoId);
+        if(contato) {
+            document.getElementById('edit-contato-id').value = contato.id;
+            document.getElementById('edit-contato-nome').value = contato.nome;
+            document.getElementById('edit-contato-email').value = contato.email || '';
+            document.getElementById('edit-contato-telefone').value = contato.telefone || '';
+            document.getElementById('edit-contato-cargo').value = contato.cargo || '';
+            editContatoModal.show();
+        }
+    };
+
+    window.handleDeleteContato = (contatoId) => {
+        if (confirm('Tem certeza que deseja desativar este contato?')) {
+            fetch(`/api/contatos/${contatoId}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    populateDropdownsAndFetchDetails(); // Recarrega tudo
+                } else {
+                    alert(`Erro ao desativar contato: ${result.error}`);
+                }
+            });
+        }
+    };
+
     const toggleEditMode = (isEditing) => {
         formEditConta.querySelectorAll('input, select').forEach(field => {
             if (field.id === 'edit-owner' && !IS_ADMIN) return;
             field.disabled = !isEditing;
         });
+
         editButtons.style.display = isEditing ? 'block' : 'none';
         btnEditConta.style.display = isEditing ? 'none' : 'block';
         hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
@@ -165,6 +211,29 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 });
         }, 500);
+    });
+
+    // --- ADIÇÃO V2.07: Listener para o formulário de edição de contato ---
+    formEditContato.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const contatoId = document.getElementById('edit-contato-id').value;
+        const updatedData = {
+            nome: document.getElementById('edit-contato-nome').value,
+            email: document.getElementById('edit-contato-email').value,
+            telefone: document.getElementById('edit-contato-telefone').value,
+            cargo: document.getElementById('edit-contato-cargo').value,
+        };
+        const response = await fetch(`/api/contatos/${contatoId}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+        const result = await response.json();
+        if (result.success) {
+            editContatoModal.hide();
+            await populateDropdownsAndFetchDetails();
+        } else {
+            alert(`Falha ao atualizar contato: ${result.error || 'Erro desconhecido'}`);
+        }
     });
 
     formNovoContato.addEventListener('submit', async function(e) {

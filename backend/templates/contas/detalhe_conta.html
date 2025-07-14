@@ -81,6 +81,31 @@
         </div>
     </div>
 </div>
+
+<!-- ADIÇÃO V2.07: Modal para edição de contatos -->
+<div class="modal fade" id="editContatoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-edit-contato">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Contato</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-contato-id">
+                    <div class="mb-3"><label for="edit-contato-nome" class="form-label">Nome *</label><input type="text" id="edit-contato-nome" class="form-control" required></div>
+                    <div class="mb-3"><label for="edit-contato-email" class="form-label">Email</label><input type="email" id="edit-contato-email" class="form-control"></div>
+                    <div class="mb-3"><label for="edit-contato-telefone" class="form-label">Telefone</label><input type="text" id="edit-contato-telefone" class="form-control"></div>
+                    <div class="mb-3"><label for="edit-contato-cargo" class="form-label">Cargo</label><input type="text" id="edit-contato-cargo" class="form-control"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-azevix">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

@@ -1,31 +1,33 @@
 ### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão Final)
 
-## versão 2.06 [Finalização da Gestão de Contas]
+## versão 2.07 [Finalização da Gestão de Contas]
 # Objetivo
 - Concluir o ciclo de vida completo da entidade Conta, permitindo a desativação de contatos e a gestão segura da hierarquia.
 
 # Requisitos da feature:
-- Um vendedor/admin poderá "excluir" (desativar) um contato da página de detalhes da conta.
+- Um admin/gerente/vendedor poderá "excluir" (desativar)  e "editar" um contato da página de detalhes da conta.
+- Um admin/gerente poderá "excluir" (desativar) um contato da página de detalhes da conta.
 - A busca por "Conta Matriz" (tanto no cadastro quanto na edição) deve impedir que uma conta seja definida como sua própria matriz.
-- A lógica de negócio para tratar filiais órfãs (quando uma matriz for desativada) será implementada.
+
 
 # O que será modificado:
 - backend/models.py: Adicionar a regra ondelete='SET NULL' no relacionamento matriz_id.
 - backend/contas.py: Adicionar a rota DELETE /api/contatos/<int:id> e a lógica para desativação de contas e tratamento de filiais.
 - backend/static/js/detalhe_conta.js: Adicionar a lógica para o botão de exclusão de contato e o filtro na busca por matriz.
 
-## versão 2.07 [Segurança, Permissões e Hierarquia de Usuários]
+## versão 2.08 [Segurança, Permissões e Hierarquia de Usuários]
 # Objetivo
 - Implementar um sistema de permissões robusto com diferentes papéis (Roles), uma estrutura de gestão de equipes e um fluxo de cadastro seguro.
 
 # Requisitos da feature:
-- O sistema deve ter uma tabela Role no banco para armazenar os papéis ('admin', 'gerente', 'vendedor').
+- O sistema deve ter uma tabela Role no banco para armazenar os papéis ('admin', 'gerente', 'vendedor'). (JÁ TEM)
 - O modelo User será refatorado para usar um relacionamento com a tabela Role e terá um campo gerente_id para a hierarquia de equipes.
 - A tela de registro público será desativada após o primeiro usuário (o admin) ser criado.
 - Admins e Gerentes poderão convidar novos usuários através de um link seguro enviado por e-mail.
-- No envio de convite, inclua uma expiração automática e talvez um uso único (token + tempo).
+- No envio de convite, terá expiração automática e talvez um uso único (token + tempo).
 - A API de listagem de Contas respeitará a role: admin vê tudo, gerente vê sua equipe, vendedor vê apenas o seu.
 - Todos os usuários terão uma página /perfil para alterar a própria senha.
+- A lógica de negócio para tratar filiais órfãs (quando uma matriz for desativada) será implementada.
 
 # O que será modificado:
 - backend/models.py: Criar a tabela Role e refatorar o modelo User.
@@ -34,7 +36,7 @@
 - backend/email.py (Novo): Criar o módulo para envio de e-mails.
 - backend/contas.py e backend/templates/: Ajustar todas as verificações de permissão para usar o novo sistema has_role('admin').
 
-## versão 2.08 [Log de Auditoria e Paginação]
+## versão 2.09 [Log de Auditoria e Paginação]
 # Objetivo
 - Rastrear alterações importantes e garantir a performance do sistema.
 
