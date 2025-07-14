@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from sqlalchemy import Index
 from .utils import encrypt_data, decrypt_data, format_cnpj, get_cnpj_hash
+from uuid import uuid4
 
 # --- ADIÇÃO: Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
 user_roles = db.Table('user_roles',
@@ -59,6 +60,10 @@ class User(UserMixin, db.Model):
                 return True
         return False
 
+    def generate_invitation_token(self):
+        self.invitation_token = str(uuid4())
+        self.invitation_expiration = datetime.utcnow() + timedelta(hours=24)
+
 class Conta(db.Model):
     __tablename__ = 'contas'
     id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +79,7 @@ class Conta(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     contatos = db.relationship('Contato', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
     leads = db.relationship('Lead', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
-    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='true')
+    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy=True)
 
     @property
     def cnpj(self):
