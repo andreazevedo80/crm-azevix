@@ -1,5 +1,5 @@
 #Acessar o container
-docker exec -it fed62af833d1 /bin/bash
+docker exec -it 68de00358cc6 /bin/bash
 
 #Acessar o banco
 psql -U azevix_admin -d crm_azevix
@@ -22,3 +22,48 @@ SELECT * FROM roles;
 
 #Lista plubic.[nome da tabela]
 \s users
+
+#Adicionar usuários
+-- Criando os Gerentes
+INSERT INTO users (id, name, email, password_hash, is_active, gerente_id) VALUES
+(3, 'Gerente Um', 'gerente1@azevix.com.br', 'senha_provisoria_hash', true, NULL),
+(4, 'Gerente Dois', 'gerente2@azevix.com.br', 'senha_provisoria_hash', true, NULL);
+
+-- Criando os Vendedores e associando ao Gerente Um (ID 3)
+INSERT INTO users (id, name, email, password_hash, is_active, gerente_id) VALUES
+(5, 'Vendedor Um', 'vendedor1@azevix.com.br', 'senha_provisoria_hash', true, 3),
+(6, 'Vendedor Dois', 'vendedor2@azevix.com.br', 'senha_provisoria_hash', true, 3),
+(7, 'Vendedor Tres', 'vendedor3@azevix.com.br', 'senha_provisoria_hash', true, 4),
+(8, 'Vendedor Quatro', 'vendedor4@azevix.com.br', 'senha_provisoria_hash', true, 4);
+
+-- Associando os papéis (Roles) aos novos usuários
+-- Lembre-se: Role 'gerente' é ID 2, Role 'vendedor' é ID 3
+INSERT INTO user_roles (user_id, role_id) VALUES
+(3, 2), -- Gerente Um
+(4, 2), -- Gerente Dois
+(5, 3), -- Vendedor Um
+(6, 3), -- Vendedor Dois
+(7, 3), -- Vendedor Tres
+(8, 3); -- Vendedor Quatro
+
+-- Atualiza a sequência de IDs para evitar conflitos futuros
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+
+#Verificar os usuários cadastrados
+SELECT id, name, gerente_id FROM users;
+
+SELECT u.name, r.name as role FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id;
+
+# Alterar gerente
+-- Altera o gerente do Vendedor Dois (ID 6) para ser o Gerente Dois (ID 4)
+UPDATE users SET gerente_id = 4 WHERE id = 6;
+
+-- Altera o gerente do Vendedor Quatro (ID 8) para ser o Gerente Dois (ID 4)
+UPDATE users SET gerente_id = 4 WHERE id = 8;
+
+
+--- Gerar hash
+python gerar_hash
+após no banco
+
+UPDATE users SET password_hash = 'scrypt:32768:8:1$PSiIEa1a461vKLMm$b7cbe0b408e710117b1eb475d7d840f3bf620ee6f256832f5be72999065cb6dc6cc8ed2e82a02a6e6e258d055d42d27702a48831de6749595a6196a2bddc6826' WHERE id IN (3, 4, 5, 6, 7, 8);

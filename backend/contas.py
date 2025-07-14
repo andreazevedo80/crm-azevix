@@ -24,7 +24,10 @@ def nova_conta_form():
 def detalhe_conta(conta_id):
     query = Conta.query.filter_by(id=conta_id)
     if not current_user.has_role('admin'):
-        query = query.filter_by(user_id=current_user.id)
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        liderados_ids.append(current_user.id)
+        if not (current_user.has_role('gerente') and conta.user_id in liderados_ids):
+             query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404()
     return render_template('contas/detalhe_conta.html', conta=conta)
 
@@ -63,7 +66,12 @@ def get_contas():
 @login_required
 def update_conta(conta_id):
     query = Conta.query.filter_by(id=conta_id)
-    if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
+    if not current_user.has_role('admin'):
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        liderados_ids.append(current_user.id)
+        conta_para_verificar = query.first()
+        if not (current_user.has_role('gerente') and conta_para_verificar and conta_para_verificar.user_id in liderados_ids):
+             query = query.filter_by(user_id=current_user.id)
     conta = query.first_or_404("Conta não encontrada ou você não tem permissão para editá-la.")
     data = request.get_json()
 

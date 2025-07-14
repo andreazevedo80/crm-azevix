@@ -1,7 +1,7 @@
 from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import Index
 from .utils import encrypt_data, decrypt_data, format_cnpj, get_cnpj_hash
 
@@ -74,7 +74,7 @@ class Conta(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     contatos = db.relationship('Contato', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
     leads = db.relationship('Lead', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
-    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='dynamic')
+    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='true')
 
     @property
     def cnpj(self):
