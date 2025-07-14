@@ -19,8 +19,8 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         } catch (error) { console.error("Erro ao carregar segmentos:", error); }
 
-        // Popula o filtro de vendedores apenas se o elemento existir (ou seja, se o usuário for admin)
-        if (IS_ADMIN && ownerFilter) {
+        // Popula o filtro de vendedores apenas se o elemento existir (ou seja, se o usuário for admin e gerente)
+        if (CAN_FILTER_BY_OWNER && ownerFilter) {
             try {
                 const response = await fetch('/api/admin/form_data');
                 const data = await response.json();
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function() {
             segmento: segmentFilter.value
         });
 
-        if (IS_ADMIN && ownerFilter && ownerFilter.value) {
+        if (CAN_FILTER_BY_OWNER && ownerFilter && ownerFilter.value) {
             params.append('owner_id', ownerFilter.value);
         }
 

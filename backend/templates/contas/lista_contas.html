@@ -41,7 +41,7 @@
 {% block scripts %}
 <script>
     // --- CORREÇÃO: Passando um booleano (true/false) de forma segura para o JavaScript ---
-    const IS_ADMIN = {{ current_user.has_role('admin')|tojson }};
+    const CAN_FILTER_BY_OWNER = {{ (current_user.has_role('admin') or current_user.has_role('gerente'))|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/lista_contas.js') }}"></script>
 {% endblock %}

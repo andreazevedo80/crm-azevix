@@ -119,10 +119,21 @@ def desativar_conta(conta_id):
 @contas.route('/api/admin/form_data', methods=['GET'])
 @login_required
 def get_admin_form_data():
-    if not current_user.has_role('admin'): return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
-    vendedores = User.query.filter_by(is_active=True).all()
+    # --- ALTERAÇÃO: Lógica para Gerente e Admin ---
+    if not (current_user.has_role('admin') or current_user.has_role('gerente')):
+        return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
+    # Se for admin, busca todos os vendedores. Se for gerente, busca apenas seus liderados.
+    if current_user.has_role('admin'):
+        vendedores = User.query.filter_by(is_active=True).all()
+    else: # Se chegou aqui, é um gerente
+        vendedores = current_user.liderados.all()
+    # A busca por contas para a Matriz continua global
     contas = Conta.query.filter_by(is_active=True).order_by(Conta.nome_fantasia).all()
-    return jsonify({'success': True, 'vendedores': [{'id': v.id, 'name': v.name} for v in vendedores], 'contas': [{'id': c.id, 'nome_fantasia': c.nome_fantasia} for c in contas]})
+    return jsonify({
+        'success': True,
+        'vendedores': [{'id': v.id, 'name': v.name} for v in vendedores],
+        'contas': [{'id': c.id, 'nome_fantasia': c.nome_fantasia} for c in contas]
+    })
 
 @contas.route('/api/contas/<int:conta_id>/details')
 @login_required
