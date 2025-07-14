@@ -8,6 +8,17 @@ contas = Blueprint('contas', __name__)
 SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
 STATUS_LEADS = ['NOVO_LEAD', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO', 'SEM_INTERESSE', 'PROPOSTA_REJEITADA']
 
+# --- Função Auxiliar para Checagem de Permissão ---
+def check_permission(conta):
+    """Verifica se o usuário atual tem permissão para acessar/modificar uma conta."""
+    if current_user.has_role('admin') or conta.user_id == current_user.id:
+        return True
+    if current_user.has_role('gerente'):
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        if conta.user_id in liderados_ids:
+            return True
+    return False
+
 # --- ROTAS DE PÁGINAS ---
 @contas.route('/contas')
 @login_required
@@ -22,21 +33,10 @@ def nova_conta_form():
 @contas.route('/contas/<int:conta_id>')
 @login_required
 def detalhe_conta(conta_id):
-    conta = Conta.query.filter_by(id=conta_id).first_or_404()
-    # --- LÓGICA DE PERMISSÃO CORRIGIDA ---
-    tem_permissao = False
-    if current_user.id == conta.user_id:
-        tem_permissao = True
-    elif current_user.has_role('admin'):
-        tem_permissao = True
-    elif current_user.has_role('gerente'):
-        liderados_ids = [liderado.id for liderado in current_user.liderados]
-        if conta.user_id in liderados_ids:
-            tem_permissao = True
-    if not tem_permissao:
+    conta = Conta.query.get_or_404(conta_id)
+    if not check_permission(conta):
         flash("Você não tem permissão para ver esta conta.", "danger")
         return redirect(url_for('contas.listar_contas'))
-        
     return render_template('contas/detalhe_conta.html', conta=conta)
 
 # --- ROTAS DE API ---
@@ -45,17 +45,13 @@ def detalhe_conta(conta_id):
 @login_required
 def get_contas():
     query = Conta.query.filter_by(is_active=True)
-    # --- ALTERAÇÃO: Implementada a lógica de visualização por papel ---
     if current_user.has_role('gerente'):
-        # Gerente vê as suas contas e as de seus liderados
         liderados_ids = [liderado.id for liderado in current_user.liderados]
-        liderados_ids.append(current_user.id) # Inclui o próprio gerente
+        liderados_ids.append(current_user.id)
         query = query.filter(Conta.user_id.in_(liderados_ids))
     elif not current_user.has_role('admin'):
-        # Vendedor vê apenas as suas
         query = query.filter_by(user_id=current_user.id)
     
-    # Filtro de vendedor (usado apenas por admins)
     if current_user.has_role('admin'):
         owner_id = request.args.get('owner_id')
         if owner_id: query = query.filter_by(user_id=owner_id)
@@ -72,21 +68,11 @@ def get_contas():
 @contas.route('/api/contas/<int:conta_id>', methods=['PUT'])
 @login_required
 def update_conta(conta_id):
-    conta = Conta.query.filter_by(id=conta_id).first_or_404("Conta não encontrada.")
-    # --- LÓGICA DE PERMISSÃO CORRIGIDA ---
-    tem_permissao_edicao = False
-    if current_user.id == conta.user_id:
-        tem_permissao_edicao = True
-    elif current_user.has_role('admin'):
-        tem_permissao_edicao = True
-    elif current_user.has_role('gerente'):
-        liderados_ids = [liderado.id for liderado in current_user.liderados]
-        if conta.user_id in liderados_ids:
-            tem_permissao_edicao = True
-    if not tem_permissao_edicao:
+    conta = Conta.query.get_or_404(conta_id)
+    if not check_permission(conta):
         return jsonify({'success': False, 'error': 'Você não tem permissão para editar esta conta.'}), 403
+    
     data = request.get_json()
-
     if 'cnpj' in data and data.get('cnpj') and data.get('cnpj') != conta.cnpj:
         if not is_valid_cnpj(data['cnpj']): return jsonify({'success': False, 'error': 'O CNPJ fornecido é inválido.'}), 400
         cnpj_hash = get_cnpj_hash(data['cnpj'])
@@ -99,26 +85,23 @@ def update_conta(conta_id):
     conta.segmento = data.get('segmento', conta.segmento)
     conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
     
-    # Todos os usuários podem editar a matriz
+    if 'matriz_id' in data:
+        matriz_id = data.get('matriz_id')
+        conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
+
     if current_user.has_role('admin'):
         if 'owner_id' in data and data.get('owner_id'): conta.user_id = int(data['owner_id'])
-    if 'matriz_id' in data:
-        matriz_id = data['matriz_id']
-        conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
         
     db.session.commit()
     return jsonify({'success': True, 'message': 'Conta atualizada com sucesso!'})
 
-# --- ADIÇÃO: Nova rota para desativar (soft delete) uma conta ---
 @contas.route('/api/contas/<int:conta_id>', methods=['DELETE'])
 @login_required
 def desativar_conta(conta_id):
-    query = Conta.query.filter_by(id=conta_id)
-    if not current_user.has_role('admin'):
-        query = query.filter_by(user_id=current_user.id)
-    conta = query.first_or_404("Conta não encontrada ou você não tem permissão para esta ação.")
+    conta = Conta.query.get_or_404(conta_id)
+    if not check_permission(conta):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para esta ação.'}), 403
 
-    # Lógica para tratar filiais órfãs
     for filial in conta.filiais:
         filial.matriz_id = None
     
@@ -131,40 +114,33 @@ def desativar_conta(conta_id):
 @contas.route('/api/admin/form_data', methods=['GET'])
 @login_required
 def get_admin_form_data():
-    # --- ALTERAÇÃO: Lógica para Gerente e Admin ---
     if not (current_user.has_role('admin') or current_user.has_role('gerente')):
         return jsonify({'success': False, 'error': 'Acesso não autorizado'}), 403
-    # Se for admin, busca todos os vendedores. Se for gerente, busca apenas seus liderados.
+    
     if current_user.has_role('admin'):
         vendedores = User.query.filter_by(is_active=True).all()
-    else: # Se chegou aqui, é um gerente
+    else: # Gerente
         vendedores = current_user.liderados.all()
-    # A busca por contas para a Matriz continua global
-    contas = Conta.query.filter_by(is_active=True).order_by(Conta.nome_fantasia).all()
-    return jsonify({
-        'success': True,
-        'vendedores': [{'id': v.id, 'name': v.name} for v in vendedores],
-        'contas': [{'id': c.id, 'nome_fantasia': c.nome_fantasia} for c in contas]
-    })
+    
+    contas_list = Conta.query.filter_by(is_active=True).order_by(Conta.nome_fantasia).all()
+    return jsonify({'success': True, 'vendedores': [{'id': v.id, 'name': v.name} for v in vendedores], 'contas': [{'id': c.id, 'nome_fantasia': c.nome_fantasia} for c in contas_list]})
 
 @contas.route('/api/contas/<int:conta_id>/details')
 @login_required
 def get_conta_details(conta_id):
-    query = Conta.query.filter_by(id=conta_id)
-    if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
-    conta = query.first_or_404()
+    conta = Conta.query.get_or_404(conta_id)
+    if not check_permission(conta):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
     
-    # --- ALTERAÇÃO V2.07: Busca apenas contatos ativos ---
     contatos_ativos = conta.contatos.filter_by(is_active=True).all()
-    
     return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in contatos_ativos], 'leads': [l.to_dict() for l in conta.leads.all()]})
 
 @contas.route('/api/contas/<int:conta_id>/contatos', methods=['POST'])
 @login_required
 def adicionar_contato(conta_id):
-    query = Conta.query.filter_by(id=conta_id)
-    if not current_user.has_role('admin'): query = query.filter_by(user_id=current_user.id)
-    conta = query.first_or_404()
+    conta = Conta.query.get_or_404(conta_id)
+    if not check_permission(conta):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para adicionar contatos a esta conta.'}), 403
     
     data = request.get_json()
     if not data or not data.get('nome'): return jsonify({'success': False, 'error': 'O nome do contato é obrigatório.'}), 400
@@ -173,15 +149,14 @@ def adicionar_contato(conta_id):
     db.session.commit()
     return jsonify({'success': True, 'contato': novo_contato.to_dict()})
 
-# --- ADIÇÃO V2.07: Rota para editar um contato específico ---
 @contas.route('/api/contatos/<int:contato_id>', methods=['PUT'])
 @login_required
 def update_contato(contato_id):
     contato = Contato.query.get_or_404(contato_id)
-    conta = Conta.query.filter_by(id=contato.conta_id)
-    if not current_user.has_role('admin'):
-        conta = conta.filter_by(user_id=current_user.id)
-    conta.first_or_404("Você não tem permissão para editar este contato.")
+    conta = Conta.query.get_or_404(contato.conta_id)
+    if not check_permission(conta):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para editar este contato.'}), 403
+    
     data = request.get_json()
     contato.nome = data.get('nome', contato.nome)
     contato.email = data.get('email', contato.email)
@@ -190,15 +165,14 @@ def update_contato(contato_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Contato atualizado.'})
 
-# --- ADIÇÃO V2.07: Rota para desativar (soft delete) um contato ---
 @contas.route('/api/contatos/<int:contato_id>', methods=['DELETE'])
 @login_required
 def delete_contato(contato_id):
     contato = Contato.query.get_or_404(contato_id)
-    conta = Conta.query.filter_by(id=contato.conta_id)
-    if not current_user.has_role('admin'):
-        conta = conta.filter_by(user_id=current_user.id)
-    conta.first_or_404("Você não tem permissão para excluir este contato.")
+    conta = Conta.query.get_or_404(contato.conta_id)
+    if not check_permission(conta):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para excluir este contato.'}), 403
+    
     contato.is_active = False
     db.session.commit()
     return jsonify({'success': True, 'message': 'Contato desativado.'})
