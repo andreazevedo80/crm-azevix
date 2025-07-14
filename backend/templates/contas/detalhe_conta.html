@@ -108,7 +108,7 @@
 {% block scripts %}
 <script>
     const CONTA_ID = {{ conta.id }};
-    const CAN_FILTER_BY_OWNER = {{ (current_user.has_role('admin') or current_user.has_role('gerente'))|tojson }};
+    const IS_ADMIN = {{ current_user.has_role('admin')|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/detalhe_conta.js') }}"></script>
 {% endblock %}

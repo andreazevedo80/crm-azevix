@@ -26,8 +26,7 @@ def detalhe_conta(conta_id):
     if not current_user.has_role('admin'):
         liderados_ids = [liderado.id for liderado in current_user.liderados]
         liderados_ids.append(current_user.id)
-        if not (current_user.has_role('gerente') and conta.user_id in liderados_ids):
-             query = query.filter_by(user_id=current_user.id)
+        query = query.filter(Conta.user_id.in_(liderados_ids))
     conta = query.first_or_404()
     return render_template('contas/detalhe_conta.html', conta=conta)
 
@@ -36,7 +35,7 @@ def detalhe_conta(conta_id):
 @contas.route('/api/contas', methods=['GET'])
 @login_required
 def get_contas():
-    query = Conta.query
+    query = Conta.query.filter_by(is_active=True)
     
     # --- ALTERAÇÃO: Implementada a lógica de visualização por papel ---
     if current_user.has_role('gerente'):

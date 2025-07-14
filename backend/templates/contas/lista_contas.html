@@ -21,7 +21,7 @@
             <div class="col-md-3">
                 <label for="owner-filter" class="form-label">Vendedor</label>
                 <select id="owner-filter" class="form-select">
-                    <option value="">Todos os Vendedores</option>
+                    <option value="">Todos</option>
                 </select>
             </div>
             {% endif %}
@@ -40,7 +40,7 @@
 
 {% block scripts %}
 <script>
-    // --- CORREÇÃO: Passando um booleano (true/false) de forma segura para o JavaScript ---
+    // ALTERAÇÃO: Passa uma variável mais genérica para o JS
     const CAN_FILTER_BY_OWNER = {{ (current_user.has_role('admin') or current_user.has_role('gerente'))|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/lista_contas.js') }}"></script>
