@@ -22,12 +22,21 @@ def nova_conta_form():
 @contas.route('/contas/<int:conta_id>')
 @login_required
 def detalhe_conta(conta_id):
-    query = Conta.query.filter_by(id=conta_id)
-    if not current_user.has_role('admin'):
+    conta = Conta.query.filter_by(id=conta_id).first_or_404()
+    # --- LÓGICA DE PERMISSÃO CORRIGIDA ---
+    tem_permissao = False
+    if current_user.id == conta.user_id:
+        tem_permissao = True
+    elif current_user.has_role('admin'):
+        tem_permissao = True
+    elif current_user.has_role('gerente'):
         liderados_ids = [liderado.id for liderado in current_user.liderados]
-        liderados_ids.append(current_user.id)
-        query = query.filter(Conta.user_id.in_(liderados_ids))
-    conta = query.first_or_404()
+        if conta.user_id in liderados_ids:
+            tem_permissao = True
+    if not tem_permissao:
+        flash("Você não tem permissão para ver esta conta.", "danger")
+        return redirect(url_for('contas.listar_contas'))
+        
     return render_template('contas/detalhe_conta.html', conta=conta)
 
 # --- ROTAS DE API ---
@@ -36,7 +45,6 @@ def detalhe_conta(conta_id):
 @login_required
 def get_contas():
     query = Conta.query.filter_by(is_active=True)
-    
     # --- ALTERAÇÃO: Implementada a lógica de visualização por papel ---
     if current_user.has_role('gerente'):
         # Gerente vê as suas contas e as de seus liderados
@@ -64,14 +72,19 @@ def get_contas():
 @contas.route('/api/contas/<int:conta_id>', methods=['PUT'])
 @login_required
 def update_conta(conta_id):
-    query = Conta.query.filter_by(id=conta_id)
-    if not current_user.has_role('admin'):
+    conta = Conta.query.filter_by(id=conta_id).first_or_404("Conta não encontrada.")
+    # --- LÓGICA DE PERMISSÃO CORRIGIDA ---
+    tem_permissao_edicao = False
+    if current_user.id == conta.user_id:
+        tem_permissao_edicao = True
+    elif current_user.has_role('admin'):
+        tem_permissao_edicao = True
+    elif current_user.has_role('gerente'):
         liderados_ids = [liderado.id for liderado in current_user.liderados]
-        liderados_ids.append(current_user.id)
-        conta_para_verificar = query.first()
-        if not (current_user.has_role('gerente') and conta_para_verificar and conta_para_verificar.user_id in liderados_ids):
-             query = query.filter_by(user_id=current_user.id)
-    conta = query.first_or_404("Conta não encontrada ou você não tem permissão para editá-la.")
+        if conta.user_id in liderados_ids:
+            tem_permissao_edicao = True
+    if not tem_permissao_edicao:
+        return jsonify({'success': False, 'error': 'Você não tem permissão para editar esta conta.'}), 403
     data = request.get_json()
 
     if 'cnpj' in data and data.get('cnpj') and data.get('cnpj') != conta.cnpj:

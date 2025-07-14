@@ -142,18 +142,29 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const toggleEditMode = (isEditing) => {
         formEditConta.querySelectorAll('input, select').forEach(field => {
-            if (field.id === 'edit-owner' && !IS_ADMIN) return;
-            field.disabled = !isEditing;
+            // Permite editar se CAN_EDIT_THIS_ACCOUNT for verdadeiro
+            if (field.id === 'edit-owner' && !IS_ADMIN) {
+                field.disabled = true; // O campo de dono só é editável pelo admin
+            } else {
+                field.disabled = !isEditing;
+            }
         });
 
         editButtons.style.display = isEditing ? 'block' : 'none';
         btnEditConta.style.display = isEditing ? 'none' : 'block';
         hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
         hierarchyInfo.style.display = isEditing ? 'none' : 'block';
-        if (IS_ADMIN) { adminFields.style.display = isEditing ? 'block' : 'none'; }
+        if (IS_ADMIN && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
     };
 
-    btnEditConta.addEventListener('click', () => toggleEditMode(true));
+    btnEditConta.addEventListener('click', () => {
+    // Usa a nova variável para decidir se habilita a edição
+    if (CAN_EDIT_THIS_ACCOUNT) {
+        toggleEditMode(true);
+    } else {
+        alert("Você não tem permissão para editar esta conta.");
+    }
+    });
     btnCancelEdit.addEventListener('click', () => {
         renderInfoForm(originalContaData);
         toggleEditMode(false);

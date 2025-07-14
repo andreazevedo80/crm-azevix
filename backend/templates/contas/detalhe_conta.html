@@ -109,6 +109,8 @@
 <script>
     const CONTA_ID = {{ conta.id }};
     const IS_ADMIN = {{ current_user.has_role('admin')|tojson }};
+    const IS_MANAGER = {{ current_user.has_role('gerente')|tojson }};
+    const CAN_EDIT_THIS_ACCOUNT = {{ (conta.owner == current_user or current_user.has_role('admin') or (current_user.has_role('gerente') and conta.owner in current_user.liderados))|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/detalhe_conta.js') }}"></script>
 {% endblock %}
