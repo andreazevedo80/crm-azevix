@@ -1,11 +1,11 @@
 from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import Index
 from .utils import encrypt_data, decrypt_data, format_cnpj, get_cnpj_hash
 
-# --- ADIÇÃO: Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
+# Tabela de associação User/Role
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True)
@@ -63,7 +63,7 @@ class Conta(db.Model):
     __tablename__ = 'contas'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    matriz_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=True)
+    matriz_id = db.Column(db.Integer, db.ForeignKey('contas.id', ondelete='SET NULL'), nullable=True)
     razao_social = db.Column(db.String(255))
     nome_fantasia = db.Column(db.String(255), nullable=False, index=True)
     _cnpj_encrypted = db.Column("cnpj_encrypted", db.String(255), nullable=True)
@@ -74,7 +74,7 @@ class Conta(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     contatos = db.relationship('Contato', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
     leads = db.relationship('Lead', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
-    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='dynamic')
+    filiais = db.relationship('Conta', backref=db.backref('matriz', remote_side=[id]), lazy='true')
 
     @property
     def cnpj(self):

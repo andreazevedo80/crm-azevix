@@ -34,9 +34,19 @@ def detalhe_conta(conta_id):
 @login_required
 def get_contas():
     query = Conta.query
-    if not current_user.has_role('admin'):
+    
+    # --- ALTERAÇÃO: Implementada a lógica de visualização por papel ---
+    if current_user.has_role('gerente'):
+        # Gerente vê as suas contas e as de seus liderados
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        liderados_ids.append(current_user.id) # Inclui o próprio gerente
+        query = query.filter(Conta.user_id.in_(liderados_ids))
+    elif not current_user.has_role('admin'):
+        # Vendedor vê apenas as suas
         query = query.filter_by(user_id=current_user.id)
-    else:
+    
+    # Filtro de vendedor (usado apenas por admins)
+    if current_user.has_role('admin'):
         owner_id = request.args.get('owner_id')
         if owner_id: query = query.filter_by(user_id=owner_id)
 
@@ -78,6 +88,25 @@ def update_conta(conta_id):
         
     db.session.commit()
     return jsonify({'success': True, 'message': 'Conta atualizada com sucesso!'})
+
+# --- ADIÇÃO: Nova rota para desativar (soft delete) uma conta ---
+@contas.route('/api/contas/<int:conta_id>', methods=['DELETE'])
+@login_required
+def desativar_conta(conta_id):
+    query = Conta.query.filter_by(id=conta_id)
+    if not current_user.has_role('admin'):
+        query = query.filter_by(user_id=current_user.id)
+    conta = query.first_or_404("Conta não encontrada ou você não tem permissão para esta ação.")
+
+    # Lógica para tratar filiais órfãs
+    for filial in conta.filiais:
+        filial.matriz_id = None
+    
+    conta.is_active = False
+    db.session.commit()
+    
+    flash(f"A conta '{conta.nome_fantasia}' foi desativada.", "success")
+    return jsonify({'success': True, 'message': 'Conta desativada.'})
 
 @contas.route('/api/admin/form_data', methods=['GET'])
 @login_required
