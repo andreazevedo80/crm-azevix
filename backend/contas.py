@@ -92,72 +92,64 @@ def update_conta(conta_id):
     
     data = request.get_json()
     
-    # --- ADIÇÃO v4.02: Lógica para registrar o histórico de alterações ---
-    changes = []
+    # --- ALTERAÇÃO v4.02: Lógica de gravação de histórico aprimorada ---
+    dados_antigos = {
+        'nome_fantasia': conta.nome_fantasia,
+        'razao_social': conta.razao_social,
+        'segmento': conta.segmento,
+        'tipo_conta': conta.tipo_conta,
+        'matriz_id': conta.matriz_id,
+        'owner_id': conta.user_id
+    }
     
+    # Tratamento especial para CNPJ (mantendo a lógica original)
     if 'cnpj' in data and data.get('cnpj') and data.get('cnpj') != conta.cnpj:
         if not is_valid_cnpj(data['cnpj']): return jsonify({'success': False, 'error': 'O CNPJ fornecido é inválido.'}), 400
         cnpj_hash = get_cnpj_hash(data['cnpj'])
         existing_conta = Conta.query.filter(Conta.id != conta_id, Conta.cnpj_hash == cnpj_hash).first()
         if existing_conta: return jsonify({'success': False, 'error': f'Este CNPJ já pertence à conta "{existing_conta.nome_fantasia}".'}), 409
-        changes.append({'campo': 'CNPJ', 'valor_antigo': conta.cnpj, 'valor_novo': data['cnpj']})
+        dados_antigos['cnpj'] = conta.cnpj
         conta.cnpj = data['cnpj']
-
-    # Compara cada campo e registra a alteração se houver diferença
-    if data.get('nome_fantasia') and data['nome_fantasia'] != conta.nome_fantasia:
-        changes.append({'campo': 'Nome Fantasia', 'valor_antigo': conta.nome_fantasia, 'valor_novo': data['nome_fantasia']})
-        conta.nome_fantasia = data['nome_fantasia']
-    else:
-        conta.nome_fantasia = data.get('nome_fantasia', conta.nome_fantasia)
-        
-    if data.get('razao_social') and data['razao_social'] != conta.razao_social:
-        changes.append({'campo': 'Razão Social', 'valor_antigo': conta.razao_social, 'valor_novo': data['razao_social']})
-        conta.razao_social = data['razao_social']
-    else:
-        conta.razao_social = data.get('razao_social', conta.razao_social)
-
-    if data.get('segmento') and data['segmento'] != conta.segmento:
-        changes.append({'campo': 'Segmento', 'valor_antigo': conta.segmento, 'valor_novo': data['segmento']})
-        conta.segmento = data['segmento']
-    else:
-        conta.segmento = data.get('segmento', conta.segmento)
-
-    if data.get('tipo_conta') and data['tipo_conta'] != conta.tipo_conta:
-        changes.append({'campo': 'Tipo Conta', 'valor_antigo': conta.tipo_conta, 'valor_novo': data['tipo_conta']})
-        conta.tipo_conta = data['tipo_conta']
-    else:
-        conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
+    
+    # Atualiza os campos
+    conta.nome_fantasia = data.get('nome_fantasia', conta.nome_fantasia)
+    conta.razao_social = data.get('razao_social', conta.razao_social)
+    conta.segmento = data.get('segmento', conta.segmento)
+    conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
     
     if 'matriz_id' in data:
         matriz_id = data.get('matriz_id')
-        nova_matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
-        if nova_matriz_id != conta.matriz_id:
-            changes.append({'campo': 'Matriz ID', 'valor_antigo': str(conta.matriz_id) if conta.matriz_id else 'Nenhuma', 'valor_novo': str(nova_matriz_id) if nova_matriz_id else 'Nenhuma'})
-        conta.matriz_id = nova_matriz_id
-
-    if current_user.has_role('admin') and 'owner_id' in data and data.get('owner_id') and int(data['owner_id']) != conta.user_id:
-        owner_antigo = User.query.get(conta.user_id).name
-        owner_novo = User.query.get(int(data['owner_id'])).name
-        changes.append({'campo': 'Responsável', 'valor_antigo': owner_antigo, 'valor_novo': owner_novo})
+        conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
+        
+    if current_user.has_role('admin') and 'owner_id' in data and data.get('owner_id'):
         conta.user_id = int(data['owner_id'])
         
-    # Salva as alterações na conta
+    # Salva as alterações para poder comparar
     db.session.commit()
 
-    # Cria os registros de histórico para cada alteração
-    for change in changes:
-        historico = HistoricoAlteracao(
-            user_id=current_user.id,
-            conta_id=conta.id,
-            campo=change['campo'],
-            valor_antigo=change['valor_antigo'],
-            valor_novo=change['valor_novo']
-        )
-        db.session.add(historico)
-    
-    if changes:
-        db.session.commit()
+    # Compara e registra no histórico
+    for campo, valor_antigo in dados_antigos.items():
+        valor_novo = getattr(conta, campo)
+        if str(valor_antigo) != str(valor_novo):
+            # Lógica especial para campos de ID (owner, matriz)
+            if campo == 'owner_id':
+                valor_antigo_nome = User.query.get(valor_antigo).name if valor_antigo else 'Nenhum'
+                valor_novo_nome = User.query.get(valor_novo).name if valor_novo else 'Nenhum'
+                historico = HistoricoAlteracao(user_id=current_user.id, conta_id=conta.id, campo='Responsável', valor_antigo=valor_antigo_nome, valor_novo=valor_novo_nome)
+                db.session.add(historico)
+            elif campo == 'matriz_id':
+                valor_antigo_nome = Conta.query.get(valor_antigo).nome_fantasia if valor_antigo else 'Nenhuma'
+                valor_novo_nome = Conta.query.get(valor_novo).nome_fantasia if valor_novo else 'Nenhuma'
+                historico = HistoricoAlteracao(user_id=current_user.id, conta_id=conta.id, campo='Conta Matriz', valor_antigo=valor_antigo_nome, valor_novo=valor_novo_nome)
+                db.session.add(historico)
+            elif campo == 'cnpj':
+                historico = HistoricoAlteracao(user_id=current_user.id, conta_id=conta.id, campo='CNPJ', valor_antigo=valor_antigo, valor_novo=valor_novo)
+                db.session.add(historico)
+            else:
+                historico = HistoricoAlteracao(user_id=current_user.id, conta_id=conta.id, campo=campo.replace('_', ' ').title(), valor_antigo=valor_antigo, valor_novo=valor_novo)
+                db.session.add(historico)
 
+    db.session.commit()
     return jsonify({'success': True, 'message': 'Conta atualizada com sucesso!'})
 
 @contas.route('/api/contas/<int:conta_id>', methods=['DELETE'])

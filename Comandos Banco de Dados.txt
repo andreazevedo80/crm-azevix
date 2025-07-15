@@ -91,3 +91,7 @@ INSERT INTO contas (user_id, nome_fantasia, razao_social, segmento) VALUES
 
 -- Este comando garante que o próximo ID automático seja 19, evitando conflitos.
 SELECT setval('contas_id_seq', (SELECT MAX(id) FROM contas));
+
+
+## Verificar Log
+SELECT * FROM historico_alteracoes WHERE conta_id = 1;
