@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const editContatoModalEl = document.getElementById('editContatoModal');
     const editContatoModal = new bootstrap.Modal(editContatoModalEl);
     const formEditContato = document.getElementById('form-edit-contato');
+    const logAuditoriaContainer = document.getElementById('log-auditoria-container');
     
     // Estado da aplicação
     let originalContaData = {};
@@ -87,6 +88,31 @@ document.addEventListener("DOMContentLoaded", function() {
         hierarchyHr.style.display = hierarchyHtml ? 'block' : 'none';
     };
 
+    // --- ADIÇÃO v4.02: Função para renderizar o log de auditoria ---
+    const renderAuditoria = (historico) => {
+        if (!logAuditoriaContainer) return; // Só executa se o elemento existir
+        
+        logAuditoriaContainer.innerHTML = '';
+        if (historico && historico.length > 0) {
+            let historicoHtml = '<ul class="list-group list-group-flush">';
+            historico.forEach(item => {
+                historicoHtml += `
+                    <li class="list-group-item">
+                        <p class="mb-1">
+                            <strong>${item.campo}</strong> alterado de 
+                            "<em>${item.valor_antigo || 'vazio'}</em>" para 
+                            "<strong>${item.valor_novo}</strong>".
+                        </p>
+                        <small class="text-muted">Por: ${item.usuario} em ${item.data}</small>
+                    </li>`;
+            });
+            historicoHtml += '</ul>';
+            logAuditoriaContainer.innerHTML = historicoHtml;
+        } else {
+            logAuditoriaContainer.innerHTML = '<p class="text-center text-muted">Nenhum histórico de alterações encontrado.</p>';
+        }
+    };
+
     const populateDropdownsAndFetchDetails = async () => {
         const configResponse = await fetch('/api/contas/config');
         const configData = await configResponse.json();
@@ -110,6 +136,17 @@ document.addEventListener("DOMContentLoaded", function() {
             renderContatos(data.contatos);
             renderLeads(data.leads);
             renderHierarchy(data.conta);
+            
+            // --- ADIÇÃO v4.02: Chama a função para buscar o histórico ---
+            if (IS_ADMIN || IS_MANAGER) {
+                fetch(`/api/contas/${CONTA_ID}/historico`)
+                    .then(res => res.json())
+                    .then(histData => {
+                        if (histData.success) {
+                            renderAuditoria(histData.historico);
+                        }
+                    });
+            }
         }
     };
 

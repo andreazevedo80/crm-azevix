@@ -47,6 +47,17 @@
                 <div id="hierarchy-info"></div>
             </div>
         </div>
+            <div class="col-lg-7">
+        {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+        <div class="card card-azevix mt-4">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="fas fa-history me-2"></i>Log de Auditoria</h5></div>
+            <div class="card-body">
+                <div id="log-auditoria-container" style="max-height: 400px; overflow-y: auto;">
+                    </div>
+            </div>
+        </div>
+        {% endif %}
+        </div>
 
         <div class="card card-azevix">
             <div class="card-header"><h5 class="card-title mb-0">Contatos</h5></div>
