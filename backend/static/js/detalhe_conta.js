@@ -150,30 +150,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
     };
-    // --- ADIÇÃO v4.02: Lógica para o modal de desativação ---
-    if (btnDesativarConta) {
-        const desativarContaModalEl = document.getElementById('desativarContaModal');
-        const desativarContaModal = new bootstrap.Modal(desativarContaModalEl);
-        const btnConfirmDesativar = document.getElementById('btn-confirm-desativar');
 
-        btnDesativarConta.addEventListener('click', () => {
-            desativarContaModal.show();
-        });
-
-        btnConfirmDesativar.addEventListener('click', () => {
-            fetch(`/api/contas/${CONTA_ID}`, { method: 'DELETE' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    // Redireciona para a lista de contas após a desativação
-                    window.location.href = "{{ url_for('contas.listar_contas') }}";
-                } else {
-                    alert(`Erro ao desativar conta: ${data.error}`);
-                    desativarContaModal.hide();
-                }
-            });
-        });
-    }
     // --- ADIÇÃO V2.07: Funções globais para gerenciar contatos ---
     window.openEditContatoModal = (contatoId) => {
         const contato = contatosData.find(c => c.id === contatoId);
@@ -200,6 +177,31 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
     };
+
+    // --- ADIÇÃO v4.02: Lógica para o modal de desativação ---
+    if (btnDesativarConta) {
+        const desativarContaModalEl = document.getElementById('desativarContaModal');
+        const desativarContaModal = new bootstrap.Modal(desativarContaModalEl);
+        const btnConfirmDesativar = document.getElementById('btn-confirm-desativar');
+
+        btnDesativarConta.addEventListener('click', () => {
+            desativarContaModal.show();
+        });
+
+        btnConfirmDesativar.addEventListener('click', () => {
+            fetch(`/api/contas/${CONTA_ID}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Redireciona para a lista de contas após a desativação
+                    window.location.href = "{{ url_for('contas.listar_contas') }}";
+                } else {
+                    alert(`Erro ao desativar conta: ${data.error}`);
+                    desativarContaModal.hide();
+                }
+            });
+        });
+    }
 
     const toggleEditMode = (isEditing) => {
         formEditConta.querySelectorAll('input, select').forEach(field => {
