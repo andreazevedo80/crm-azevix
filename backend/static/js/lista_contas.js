@@ -4,12 +4,17 @@ document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById('search-filter');
     const segmentFilter = document.getElementById('segment-filter');
     const ownerFilter = document.getElementById('owner-filter');
+    const paginationContainer = document.getElementById('pagination-container');
     const checkModalInput = document.getElementById('check-conta-input');
     const checkResultsContainer = document.getElementById('check-results-container');
     const proceedButton = document.getElementById('proceed-to-register-btn');
     const checkModalEl = document.getElementById('checkContaModal');
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
+    
+    // --- ADIÇÃO v4.01: Estado da Paginação ---
+    let currentPage = 1;
+
     const populateFilters = async () => {
         try {
             const response = await fetch('/api/contas/config');
@@ -31,11 +36,46 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
+    // --- ADIÇÃO v4.01: Função para renderizar a paginação ---
+    const renderPagination = (pagination) => {
+        paginationContainer.innerHTML = '';
+        if (pagination.pages <= 1) return;
+
+        let paginationHTML = '<ul class="pagination">';
+        
+        // Botão Anterior
+        paginationHTML += `<li class="page-item ${!pagination.has_prev ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pagination.page - 1}">Anterior</a></li>`;
+
+        // Botões de Página
+        for (let i = 1; i <= pagination.pages; i++) {
+            paginationHTML += `<li class="page-item ${i === pagination.page ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+        }
+
+        // Botão Próximo
+        paginationHTML += `<li class="page-item ${!pagination.has_next ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pagination.page + 1}">Próximo</a></li>`;
+
+        paginationHTML += '</ul>';
+        paginationContainer.innerHTML = paginationHTML;
+
+        // Adiciona listeners aos novos botões de página
+        paginationContainer.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const newPage = e.target.dataset.page;
+                if (newPage && currentPage !== newPage) {
+                    currentPage = parseInt(newPage);
+                    renderContas();
+                }
+            });
+        });
+    };
+
     const renderContas = () => {
         displayArea.innerHTML = loadingSpinner;
         const params = new URLSearchParams({
             search: searchInput.value,
-            segmento: segmentFilter.value
+            segmento: segmentFilter.value,
+            page: currentPage // Envia a página atual
         });
 
         if (CAN_FILTER_BY_OWNER && ownerFilter && ownerFilter.value) {
@@ -62,6 +102,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     tableContent = `<p class="text-center py-4">Nenhuma conta encontrada. <a href="#" data-bs-toggle="modal" data-bs-target="#checkContaModal">Cadastre a primeira!</a></p>`;
                 }
                 displayArea.innerHTML = tableContent;
+                // --- ALTERAÇÃO v4.01: Renderiza a paginação ---
+                renderPagination(data.pagination);
             });
     };
 
@@ -92,13 +134,19 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     };
 
+    // --- ALTERAÇÃO v4.01: Reseta a página para 1 ao aplicar filtros ---
+    const applyFilters = () => {
+        currentPage = 1;
+        renderContas();
+    };
+
     // --- EVENT LISTENERS ---
     
     // Filtros da página principal
     let searchTimeout;
-    searchInput.addEventListener('keyup', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(renderContas, 500); });
-    segmentFilter.addEventListener('change', renderContas);
-    if(ownerFilter) { ownerFilter.addEventListener('change', renderContas); }
+    searchInput.addEventListener('keyup', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(applyFilters, 500); });
+    segmentFilter.addEventListener('change', applyFilters);
+    if(ownerFilter) { ownerFilter.addEventListener('change', applyFilters); }
     
     // Modal de verificação
     checkModalEl.addEventListener('hidden.bs.modal', function () {

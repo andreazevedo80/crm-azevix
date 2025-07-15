@@ -44,7 +44,12 @@ def detalhe_conta(conta_id):
 @contas.route('/api/contas', methods=['GET'])
 @login_required
 def get_contas():
+    # --- ALTERAÇÃO v4.01: Lógica de Paginação ---
+    page = request.args.get('page', 1, type=int)
+    per_page = 15 # Itens por página
+    
     query = Conta.query.filter_by(is_active=True)
+    
     if current_user.has_role('gerente'):
         liderados_ids = [liderado.id for liderado in current_user.liderados]
         liderados_ids.append(current_user.id)
@@ -62,8 +67,21 @@ def get_contas():
     segmento = request.args.get('segmento', '').strip()
     if segmento: query = query.filter(Conta.segmento == segmento)
     
-    contas_list = [c.to_dict() for c in query.order_by(Conta.nome_fantasia).all()]
-    return jsonify({'success': True, 'contas': contas_list})
+    # --- ALTERAÇÃO v4.01: Usando .paginate() em vez de .all() ---
+    pagination = query.order_by(Conta.nome_fantasia).paginate(page=page, per_page=per_page, error_out=False)
+    contas_list = [c.to_dict() for c in pagination.items]
+    
+    return jsonify({
+        'success': True,
+        'contas': contas_list,
+        'pagination': {
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'has_prev': pagination.has_prev,
+            'has_next': pagination.has_next,
+            'page': pagination.page
+        }
+    })
 
 @contas.route('/api/contas/<int:conta_id>', methods=['PUT'])
 @login_required
