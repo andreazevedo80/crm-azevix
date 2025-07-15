@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(data => {
                 if (data.success) {
                     // Redireciona para a lista de contas após a desativação
-                    window.location.href = "{{ url_for('contas.listar_contas') }}";
+                    window.location.href = LISTAR_CONTAS_URL;
                 } else {
                     alert(`Erro ao desativar conta: ${data.error}`);
                     desativarContaModal.hide();
