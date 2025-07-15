@@ -67,3 +67,27 @@ python gerar_hash
 após no banco
 
 UPDATE users SET password_hash = 'scrypt:32768:8:1$PSiIEa1a461vKLMm$b7cbe0b408e710117b1eb475d7d840f3bf620ee6f256832f5be72999065cb6dc6cc8ed2e82a02a6e6e258d055d42d27702a48831de6749595a6196a2bddc6826' WHERE id IN (3, 4, 5, 6, 7, 8);
+
+#Popular com clientes
+INSERT INTO contas (user_id, nome_fantasia, razao_social, segmento) VALUES
+(1, 'Empresa de Teste 1', 'Razão Social Teste 1 SA', 'Tecnologia'),
+(1, 'Serviços Rápidos 2', 'Serviços e Cia 2 LTDA', 'Serviços'),
+(1, 'Saúde & Bem-Estar 3', 'Clínica Saúde Vital 3', 'Saúde'),
+(1, 'Varejo Online 4', 'Varejista Digital 4 ME', 'Varejo'),
+(1, 'Educação Inovadora 5', 'Escola do Futuro 5', 'Educação'),
+(1, 'Indústria Pesada 6', 'Metalúrgica Aço Forte 6', 'Indústria'),
+(1, 'Agro Brasil 7', 'Fazenda Campo Verde 7', 'Agronegócio'),
+(1, 'Fintech Confiança 8', 'Soluções Financeiras 8', 'Financeiro'),
+(1, 'Imóveis & Cia 9', 'Imobiliária Morar Bem 9', 'Imobiliário'),
+(1, 'Consultoria Global 10', 'Consultores Associados 10', 'Serviços'),
+(1, 'Data Analytics 11', 'Big Data Corp 11', 'Tecnologia'),
+(1, 'Varejo Popular 12', 'Mercado do Povo 12', 'Varejo'),
+(1, 'Logística Express 13', 'Transportes Velozes 13', 'Serviços'),
+(1, 'Clínica Sorriso 14', 'Odontologia de Ponta 14', 'Saúde'),
+(1, 'Universidade Livre 15', 'Centro Educacional 15', 'Educação'),
+(1, 'Manufatura Digital 16', 'Indústria 4.0 Soluções 16', 'Indústria'),
+(1, 'Exportadora de Grãos 17', 'AgroExport 17', 'Agronegócio'),
+(1, 'Crédito Fácil 18', 'Financeira Resolve 18', 'Financeiro');
+
+-- Este comando garante que o próximo ID automático seja 19, evitando conflitos.
+SELECT setval('contas_id_seq', (SELECT MAX(id) FROM contas));
