@@ -1,33 +1,39 @@
-### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 5.0)
+## versão 4.02: Ciclo de Vida e Integridade de Contas
+# Objetivo:
+- Finalizar as regras de negócio essenciais para a entidade Conta.
 
-## versão 4.01 [Log de Auditoria e Paginação]
-# Objetivo
-- Rastrear alterações importantes e garantir a performance do sistema.
+# Requisitos:
+- Implementar a função de desativar uma Conta (soft delete).
+- Implementar a lógica para tratar filiais órfãs (definir matriz_id como NULL) quando uma matriz for desativada.
+- Impedir que uma conta seja definida como sua própria matriz (validação de hierarquia circular).
 
-# Requisitos da feature:
-- O sistema deve registrar um histórico de alterações para entidades críticas como Lead e Proposta.
-- Todas as listas principais devem ser paginadas para manter a aplicação rápida.
+## versão 5.01: Módulo de Administração (Base e Gestão de Usuários)
+# Objetivo:
+- Criar a estrutura do painel de administração e implementar a gestão completa do ciclo de vida dos usuários.
 
-# O que será modificado:
-- backend/models.py: Criar a tabela HistoricoAlteracao.
-- backend/contas.py, backend/propostas.py: Adicionar a lógica para registrar o histórico nas rotas de atualização.
-- backend/static/js/ e backend/*_api.py: Implementar a lógica de paginação no frontend e backend.
+# Requisitos:
+- Criar uma área /admin acessível apenas para a role 'admin'.
+- Implementar a interface para convidar, listar, editar e desativar/reativar usuários.
 
-## versão 5.01 [Módulo de Administração Centralizado]
-# Objetivo
-- Dar ao administrador controle total sobre as regras de negócio e configurações do sistema.
+## versão 5.02: Módulo de Administração (Configurações do Sistema)
+# Objetivo:
+- Permitir que o administrador configure parâmetros essenciais do sistema.
 
-# Requisitos da feature:
-- Admin pode gerenciar (CRUD) os Status de Lead, Segmentos, Motivos de Perda.
-- Admin pode definir o Workflow de Status (regras de transição).
-- Admin pode gerenciar as configurações de e-mail (SMTP) e os domínios permitidos para convite.
+# Requisitos:
+- Implementar a interface para gerenciar os domínios de e-mail permitidos para convites.
+- Implementar a interface para configurar os dados do servidor de e-mail (SMTP).
 
-# O que será modificado:
-- backend/models.py: Criar as tabelas de configuração (ConfigStatusLead, ConfigSegmento, etc.).
-- backend/admin.py (Novo): Criar o Blueprint e as interfaces do painel de administração.
+## versão 6.0: Workflow Inteligente de Vendas
+# Objetivo:
+- Dar ao administrador o poder de customizar o processo de vendas.
 
-## versão 6.01 [Propostas: Estrutura, Custos e Lucratividade]
-# Objetivo
+# Requisitos:
+- Interface para o Admin gerenciar (CRUD) os Status de Lead e os Motivos de Perda.
+- Interface para o Admin definir as regras de transição entre os status (Workflow).
+- Na tela do Lead, o campo "Status" só mostrará as transições permitidas, e exigirá um "Motivo de Perda" quando aplicável.
+
+## versão 6.01: Módulo de Propostas (Estrutura e Custos)
+# Objetivo:
 - Implementar o módulo de propostas, o coração financeiro do CRM.
 
 # Requisitos da feature:
@@ -35,11 +41,6 @@
 - Adicionar custos (fixos/percentuais) para calcular a margem de lucro estimada.
 - A lógica de custos deve ser sensível ao tipo_conta (Pública vs. Privada).
 - Propostas devem ter status e prazos.
-
-# O que será modificado:
-- backend/models.py: Criar as tabelas ProdutoServico, Proposta, ItemProposta, CustoProposta.
-- backend/propostas.py (Novo): Blueprint com toda a lógica de negócio para propostas.
-- backend/templates/: Novas interfaces para criar e visualizar propostas.
 
 # versão 7.01 [Automação de Documentos e Comunicação]
 # Objetivo

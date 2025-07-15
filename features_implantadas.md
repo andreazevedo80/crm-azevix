@@ -118,3 +118,18 @@ Implementar o ciclo de vida inicial do usuário: o "onboarding" seguro através 
 # O que será modificado:
 - backend/contas.py: Ajustar a query da rota get_contas para respeitar a hierarquia gerente_id. Implementar a rota para desativar contas.
 - backend/models.py: Adicionar a regra ondelete='SET NULL' ao campo matriz_id como uma camada extra de proteção no banco de dados.
+
+### Plano de Ação e Requisitos de Software - CRM Azevix (Revisão 5.0)
+
+## versão 4.01 [Log de Auditoria e Paginação]
+# Objetivo
+- Rastrear alterações importantes e garantir a performance do sistema.
+
+# Requisitos da feature:
+- O sistema deve registrar um histórico de alterações para entidades críticas como Lead e Proposta.
+- Todas as listas principais devem ser paginadas para manter a aplicação rápida.
+
+# O que será modificado:
+- backend/models.py: Criar a tabela HistoricoAlteracao.
+- backend/contas.py, backend/propostas.py: Adicionar a lógica para registrar o histórico nas rotas de atualização.
+- backend/static/js/ e backend/*_api.py: Implementar a lógica de paginação no frontend e backend.
