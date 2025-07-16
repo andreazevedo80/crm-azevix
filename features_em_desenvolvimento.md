@@ -1,12 +1,3 @@
-## versão 4.02: Ciclo de Vida e Integridade de Contas
-# Objetivo:
-- Finalizar as regras de negócio essenciais para a entidade Conta.
-
-# Requisitos:
-- Implementar a função de desativar uma Conta (soft delete).
-- Implementar a lógica para tratar filiais órfãs (definir matriz_id como NULL) quando uma matriz for desativada.
-- Impedir que uma conta seja definida como sua própria matriz (validação de hierarquia circular).
-
 ## versão 5.01: Módulo de Administração (Base e Gestão de Usuários)
 # Objetivo:
 - Criar a estrutura do painel de administração e implementar a gestão completa do ciclo de vida dos usuários.
@@ -22,6 +13,7 @@
 # Requisitos:
 - Implementar a interface para gerenciar os domínios de e-mail permitidos para convites.
 - Implementar a interface para configurar os dados do servidor de e-mail (SMTP).
+- Implementar um campo no painel de administração para que o admin possa configurar a "URL Base do Site" (SITE_URL)
 
 ## versão 6.0: Workflow Inteligente de Vendas
 # Objetivo:

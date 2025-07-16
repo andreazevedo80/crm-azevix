@@ -133,3 +133,12 @@ Implementar o ciclo de vida inicial do usuário: o "onboarding" seguro através 
 - backend/models.py: Criar a tabela HistoricoAlteracao.
 - backend/contas.py, backend/propostas.py: Adicionar a lógica para registrar o histórico nas rotas de atualização.
 - backend/static/js/ e backend/*_api.py: Implementar a lógica de paginação no frontend e backend.
+
+## versão 4.02: Ciclo de Vida e Integridade de Contas
+# Objetivo:
+- Finalizar as regras de negócio essenciais para a entidade Conta.
+
+# Requisitos:
+- Implementar a função de desativar uma Conta (soft delete).
+- Implementar a lógica para tratar filiais órfãs (definir matriz_id como NULL) quando uma matriz for desativada.
+- Impedir que uma conta seja definida como sua própria matriz (validação de hierarquia circular).

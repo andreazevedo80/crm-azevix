@@ -21,8 +21,11 @@
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                        
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('contas.listar_contas') }}">Contas</a></li>
+                        
+                        {% if current_user.has_role('admin') %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Administração</a></li>
+                        {% endif %}
                         
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
