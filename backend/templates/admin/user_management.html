@@ -31,6 +31,8 @@
                         <td>
                             {% for role in user.roles %}
                                 <span class="badge bg-secondary">{{ role.name }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">Nenhum</span>
                             {% endfor %}
                         </td>
                         <td>
@@ -41,8 +43,12 @@
                             {% endif %}
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-secondary" title="Editar Usuário"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="btn btn-sm btn-outline-danger" title="Desativar Usuário"><i class="fas fa-toggle-off"></i></button>
+                            <button class="btn btn-sm btn-outline-secondary" title="Editar Usuário" onclick="openEditUserModal({{ user.id }})"><i class="fas fa-pencil-alt"></i></button>
+                            {% if user.is_active %}
+                            <button class="btn btn-sm btn-outline-danger" title="Desativar Usuário" onclick="toggleUserStatus({{ user.id }})"><i class="fas fa-toggle-off"></i></button>
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-success" title="Reativar Usuário" onclick="toggleUserStatus({{ user.id }})"><i class="fas fa-toggle-on"></i></button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% else %}
@@ -55,4 +61,34 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="form-edit-user">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-user-id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="edit-user-name" class="form-label">Nome *</label><input type="text" id="edit-user-name" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label for="edit-user-email" class="form-label">Email *</label><input type="email" id="edit-user-email" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label for="edit-user-roles" class="form-label">Papéis (Roles)</label><select id="edit-user-roles" class="form-select" multiple></select></div>
+                        <div class="col-md-6 mb-3"><label for="edit-user-gerente" class="form-label">Gerente Direto</label><select id="edit-user-gerente" class="form-select"><option value="">Nenhum</option></select></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-azevix">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/user_management.js') }}"></script>
 {% endblock %}
