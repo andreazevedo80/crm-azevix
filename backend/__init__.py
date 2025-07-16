@@ -7,31 +7,23 @@ import os
 db = SQLAlchemy()
 login_manager = LoginManager()
 
-# --- ADIÇÃO: Função para inicializar o banco de dados e os papéis ---
 def setup_database(app):
     """Cria as tabelas e popula os dados iniciais, como os papéis (Roles)."""
     with app.app_context():
         db.create_all()
-
-        # Importa o modelo Role aqui dentro para evitar importação circular
         from .models import Role
-        
-        # Lista de papéis essenciais que o sistema precisa para funcionar
         initial_roles = {
             'admin': 'Administrador do Sistema com acesso total.',
             'gerente': 'Líder de equipe com visão sobre seus liderados.',
             'vendedor': 'Usuário padrão que gerencia suas próprias contas.'
         }
-
         for role_name, role_description in initial_roles.items():
             role = Role.query.filter_by(name=role_name).first()
             if not role:
                 new_role = Role(name=role_name, description=role_description)
                 db.session.add(new_role)
-        
         db.session.commit()
         print("Tabelas e papéis essenciais verificados/criados.")
-
 
 def create_app():
     load_dotenv()
@@ -40,7 +32,6 @@ def create_app():
     if not app.config['SECRET_KEY']:
         raise ValueError("SECRET_KEY não configurada no arquivo .env!")
 
-    # Configuração do Banco de Dados
     DB_USER = os.getenv('POSTGRES_USER')
     DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
     DB_NAME = os.getenv('POSTGRES_DB')
@@ -62,18 +53,17 @@ def create_app():
     # --- Registro de Blueprints ---
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/')
-
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/')
-    
     from .contas import contas as contas_blueprint
     app.register_blueprint(contas_blueprint, url_prefix='/')
-
-    # --- ADIÇÃO: Novo Blueprint de Perfil ---
     from .user import user as user_blueprint
     app.register_blueprint(user_blueprint, url_prefix='/')
+    
+    # --- ADIÇÃO v5.01: Registro do Blueprint de Administração ---
+    from .admin import admin as admin_blueprint
+    app.register_blueprint(admin_blueprint)
 
-    # --- ALTERAÇÃO: Chama a função de setup do banco de dados ---
     setup_database(app)
 
     return app
