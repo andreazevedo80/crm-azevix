@@ -61,7 +61,6 @@ def get_all_accounts():
         }
     })
 
-
 @admin.route('/api/accounts/<int:conta_id>/reactivate', methods=['POST'])
 def reactivate_account(conta_id):
     """Reativa uma conta que foi desativada."""

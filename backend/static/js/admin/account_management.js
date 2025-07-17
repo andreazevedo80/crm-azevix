@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
 
+    // --- ADIÇÃO v5.01.2: Nova função para renderizar paginação ---
     const renderPagination = (pagination) => {
         paginationContainer.innerHTML = '';
         if (!pagination || pagination.pages <= 1) return;
@@ -67,6 +68,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 tableHTML += '</tbody></table>';
                 container.innerHTML = tableHTML;
+                // --- ADIÇÃO v5.01.2: Chama renderPagination ---
                 renderPagination(data.pagination);
             });
     };
@@ -77,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    fetchAndRenderAccounts();
+                    fetchAndRenderAccounts(); // Atualiza a lista
                 } else {
                     alert('Erro ao reativar conta: ' + (data.error || 'Erro desconhecido'));
                 }
@@ -85,6 +87,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
+    // --- ADIÇÃO v5.01.2: Nova função para aplicar filtros e busca ---
     const applyFiltersAndSearch = () => {
         currentPage = 1;
         fetchAndRenderAccounts();
@@ -95,6 +98,7 @@ document.addEventListener("DOMContentLoaded", function() {
         currentStatus = 'active';
         activeFilter.classList.add('active');
         inactiveFilter.classList.remove('active');
+        // --- ALTERAÇÃO v5.01.2: Chama applyFiltersAndSearch ao invés de fetchAndRenderAccounts ---
         applyFiltersAndSearch();
     });
 
@@ -103,9 +107,11 @@ document.addEventListener("DOMContentLoaded", function() {
         currentStatus = 'inactive';
         inactiveFilter.classList.add('active');
         activeFilter.classList.remove('active');
+        // --- ALTERAÇÃO v5.01.2: Chama applyFiltersAndSearch ao invés de fetchAndRenderAccounts ---
         applyFiltersAndSearch();
     });
-    
+
+    // --- ADIÇÃO v5.01.2: Event listener para busca ---
     searchInput.addEventListener('keyup', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(applyFiltersAndSearch, 500);
