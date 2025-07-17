@@ -1,12 +1,15 @@
-## versão 5.01: Módulo de Administração (Base e Gestão de Usuários)
-# Objetivo:
-- Criar a estrutura do painel de administração e implementar a gestão completa do ciclo de vida dos usuários.
+## versão 5.03: Refinamento do Processo de Vendas (A Base)
+Objetivo: Enriquecer o modelo Lead com os novos campos de "Estágio de Ciclo de Vida" e "Motivo de Perda", e atualizar a interface existente para refletir essa nova inteligência.
 
 # Requisitos:
-- Criar uma área /admin acessível apenas para a role 'admin'.
-- Implementar a interface para convidar, listar, editar e desativar/reativar usuários.
+- Adicionar as colunas estagio_ciclo_vida, motivo_perda e temperatura ao modelo Lead.
+- Atualizar as STATUS_LEADS para a nova lista mais detalhada.
+- Na página detalhe_conta.html, a seção de "Oportunidades/Leads" será modificada para exibir e permitir a edição de todos os novos campos, incluindo os ícones do termômetro.
+- A lógica no detalhe_conta.js será aprimorada para lidar com a nova interface.
 
-## versão 5.02: Módulo de Administração (Configurações do Sistema)
+# Impacto: Esta versão prepara o terreno. Ao final dela, teremos um backend robusto, mas a gestão dos leads ainda será feita dentro de cada conta.
+
+## versão 5.04: Módulo de Administração (Configurações do Sistema)
 # Objetivo:
 - Permitir que o administrador configure parâmetros essenciais do sistema.
 
@@ -14,8 +17,18 @@
 - Implementar a interface para gerenciar os domínios de e-mail permitidos para convites.
 - Implementar a interface para configurar os dados do servidor de e-mail (SMTP).
 - Implementar um campo no painel de administração para que o admin possa configurar a "URL Base do Site" (SITE_URL)
+- Habilitar o botão já existente em /admin/users +Convidar Novo Usuário.
 
-## versão 6.0: Workflow Inteligente de Vendas
+## versão 6.0: Módulo de Gestão de Leads
+Objetivo: Criar a nova tela principal de gestão de leads.
+Requisitos:
+- Criar um novo link "Leads" na barra de navegação principal.
+- Este link levará a uma nova página (/leads).
+- Esta página terá uma lista paginada e com busca de todos os leads aos quais o usuário tem acesso.
+- A página terá filtros poderosos para que o usuário possa segmentar a lista por Estágio de Ciclo de Vida e por Status da Oportunidade.
+- Ao clicar em um lead na lista, o usuário será levado para a página de detalhe_conta correspondente.
+
+## versão 7.0: Workflow Inteligente de Vendas
 # Objetivo:
 - Dar ao administrador o poder de customizar o processo de vendas.
 
@@ -24,7 +37,7 @@
 - Interface para o Admin definir as regras de transição entre os status (Workflow).
 - Na tela do Lead, o campo "Status" só mostrará as transições permitidas, e exigirá um "Motivo de Perda" quando aplicável.
 
-## versão 6.01: Módulo de Propostas (Estrutura e Custos)
+## versão 8.01: Módulo de Propostas (Estrutura e Custos)
 # Objetivo:
 - Implementar o módulo de propostas, o coração financeiro do CRM.
 
@@ -34,7 +47,7 @@
 - A lógica de custos deve ser sensível ao tipo_conta (Pública vs. Privada).
 - Propostas devem ter status e prazos.
 
-# versão 7.01 [Automação de Documentos e Comunicação]
+# versão 9.01 [Automação de Documentos e Comunicação]
 # Objetivo
 - Automatizar a criação e o envio de propostas.
 
@@ -47,7 +60,7 @@
 - backend/propostas.py: Adicionar a rota para geração de PDF e a lógica de envio de e-mail.
 - backend/email.py (Novo): Módulo utilitário para envio de e-mails, lendo as configurações do banco de dados.
 
-# versão 8.01 [Módulo de Relatórios e Dashboard Inteligente]
+# versão 10.01 [Módulo de Relatórios e Dashboard Inteligente]
 # Objetivo
 - Fornecer inteligência de negócio, consolidando os dados em relatórios e em um dashboard dinâmico.
 
