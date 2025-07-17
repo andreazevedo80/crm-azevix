@@ -68,7 +68,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 tableHTML += '</tbody></table>';
                 container.innerHTML = tableHTML;
-                // --- ADIÇÃO v5.01.2: Chama renderPagination ---
                 renderPagination(data.pagination);
             });
     };
@@ -98,7 +97,6 @@ document.addEventListener("DOMContentLoaded", function() {
         currentStatus = 'active';
         activeFilter.classList.add('active');
         inactiveFilter.classList.remove('active');
-        // --- ALTERAÇÃO v5.01.2: Chama applyFiltersAndSearch ao invés de fetchAndRenderAccounts ---
         applyFiltersAndSearch();
     });
 
@@ -107,11 +105,9 @@ document.addEventListener("DOMContentLoaded", function() {
         currentStatus = 'inactive';
         inactiveFilter.classList.add('active');
         activeFilter.classList.remove('active');
-        // --- ALTERAÇÃO v5.01.2: Chama applyFiltersAndSearch ao invés de fetchAndRenderAccounts ---
         applyFiltersAndSearch();
     });
-
-    // --- ADIÇÃO v5.01.2: Event listener para busca ---
+    
     searchInput.addEventListener('keyup', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(applyFiltersAndSearch, 500);
