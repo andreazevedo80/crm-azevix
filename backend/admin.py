@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort, jsonify, request
 from flask_login import login_required, current_user
-from .models import User, Role, db
+from .models import User, Role, Conta, db
 
 # --- ADIÇÃO v5.01: Novo Blueprint para o Painel de Administração ---
 admin = Blueprint('admin', __name__, url_prefix='/admin')
@@ -33,10 +33,7 @@ def account_management():
 def get_all_accounts():
     """API que busca todas as contas, com filtro de status."""
     status = request.args.get('status', 'active')
-    if status == 'active':
-        query = Conta.query.filter_by(is_active=True)
-    else:
-        query = Conta.query.filter_by(is_active=False)
+    query = Conta.query.filter_by(is_active=(status == 'active'))
     
     contas = query.order_by(Conta.nome_fantasia).all()
     return jsonify({'success': True, 'contas': [c.to_dict() for c in contas]})
