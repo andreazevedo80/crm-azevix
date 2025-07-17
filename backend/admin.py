@@ -29,14 +29,38 @@ def account_management():
     """Página de listagem e gestão de contas."""
     return render_template('admin/account_management.html')
 
+# --- ALTERAÇÃO v5.01.2: Adicionada lógica de busca e paginação ---
 @admin.route('/api/accounts', methods=['GET'])
 def get_all_accounts():
-    """API que busca todas as contas, com filtro de status."""
+    """API que busca todas as contas, com filtro de status, busca e paginação."""
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
     status = request.args.get('status', 'active')
+    search = request.args.get('search', '').strip()
+
     query = Conta.query.filter_by(is_active=(status == 'active'))
     
-    contas = query.order_by(Conta.nome_fantasia).all()
-    return jsonify({'success': True, 'contas': [c.to_dict() for c in contas]})
+    if search:
+        query = query.filter(db.or_(
+            Conta.nome_fantasia.ilike(f'%{search}%'),
+            Conta.razao_social.ilike(f'%{search}%')
+        ))
+
+    pagination = query.order_by(Conta.nome_fantasia).paginate(page=page, per_page=per_page, error_out=False)
+    contas = [c.to_dict() for c in pagination.items]
+    
+    return jsonify({
+        'success': True,
+        'contas': contas,
+        'pagination': {
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'has_prev': pagination.has_prev,
+            'has_next': pagination.has_next,
+            'page': pagination.page
+        }
+    })
+
 
 @admin.route('/api/accounts/<int:conta_id>/reactivate', methods=['POST'])
 def reactivate_account(conta_id):

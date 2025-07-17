@@ -2,13 +2,51 @@ document.addEventListener("DOMContentLoaded", function() {
     const activeFilter = document.getElementById('filter-active');
     const inactiveFilter = document.getElementById('filter-inactive');
     const container = document.getElementById('accounts-table-container');
+    // --- ADIÇÃO v5.01.2: Elementos de busca e paginação ---
+    const searchInput = document.getElementById('account-search-input');
+    const paginationContainer = document.getElementById('pagination-container');
+    
     let currentStatus = 'active';
+    let currentPage = 1;
+    let searchTimeout;
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
 
+    const renderPagination = (pagination) => {
+        paginationContainer.innerHTML = '';
+        if (!pagination || pagination.pages <= 1) return;
+
+        let paginationHTML = '<ul class="pagination mb-0">';
+        paginationHTML += `<li class="page-item ${!pagination.has_prev ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pagination.page - 1}">Anterior</a></li>`;
+        for (let i = 1; i <= pagination.pages; i++) {
+            paginationHTML += `<li class="page-item ${i === pagination.page ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+        }
+        paginationHTML += `<li class="page-item ${!pagination.has_next ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pagination.page + 1}">Próximo</a></li>`;
+        paginationHTML += '</ul>';
+        paginationContainer.innerHTML = paginationHTML;
+
+        paginationContainer.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const newPage = e.target.dataset.page;
+                if (newPage && currentPage !== parseInt(newPage)) {
+                    currentPage = parseInt(newPage);
+                    fetchAndRenderAccounts();
+                }
+            });
+        });
+    };
+
     const fetchAndRenderAccounts = () => {
         container.innerHTML = loadingSpinner;
-        fetch(`/admin/api/accounts?status=${currentStatus}`)
+        // --- ALTERAÇÃO v5.01.2: Adiciona busca e paginação aos parâmetros ---
+        const params = new URLSearchParams({
+            status: currentStatus,
+            page: currentPage,
+            search: searchInput.value
+        });
+
+        fetch(`/admin/api/accounts?${params.toString()}`)
             .then(res => res.json())
             .then(data => {
                 let tableHTML = '<table class="table table-hover"><thead><tr><th>Nome Fantasia</th><th>Responsável</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
@@ -29,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 tableHTML += '</tbody></table>';
                 container.innerHTML = tableHTML;
+                renderPagination(data.pagination);
             });
     };
 
@@ -38,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    fetchAndRenderAccounts(); // Atualiza a lista
+                    fetchAndRenderAccounts();
                 } else {
                     alert('Erro ao reativar conta: ' + (data.error || 'Erro desconhecido'));
                 }
@@ -46,12 +85,17 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
+    const applyFiltersAndSearch = () => {
+        currentPage = 1;
+        fetchAndRenderAccounts();
+    };
+
     activeFilter.addEventListener('click', (e) => {
         e.preventDefault();
         currentStatus = 'active';
         activeFilter.classList.add('active');
         inactiveFilter.classList.remove('active');
-        fetchAndRenderAccounts();
+        applyFiltersAndSearch();
     });
 
     inactiveFilter.addEventListener('click', (e) => {
@@ -59,7 +103,12 @@ document.addEventListener("DOMContentLoaded", function() {
         currentStatus = 'inactive';
         inactiveFilter.classList.add('active');
         activeFilter.classList.remove('active');
-        fetchAndRenderAccounts();
+        applyFiltersAndSearch();
+    });
+    
+    searchInput.addEventListener('keyup', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFiltersAndSearch, 500);
     });
 
     fetchAndRenderAccounts(); // Carga inicial
