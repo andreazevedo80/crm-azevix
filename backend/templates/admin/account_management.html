@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Contas - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-azevix mb-0"><i class="fas fa-building me-2"></i>Gestão de Contas</h1>
+</div>
+
+<div class="card card-azevix">
+    <div class="card-header">
+        <ul class="nav nav-pills card-header-pills">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" id="filter-active">Ativas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" id="filter-inactive">Inativas</a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive" id="accounts-table-container">
+            </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- ADIÇÃO v5.01.1: Lógica para a página de Gestão de Contas ---
+    document.addEventListener("DOMContentLoaded", function() {
+        const activeFilter = document.getElementById('filter-active');
+        const inactiveFilter = document.getElementById('filter-inactive');
+        const container = document.getElementById('accounts-table-container');
+        let currentStatus = 'active';
+
+        const fetchAndRenderAccounts = () => {
+            container.innerHTML = '<div class="text-center"><div class="spinner-border text-azevix" role="status"></div></div>';
+            fetch(`/admin/api/accounts?status=${currentStatus}`)
+                .then(res => res.json())
+                .then(data => {
+                    let tableHTML = '<table class="table table-hover"><thead><tr><th>Nome Fantasia</th><th>Responsável</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+                    if (data.success && data.contas.length > 0) {
+                        data.contas.forEach(conta => {
+                            tableHTML += `
+                                <tr>
+                                    <td><a href="/contas/${conta.id}">${conta.nome_fantasia}</a></td>
+                                    <td>${conta.owner_name}</td>
+                                    <td><span class="badge bg-${currentStatus === 'active' ? 'success' : 'danger'}">${currentStatus === 'active' ? 'Ativa' : 'Inativa'}</span></td>
+                                    <td>
+                                        ${currentStatus === 'inactive' ? `<button class="btn btn-sm btn-outline-success" onclick="reactivateAccount(${conta.id})">Reativar</button>` : ''}
+                                    </td>
+                                </tr>`;
+                        });
+                    } else {
+                        tableHTML += '<tr><td colspan="4" class="text-center">Nenhuma conta encontrada.</td></tr>';
+                    }
+                    tableHTML += '</tbody></table>';
+                    container.innerHTML = tableHTML;
+                });
+        };
+
+        window.reactivateAccount = (contaId) => {
+            if (confirm('Tem certeza que deseja reativar esta conta?')) {
+                fetch(`/admin/api/accounts/${contaId}/reactivate`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchAndRenderAccounts(); // Atualiza a lista
+                    } else {
+                        alert('Erro ao reativar conta: ' + data.error);
+                    }
+                });
+            }
+        };
+
+        activeFilter.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentStatus = 'active';
+            activeFilter.classList.add('active');
+            inactiveFilter.classList.remove('active');
+            fetchAndRenderAccounts();
+        });
+
+        inactiveFilter.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentStatus = 'inactive';
+            inactiveFilter.classList.add('active');
+            activeFilter.classList.remove('active');
+            fetchAndRenderAccounts();
+        });
+
+        fetchAndRenderAccounts(); // Carga inicial
+    });
+</script>
+{% endblock %}

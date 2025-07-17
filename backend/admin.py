@@ -23,6 +23,32 @@ def user_management():
     users = User.query.order_by(User.name).all()
     return render_template('admin/user_management.html', users=users)
 
+# --- ADIÇÃO v5.01.1: Rotas para Gestão de Contas ---
+@admin.route('/accounts')
+def account_management():
+    """Página de listagem e gestão de contas."""
+    return render_template('admin/account_management.html')
+
+@admin.route('/api/accounts', methods=['GET'])
+def get_all_accounts():
+    """API que busca todas as contas, com filtro de status."""
+    status = request.args.get('status', 'active')
+    if status == 'active':
+        query = Conta.query.filter_by(is_active=True)
+    else:
+        query = Conta.query.filter_by(is_active=False)
+    
+    contas = query.order_by(Conta.nome_fantasia).all()
+    return jsonify({'success': True, 'contas': [c.to_dict() for c in contas]})
+
+@admin.route('/api/accounts/<int:conta_id>/reactivate', methods=['POST'])
+def reactivate_account(conta_id):
+    """Reativa uma conta que foi desativada."""
+    conta = Conta.query.get_or_404(conta_id)
+    conta.is_active = True
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Conta reativada com sucesso.'})
+
 # --- ADIÇÃO v5.01: Novas rotas de API para gerenciar usuários ---
 
 @admin.route('/api/users/<int:user_id>', methods=['GET'])
