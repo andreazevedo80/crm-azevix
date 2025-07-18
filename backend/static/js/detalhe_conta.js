@@ -18,8 +18,15 @@ document.addEventListener("DOMContentLoaded", function() {
     const logAuditoriaContainer = document.getElementById('log-auditoria-container');
     const btnDesativarConta = document.getElementById('btn-desativar-conta');
     
+    // --- ADIÇÃO v5.03: Elementos do Modal de Edição do Processo do Lead ---
+    const editLeadProcessoModalEl = document.getElementById('editLeadProcessoModal');
+    const editLeadProcessoModal = new bootstrap.Modal(editLeadProcessoModalEl);
+    const formEditLeadProcesso = document.getElementById('form-edit-lead-processo');
+    
     // Estado da aplicação
     let originalContaData = {};
+    let contatosData = [];
+    let leadsData = []; // Armazena a lista de leads
 
     const populateSelect = (selectElement, options, selectedValue) => {
         selectElement.innerHTML = '';
@@ -69,11 +76,36 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
+    // --- ALTERAÇÃO v5.03: Função renderLeads completamente reescrita ---
     const renderLeads = (leads) => {
         listaLeads.innerHTML = '';
         if (leads && leads.length > 0) {
-            leads.forEach(l => { listaLeads.innerHTML += `<tr><td>${l.titulo}</td><td><span class="badge bg-info">${l.status_lead}</span></td><td>${l.valor_estimado}</td><td>${l.contato_principal_nome}</td><td><a href="#" class="btn btn-sm btn-outline-secondary disabled">Ver</a></td></tr>`; });
-        } else { listaLeads.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma oportunidade encontrada.</td></tr>'; }
+            leads.forEach(l => {
+                const tempIcon = l.temperatura === 'Quente' ? 'fa-fire text-danger' : (l.temperatura === 'Frio' ? 'fa-snowflake text-info' : 'fa-sun text-warning');
+                const followupIcon = l.follow_up_necessario ? 'fa-flag text-danger' : 'fa-flag text-muted';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${l.titulo}</td>
+                    <td><span class="badge bg-primary">${l.estagio_ciclo_vida}</span></td>
+                    <td><span class="badge bg-info">${l.status_lead}</span></td>
+                    <td class="text-center">
+                        <i class="fas ${tempIcon} fa-lg" title="${l.temperatura}"></i>
+                    </td>
+                    <td class="text-center">
+                        <i class="fas ${followupIcon} fa-lg" style="cursor: pointer;" onclick="toggleFollowUp(${l.id}, ${!l.follow_up_necessario})" title="Marcar Follow-up"></i>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="openEditLeadProcessoModal(${l.id})">
+                            <i class="fas fa-edit"></i> Alterar Status
+                        </button>
+                    </td>
+                `;
+                listaLeads.appendChild(row);
+            });
+        } else {
+            listaLeads.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma oportunidade encontrada.</td></tr>';
+        }
     };
     
     const renderHierarchy = (conta) => {
@@ -133,6 +165,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (data.success) {
             originalContaData = data.conta;
             contatosData = data.contatos;
+            leadsData = data.leads; // Armazena os leads
             renderInfoForm(originalContaData);
             renderContatos(data.contatos);
             renderLeads(data.leads);
@@ -175,6 +208,25 @@ document.addEventListener("DOMContentLoaded", function() {
                     alert(`Erro ao desativar contato: ${result.error}`);
                 }
             });
+        }
+    };
+
+    // --- ADIÇÃO v5.03: Funções para gerenciar o processo do lead ---
+    window.toggleFollowUp = (leadId, novoStatus) => {
+        const data = { follow_up_necessario: novoStatus };
+        fetch(`/api/leads/${leadId}/processo`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+        }).then(() => populateDropdownsAndFetchDetails());
+    };
+
+    window.openEditLeadProcessoModal = (leadId) => {
+        const lead = leadsData.find(l => l.id === leadId);
+        if (lead) {
+            formEditLeadProcesso.querySelector('#edit-lead-id').value = lead.id;
+            formEditLeadProcesso.querySelector('#edit-lead-titulo').textContent = lead.titulo;
+            // Lógica para popular o select de status (precisará buscar do config)
+            // e para mostrar/esconder o motivo da perda...
+            editLeadProcessoModal.show();
         }
     };
 
@@ -308,6 +360,35 @@ document.addEventListener("DOMContentLoaded", function() {
             await populateDropdownsAndFetchDetails();
         } else {
             alert(`Falha ao atualizar contato: ${result.error || 'Erro desconhecido'}`);
+        }
+    });
+
+    // --- ADIÇÃO v5.03: Listener para o formulário de edição de processo do lead ---
+    formEditLeadProcesso.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const leadId = formEditLeadProcesso.querySelector('#edit-lead-id').value;
+        const novoStatus = formEditLeadProcesso.querySelector('#edit-lead-status').value;
+        
+        const updatedData = { status_lead: novoStatus };
+        
+        if (novoStatus === 'Perdido' || novoStatus === 'Não Qualificado') {
+            const motivo = formEditLeadProcesso.querySelector('#edit-lead-motivo-perda').value;
+            if (!motivo) {
+                alert('O motivo da perda é obrigatório.');
+                return;
+            }
+            updatedData.motivo_perda = motivo;
+        }
+        
+        const response = await fetch(`/api/leads/${leadId}/processo`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedData)
+        });
+        const result = await response.json();
+        if (result.success) {
+            editLeadProcessoModal.hide();
+            await populateDropdownsAndFetchDetails();
+        } else {
+            alert(`Falha ao atualizar: ${result.error || 'Erro desconhecido'}`);
         }
     });
 

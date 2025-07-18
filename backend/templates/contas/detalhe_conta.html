@@ -76,8 +76,18 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
-                        <thead><tr><th>Título</th><th>Status</th><th>Valor (R$)</th><th>Contato Principal</th><th>Ações</th></tr></thead>
-                        <tbody id="lista-leads"></tbody>
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Estágio</th>
+                                <th>Status</th>
+                                <th class="text-center">Temperatura</th>
+                                <th class="text-center">Follow-up</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-leads">
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -113,6 +123,39 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-azevix">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editLeadProcessoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="form-edit-lead-processo">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Processo da Oportunidade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-lead-id">
+                    <h6 id="edit-lead-titulo" class="text-azevix"></h6>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-lead-status" class="form-label">Status da Oportunidade</label>
+                            <select id="edit-lead-status" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="motivo-perda-container" style="display: none;">
+                            <label for="edit-lead-motivo-perda" class="form-label">Motivo da Perda *</label>
+                            <select id="edit-lead-motivo-perda" class="form-select">
+                                </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-azevix">Salvar Alterações</button>
                 </div>
             </form>
         </div>
