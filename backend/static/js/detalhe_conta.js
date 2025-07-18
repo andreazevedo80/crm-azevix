@@ -22,16 +22,22 @@ document.addEventListener("DOMContentLoaded", function() {
     const editLeadProcessoModalEl = document.getElementById('editLeadProcessoModal');
     const editLeadProcessoModal = new bootstrap.Modal(editLeadProcessoModalEl);
     const formEditLeadProcesso = document.getElementById('form-edit-lead-processo');
+    const leadStatusSelect = document.getElementById('edit-lead-status');
+    const motivoPerdaContainer = document.getElementById('motivo-perda-container');
+    const motivoPerdaSelect = document.getElementById('edit-lead-motivo-perda');
     
     // Estado da aplicação
     let originalContaData = {};
     let contatosData = [];
     let leadsData = []; // Armazena a lista de leads
+    let statusLeadsOptions = []; // Para armazenar os status
+    const motivosPerdaOptions = ['Preço', 'Concorrência', 'Timing', 'Sem Orçamento', 'Sem Fit com o Produto']; // Hardcoded por enquanto
 
     const populateSelect = (selectElement, options, selectedValue) => {
         selectElement.innerHTML = '';
         if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
         if (selectElement.id === 'edit-matriz') selectElement.add(new Option('Nenhuma', ''));
+        if (selectElement.id === 'edit-lead-motivo-perda') selectElement.add(new Option('Selecione...', ''));
         
         options.forEach(opt => {
             const text = opt.name || opt.nome_fantasia || opt;
@@ -81,7 +87,11 @@ document.addEventListener("DOMContentLoaded", function() {
         listaLeads.innerHTML = '';
         if (leads && leads.length > 0) {
             leads.forEach(l => {
-                const tempIcon = l.temperatura === 'Quente' ? 'fa-fire text-danger' : (l.temperatura === 'Frio' ? 'fa-snowflake text-info' : 'fa-sun text-warning');
+                const tempIcons = `
+                    <i class="fas fa-fire ${l.temperatura === 'Quente' ? 'text-danger' : 'text-muted'}" style="cursor: pointer;" onclick="updateTemperaturaLead(${l.id}, 'Quente')" title="Quente"></i>
+                    <i class="fas fa-sun ${l.temperatura === 'Morno' ? 'text-warning' : 'text-muted'}" style="cursor: pointer;" onclick="updateTemperaturaLead(${l.id}, 'Morno')" title="Morno"></i>
+                    <i class="fas fa-snowflake ${l.temperatura === 'Frio' ? 'text-info' : 'text-muted'}" style="cursor: pointer;" onclick="updateTemperaturaLead(${l.id}, 'Frio')" title="Frio"></i>
+                `;
                 const followupIcon = l.follow_up_necessario ? 'fa-flag text-danger' : 'fa-flag text-muted';
 
                 const row = document.createElement('tr');
@@ -89,9 +99,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <td>${l.titulo}</td>
                     <td><span class="badge bg-primary">${l.estagio_ciclo_vida}</span></td>
                     <td><span class="badge bg-info">${l.status_lead}</span></td>
-                    <td class="text-center">
-                        <i class="fas ${tempIcon} fa-lg" title="${l.temperatura}"></i>
-                    </td>
+                    <td class="text-center">${tempIcons}</td>
                     <td class="text-center">
                         <i class="fas ${followupIcon} fa-lg" style="cursor: pointer;" onclick="toggleFollowUp(${l.id}, ${!l.follow_up_necessario})" title="Marcar Follow-up"></i>
                     </td>
@@ -121,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function() {
         hierarchyHr.style.display = hierarchyHtml ? 'block' : 'none';
     };
 
-    // --- ADIÇÃO v4.02: Função para renderizar o log de auditoria ---
+    // --- Função para renderizar o log de auditoria ---
     const renderAuditoria = (historico) => {
         if (!logAuditoriaContainer) return; // Só executa se o elemento existir
         
@@ -149,7 +157,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const populateDropdownsAndFetchDetails = async () => {
         const configResponse = await fetch('/api/contas/config');
         const configData = await configResponse.json();
-        if (configData.success) { populateSelect(document.getElementById('edit-segmento'), configData.segmentos); }
+        if (configData.success) { 
+            populateSelect(document.getElementById('edit-segmento'), configData.segmentos);
+            statusLeadsOptions = configData.status_leads; // Armazena a lista de status
+        }
 
         if (IS_ADMIN) {
             const adminResponse = await fetch('/api/admin/form_data');
@@ -171,7 +182,7 @@ document.addEventListener("DOMContentLoaded", function() {
             renderLeads(data.leads);
             renderHierarchy(data.conta);
             
-            // --- ADIÇÃO v4.02: Chama a função para buscar o histórico ---
+            // --- Chama a função para buscar o histórico ---
             if (IS_ADMIN || IS_MANAGER) {
                 fetch(`/api/contas/${CONTA_ID}/historico`)
                     .then(res => res.json())
@@ -184,7 +195,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
-    // --- ADIÇÃO V2.07: Funções globais para gerenciar contatos ---
+    // --- Funções globais para gerenciar contatos ---
     window.openEditContatoModal = (contatoId) => {
         const contato = contatosData.find(c => c.id === contatoId);
         if(contato) {
@@ -211,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
-    // --- ADIÇÃO v5.03: Funções para gerenciar o processo do lead ---
+    // --- Funções para gerenciar o processo do lead ---
     window.toggleFollowUp = (leadId, novoStatus) => {
         const data = { follow_up_necessario: novoStatus };
         fetch(`/api/leads/${leadId}/processo`, {
@@ -219,18 +230,46 @@ document.addEventListener("DOMContentLoaded", function() {
         }).then(() => populateDropdownsAndFetchDetails());
     };
 
+    // --- ADIÇÃO v5.03: Nova função para atualizar temperatura do lead ---
+    window.updateTemperaturaLead = (leadId, novaTemperatura) => {
+        const data = { temperatura: novaTemperatura };
+        fetch(`/api/leads/${leadId}/processo`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+        }).then(() => populateDropdownsAndFetchDetails());
+    };
+
+    // --- ALTERAÇÃO v5.03: Função openEditLeadProcessoModal completada ---
     window.openEditLeadProcessoModal = (leadId) => {
         const lead = leadsData.find(l => l.id === leadId);
         if (lead) {
             formEditLeadProcesso.querySelector('#edit-lead-id').value = lead.id;
             formEditLeadProcesso.querySelector('#edit-lead-titulo').textContent = lead.titulo;
-            // Lógica para popular o select de status (precisará buscar do config)
-            // e para mostrar/esconder o motivo da perda...
+            
+            // Popula os selects do modal
+            populateSelect(leadStatusSelect, statusLeadsOptions, lead.status_lead);
+            populateSelect(motivoPerdaSelect, motivosPerdaOptions, lead.motivo_perda);
+
+            // Controla a visibilidade do motivo da perda
+            const checkMotivoPerda = () => {
+                const statusSelecionado = leadStatusSelect.value;
+                if (statusSelecionado === 'Perdido' || statusSelecionado === 'Não Qualificado') {
+                    motivoPerdaContainer.style.display = 'block';
+                    motivoPerdaSelect.required = true;
+                } else {
+                    motivoPerdaContainer.style.display = 'none';
+                    motivoPerdaSelect.required = false;
+                }
+            };
+            
+            leadStatusSelect.removeEventListener('change', checkMotivoPerda); // Remove listener antigo para evitar duplicação
+            leadStatusSelect.addEventListener('change', checkMotivoPerda);
+            checkMotivoPerda(); // Executa uma vez para o estado inicial
+
             editLeadProcessoModal.show();
         }
     };
 
-    // --- ADIÇÃO v4.02: Lógica para o modal de desativação ---
+    // --- Lógica para o modal de desativação ---
     if (btnDesativarConta) {
         const desativarContaModalEl = document.getElementById('desativarContaModal');
         const desativarContaModal = new bootstrap.Modal(desativarContaModalEl);
@@ -340,7 +379,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 500);
     });
 
-    // --- ADIÇÃO V2.07: Listener para o formulário de edição de contato ---
+    // --- Listener para o formulário de edição de contato ---
     formEditContato.addEventListener('submit', async (e) => {
         e.preventDefault();
         const contatoId = document.getElementById('edit-contato-id').value;
