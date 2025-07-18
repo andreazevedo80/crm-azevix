@@ -27,6 +27,7 @@ Objetivo: Criar a nova interface central para a gestão do funil de vendas.
 - Implementar paginação desde o início
 - Adicionar contador de leads por status (métricas básicas)
 - Incluir busca por nome/empresa
+- Adicionar botão na pagina detalhe_conta.htlm "Adicionar Nova Oportunidade"
 - Ao clicar em um lead na lista, o usuário será levado para a página de detalhe_conta correspondente.
 📊 Filtros: se forem muitos, pense em URL parametrizada para facilitar bookmarks e análises.
 
