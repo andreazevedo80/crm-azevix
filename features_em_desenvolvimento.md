@@ -1,18 +1,4 @@
-### Plano de Ação Mestre (Revisão 8.0 - Proposta Reorganizada)
-
-## versão 5.03: Refinamento do Processo de Vendas (A Base)
-Objetivo: Enriquecer o modelo Lead com os novos campos e status para suportar o novo fluxo de vendas.
-
-# Requisitos:
-- Adicionar as colunas estagio_ciclo_vida, motivo_perda e temperatura ao modelo Lead.
-- Adicionar a coluna booleana follow_up_necessario.
-- Adicionar os campos de auditoria (data_apropriacao, etc.).
-- Atualizar a lista STATUS_LEADS no contas.py para os novos valores.
-- Implementar a lógica de mudança automática do estagio_ciclo_vida no backend.
-- Implementar validações de negócio para transições de status
-- Adicionar logs de auditoria para mudanças de status
-
-🔍 Validações de transição de status: sugiro uma tabela auxiliar status_transicoes com regras, para evitar lógica engessada no código.
+### Plano de Ação Mestre (Revisão 8.2 - Proposta Reorganizada)
 
 # versão 6.0: Módulo de Gestão de Leads (A Nova Tela)
 Objetivo: Criar a nova interface central para a gestão do funil de vendas.
@@ -69,10 +55,12 @@ Objetivo: Permitir que o administrador importe uma base de leads de uma planilha
 - Dar ao administrador o poder de customizar o processo de vendas.
 
 # Requisitos:
+- Implementar validações de negócio para transições de status
 - Interface para o Admin gerenciar (CRUD) os Status de Lead e os Motivos de Perda.
 - Interface para o Admin definir as regras de transição entre os status (Workflow).
 - Na tela do Lead, o campo "Status" só mostrará as transições permitidas, e exigirá um "Motivo de Perda" quando aplicável.
 ⚠️ Atenção à integridade dos dados: se um admin remove um status, o que acontece com os leads existentes?
+🔍 Validações de transição de status: sugiro uma tabela auxiliar status_transicoes com regras, para evitar lógica engessada no código.
 
 ## versão 10.00: Módulo de Propostas (Estrutura e Custos)
 # Objetivo:

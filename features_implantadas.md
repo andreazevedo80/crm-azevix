@@ -142,3 +142,14 @@ Implementar o ciclo de vida inicial do usuário: o "onboarding" seguro através 
 - Implementar a função de desativar uma Conta (soft delete).
 - Implementar a lógica para tratar filiais órfãs (definir matriz_id como NULL) quando uma matriz for desativada.
 - Impedir que uma conta seja definida como sua própria matriz (validação de hierarquia circular).
+
+## versão 5.03: Refinamento do Processo de Vendas (A Base)
+Objetivo: Enriquecer o modelo Lead com os novos campos e status para suportar o novo fluxo de vendas.
+
+# Requisitos:
+- Adicionar as colunas estagio_ciclo_vida, motivo_perda e temperatura ao modelo Lead.
+- Adicionar a coluna booleana follow_up_necessario.
+- Adicionar os campos de auditoria (data_apropriacao, etc.).
+- Atualizar a lista STATUS_LEADS no contas.py para os novos valores.
+- Implementar a lógica de mudança automática do estagio_ciclo_vida no backend.
+- Adicionar logs de auditoria para mudanças de status
