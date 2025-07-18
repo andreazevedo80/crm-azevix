@@ -124,16 +124,38 @@ class Lead(db.Model):
     __tablename__ = 'leads'
     id = db.Column(db.Integer, primary_key=True)
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     contato_id = db.Column(db.Integer, db.ForeignKey('contatos.id'), nullable=True)
     titulo = db.Column(db.String(255), nullable=False)
     status_lead = db.Column(db.String(50), nullable=False, default='NOVO_LEAD')
     valor_estimado = db.Column(db.Numeric(10, 2), nullable=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # --- ADIÇÃO v5.03: Novos campos para o processo de vendas ---
+    estagio_ciclo_vida = db.Column(db.String(50), nullable=False, default='Lead')
+    temperatura = db.Column(db.String(50), default='Morno') # Quente, Morno, Frio
+    follow_up_necessario = db.Column(db.Boolean, default=False, nullable=False)
+    motivo_perda = db.Column(db.String(255), nullable=True)
+    
+    # --- ADIÇÃO v5.03: Campos de auditoria de apropriação ---
+    data_apropriacao = db.Column(db.DateTime, nullable=True)
+    
     def to_dict(self):
         contato_principal = Contato.query.get(self.contato_id) if self.contato_id else None
-        return {'id': self.id, 'titulo': self.titulo, 'status_lead': self.status_lead, 'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00', 'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'), 'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A'}
+        return {
+            'id': self.id,
+            'titulo': self.titulo,
+            'status_lead': self.status_lead,
+            'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00',
+            'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'),
+            'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A',
+            # --- ADIÇÃO v5.03: Incluindo novos campos na resposta da API ---
+            'estagio_ciclo_vida': self.estagio_ciclo_vida,
+            'temperatura': self.temperatura,
+            'follow_up_necessario': self.follow_up_necessario,
+            'motivo_perda': self.motivo_perda
+        }
 
 class HistoricoAlteracao(db.Model):
     __tablename__ = 'historico_alteracoes'

@@ -2,11 +2,14 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from flask_login import login_required, current_user
 from .models import Conta, Contato, Lead, User, db, HistoricoAlteracao
 from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
+from datetime import datetime
 
 contas = Blueprint('contas', __name__)
 
 SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
-STATUS_LEADS = ['NOVO_LEAD', 'CONTATADO', 'AGENDADO', 'PROPOSTA_ENVIADA', 'FECHADO', 'SEM_INTERESSE', 'PROPOSTA_REJEITADA']
+
+# --- ALTERAÇÃO v5.03: Nova lista de status alinhada ao processo de vendas ---
+STATUS_LEADS = ['Novo', 'Tentando Contato', 'Contatado', 'Interesse Demonstrado', 'Qualificado', 'Reunião Agendada', 'Proposta Apresentada', 'Em Negociação', 'Aguardando Aprovação', 'Ganho', 'Perdido', 'Não Qualificado']
 
 # --- Função Auxiliar para Checagem de Permissão ---
 def check_permission(conta):
@@ -261,6 +264,58 @@ def delete_contato(contato_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Contato desativado.'})
 
+# --- ADIÇÃO v5.03: Rota dedicada para atualizar o processo de um Lead ---
+@contas.route('/api/leads/<int:lead_id>/processo', methods=['PUT'])
+@login_required
+def update_lead_processo(lead_id):
+    lead = Lead.query.get_or_404(lead_id)
+    conta = Conta.query.get_or_404(lead.conta_id)
+    if not check_permission(conta):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para editar este lead.'}), 403
+        
+    data = request.get_json()
+    changes_to_log = []
+    
+    # Atualiza Status e verifica transições
+    if 'status_lead' in data and data['status_lead'] != lead.status_lead:
+        # AQUI ENTRARÁ A LÓGICA DE VALIDAÇÃO DE WORKFLOW DA v7.0
+        changes_to_log.append({'campo': 'Status', 'valor_antigo': lead.status_lead, 'valor_novo': data['status_lead']})
+        lead.status_lead = data['status_lead']
+        
+        # Lógica de automação do Estágio do Ciclo de Vida
+        if lead.status_lead == 'Qualificado' and lead.estagio_ciclo_vida == 'Lead':
+            changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': 'Oportunidade'})
+            lead.estagio_ciclo_vida = 'Oportunidade'
+        elif lead.status_lead == 'Ganho' and lead.estagio_ciclo_vida != 'Cliente':
+            changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': 'Cliente'})
+            lead.estagio_ciclo_vida = 'Cliente'
+
+    # Atualiza outros campos do processo
+    if 'temperatura' in data and data['temperatura'] != lead.temperatura:
+        changes_to_log.append({'campo': 'Temperatura', 'valor_antigo': lead.temperatura, 'valor_novo': data['temperatura']})
+        lead.temperatura = data['temperatura']
+        
+    if 'follow_up_necessario' in data and data['follow_up_necessario'] != lead.follow_up_necessario:
+        changes_to_log.append({'campo': 'Follow-up', 'valor_antigo': str(lead.follow_up_necessario), 'valor_novo': str(data['follow_up_necessario'])})
+        lead.follow_up_necessario = data['follow_up_necessario']
+        
+    if 'motivo_perda' in data and data['motivo_perda'] != lead.motivo_perda:
+        changes_to_log.append({'campo': 'Motivo da Perda', 'valor_antigo': lead.motivo_perda, 'valor_novo': data['motivo_perda']})
+        lead.motivo_perda = data['motivo_perda']
+
+    lead.data_ultima_atualizacao = datetime.utcnow()
+
+    # Grava o histórico
+    for change in changes_to_log:
+        historico = HistoricoAlteracao(
+            user_id=current_user.id, lead_id=lead.id, campo=change['campo'],
+            valor_antigo=change['valor_antigo'], valor_novo=change['valor_novo']
+        )
+        db.session.add(historico)
+        
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Processo do lead atualizado.'})
+
 @contas.route('/api/contas/config', methods=['GET'])
 @login_required
 def get_contas_config():
@@ -299,7 +354,17 @@ def criar_conta():
         db.session.add(novo_contato)
         db.session.commit()
     if data.get('lead_titulo'):
-        novo_lead = Lead(conta_id=nova_conta.id, user_id=current_user.id, contato_id=novo_contato.id if novo_contato else None, titulo=data.get('lead_titulo'), valor_estimado=data.get('lead_valor') or None)
+        # --- ALTERAÇÃO v5.03: Define os valores padrão para os novos campos do Lead ---
+        novo_lead = Lead(
+            conta_id=nova_conta.id, 
+            user_id=current_user.id, 
+            contato_id=novo_contato.id if novo_contato else None, 
+            titulo=data.get('lead_titulo'), 
+            valor_estimado=data.get('lead_valor') or None,
+            estagio_ciclo_vida='Lead', # Valor Padrão
+            temperatura='Morno', # Valor Padrão
+            status_lead='Novo' # Novo status padrão
+        )
         db.session.add(novo_lead)
     
     db.session.commit()

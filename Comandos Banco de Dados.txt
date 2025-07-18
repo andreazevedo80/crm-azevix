@@ -95,3 +95,6 @@ SELECT setval('contas_id_seq', (SELECT MAX(id) FROM contas));
 
 ## Verificar Log
 SELECT * FROM historico_alteracoes WHERE conta_id = 1;
+
+# Verificar status_lead
+SELECT id, estagio_ciclo_vida, temperatura, status_lead FROM leads;
