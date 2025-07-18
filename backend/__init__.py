@@ -59,10 +59,10 @@ def create_app():
     app.register_blueprint(contas_blueprint, url_prefix='/')
     from .user import user as user_blueprint
     app.register_blueprint(user_blueprint, url_prefix='/')
-    
-    # --- ADIÇÃO v5.01: Registro do Blueprint de Administração ---
     from .admin import admin as admin_blueprint
     app.register_blueprint(admin_blueprint)
+    from .leads import leads as leads_blueprint
+    app.register_blueprint(leads_blueprint)
 
     setup_database(app)
 
