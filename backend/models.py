@@ -64,7 +64,7 @@ class User(UserMixin, db.Model):
 class Conta(db.Model):
     __tablename__ = 'contas'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     matriz_id = db.Column(db.Integer, db.ForeignKey('contas.id', ondelete='SET NULL'), nullable=True)
     razao_social = db.Column(db.String(255))
     nome_fantasia = db.Column(db.String(255), nullable=False, index=True)
