@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // --- ELEMENTOS DA PÁGINA ---
     const container = document.getElementById('leads-table-container');
     const paginationContainer = document.getElementById('pagination-container');
     const searchInput = document.getElementById('lead-search-input');
@@ -12,12 +11,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
     
-    // --- ESTADO DA APLICAÇÃO ---
     let currentPage = 1;
     let currentViewMode = 'meus_leads';
     let searchTimeout;
 
-    // --- FUNÇÕES PARA POPULAR FILTROS ---
     const populateSelect = (selectElement, options) => {
         options.forEach(opt => selectElement.add(new Option(opt, opt)));
     };
@@ -31,18 +28,34 @@ document.addEventListener("DOMContentLoaded", function() {
                 populateSelect(statusFilter, data.status);
                 populateSelect(temperaturaFilter, data.temperaturas);
             }
-        } catch (error) { 
-            console.error("Erro ao carregar filtros:", error); 
-        }
+        } catch (error) { console.error("Erro ao carregar filtros:", error); }
     };
 
-    // --- FUNÇÃO PARA RENDERIZAR PAGINAÇÃO ---
     const renderPagination = (pagination) => {
-        // A lógica de paginação será implementada aqui
-        // Mantendo como comentário pois não estava no arquivo base original
+        paginationContainer.innerHTML = '';
+        if (!pagination || pagination.pages <= 1) return;
+
+        let paginationHTML = '<ul class="pagination mb-0">';
+        paginationHTML += `<li class="page-item ${!pagination.has_prev ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pagination.page - 1}">Anterior</a></li>`;
+        for (let i = 1; i <= pagination.pages; i++) {
+            paginationHTML += `<li class="page-item ${i === pagination.page ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+        }
+        paginationHTML += `<li class="page-item ${!pagination.has_next ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pagination.page + 1}">Próximo</a></li>`;
+        paginationHTML += '</ul>';
+        paginationContainer.innerHTML = paginationHTML;
+
+        paginationContainer.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const newPage = e.target.dataset.page;
+                if (newPage && currentPage !== parseInt(newPage)) {
+                    currentPage = parseInt(newPage);
+                    fetchAndRenderLeads();
+                }
+            });
+        });
     };
 
-    // --- FUNÇÃO PARA RENDERIZAR LEADS ---
     const renderLeads = (leads, pagination) => {
         let tableHTML = `
             <table class="table table-hover">
@@ -73,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 tableHTML += `
                     <tr>
                         <td><strong>${lead.titulo}</strong></td>
-                        <td>${lead.conta_nome}</td>
+                        <td><a href="/contas/${lead.conta_id}">${lead.conta_nome}</a></td>
                         <td><span class="badge bg-primary">${lead.estagio_ciclo_vida}</span></td>
                         <td><span class="badge bg-info">${lead.status_lead}</span></td>
                         <td class="text-center"><i class="fas ${tempIcon} fa-lg" title="${lead.temperatura}"></i></td>
@@ -85,17 +98,13 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             tableHTML += '<tr><td colspan="8" class="text-center">Nenhum lead encontrado.</td></tr>';
         }
-
         tableHTML += '</tbody></table>';
         container.innerHTML = tableHTML;
         renderPagination(pagination);
     };
-
-    // --- FUNÇÃO PRINCIPAL PARA BUSCAR E RENDERIZAR LEADS ---
+    
     const fetchAndRenderLeads = () => {
         container.innerHTML = loadingSpinner;
-        
-        // Construindo parâmetros com todos os filtros
         const params = new URLSearchParams({
             page: currentPage,
             view_mode: currentViewMode,
@@ -115,13 +124,11 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     };
 
-    // --- FUNÇÃO AUXILIAR PARA APLICAR FILTROS ---
     const applyFiltersAndSearch = () => {
         currentPage = 1;
         fetchAndRenderLeads();
     };
 
-    // --- EVENT LISTENERS ---
     meusLeadsTab.addEventListener('click', (e) => {
         e.preventDefault();
         currentViewMode = 'meus_leads';
@@ -147,10 +154,9 @@ document.addEventListener("DOMContentLoaded", function() {
         el.addEventListener('change', applyFiltersAndSearch);
     });
 
-    // --- INICIALIZAÇÃO ---
     const init = async () => {
         await populateFilters();
-        fetchAndRenderLeads(); // Carga inicial mantida do arquivo base
+        fetchAndRenderLeads();
     };
     
     init();

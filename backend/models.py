@@ -26,9 +26,6 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(150), nullable=False)
     password_hash = db.Column(db.String(256), nullable=True)
     is_active = db.Column(db.Boolean, default=False, nullable=False)
-
-    # --- REMOVIDO: O campo de texto 'role' foi removido ---
-    # role = db.Column(db.String(50), default='vendedor', nullable=False)
     
     # --- ADIÇÃO: Novos campos e relações para hierarquia e permissões ---
     gerente_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -132,13 +129,13 @@ class Lead(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # --- ADIÇÃO v5.03: Novos campos para o processo de vendas ---
+    # --- ADIÇÃO: Novos campos para o processo de vendas ---
     estagio_ciclo_vida = db.Column(db.String(50), nullable=False, default='Lead')
     temperatura = db.Column(db.String(50), default='Morno') # Quente, Morno, Frio
     follow_up_necessario = db.Column(db.Boolean, default=False, nullable=False)
     motivo_perda = db.Column(db.String(255), nullable=True)
     
-    # --- ADIÇÃO v5.03: Campos de auditoria de apropriação ---
+    # --- ADIÇÃO: Campos de auditoria de apropriação ---
     data_apropriacao = db.Column(db.DateTime, nullable=True)
     
     def to_dict(self):
@@ -150,7 +147,7 @@ class Lead(db.Model):
             'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00',
             'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'),
             'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A',
-            # --- ADIÇÃO v5.03: Incluindo novos campos na resposta da API ---
+            # --- ADIÇÃO: Incluindo novos campos na resposta da API ---
             'estagio_ciclo_vida': self.estagio_ciclo_vida,
             'temperatura': self.temperatura,
             'follow_up_necessario': self.follow_up_necessario,
