@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from .models import Lead, User, db, Conta
+from .models import Lead, User, db, Conta, HistoricoAlteracao
 from .config_constants import ESTAGIOS_CICLO_VIDA, STATUS_LEADS, TEMPERATURAS
 from datetime import datetime
 
@@ -82,16 +82,20 @@ def get_leads():
         }
     })
 
-# --- ADIÇÃO: Rota para assumir um lead do pool ---
+# --- ADIÇÃO v6.0: Rota para assumir um lead do pool ---
 @leads.route('/api/leads/<int:lead_id>/assumir', methods=['POST'])
 @login_required
 def assumir_lead(lead_id):
     lead = Lead.query.get_or_404(lead_id)
+    conta = Conta.query.get_or_404(lead.conta_id)
 
     if lead.user_id is not None:
-        return jsonify({'success': False, 'error': f'Este lead já foi assumido por {lead.owner.name}.'}), 409 # 409 Conflict
+        return jsonify({'success': False, 'error': f'Este lead já foi assumido por {lead.owner.name}.'}), 409
 
     lead.user_id = current_user.id
+    if conta.user_id is None:
+        conta.user_id = current_user.id
+    conta.user_id = current_user.id # Atribui a conta também
     lead.status_lead = 'Tentando Contato'
     lead.data_apropriacao = datetime.utcnow()
     lead.data_ultima_atualizacao = datetime.utcnow()
@@ -99,3 +103,30 @@ def assumir_lead(lead_id):
     db.session.commit()
     
     return jsonify({'success': True, 'message': 'Lead assumido com sucesso!'})
+
+# --- ADIÇÃO v6.0: Rota para criar um novo lead (oportunidade) para uma conta existente ---
+@leads.route('/api/leads', methods=['POST'])
+@login_required
+def criar_lead():
+    data = request.get_json()
+    conta_id = data.get('conta_id')
+    titulo = data.get('titulo')
+    if not conta_id or not titulo:
+        return jsonify({'success': False, 'error': 'Conta e Título são obrigatórios.'}), 400
+    conta = Conta.query.get_or_404(conta_id)
+    # A permissão para criar um lead é a mesma de ver a conta
+    if not check_permission(conta):
+         return jsonify({'success': False, 'error': 'Você não tem permissão para adicionar um lead a esta conta.'}), 403
+    novo_lead = Lead(
+        conta_id=conta_id,
+        user_id=current_user.id,
+        titulo=titulo,
+        valor_estimado=data.get('valor_estimado') or None,
+        contato_id=data.get('contato_id') or None,
+        estagio_ciclo_vida='Lead',
+        temperatura='Morno',
+        status_lead='Novo'
+    )
+    db.session.add(novo_lead)
+    db.session.commit()
+    return jsonify({'success': True, 'lead': novo_lead.to_dict()})

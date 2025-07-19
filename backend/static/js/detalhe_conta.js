@@ -26,6 +26,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const motivoPerdaContainer = document.getElementById('motivo-perda-container');
     const motivoPerdaSelect = document.getElementById('edit-lead-motivo-perda');
     
+    // --- ADIÇÃO v6.0: Elementos do Modal de Nova Oportunidade ---
+    const btnNovaOportunidade = document.getElementById('btn-nova-oportunidade');
+    const novaOportunidadeModalEl = document.getElementById('novaOportunidadeModal');
+    const novaOportunidadeModal = new bootstrap.Modal(novaOportunidadeModalEl);
+    const formNovaOportunidade = document.getElementById('form-nova-oportunidade');
+    
     // Estado da aplicação
     let originalContaData = {};
     let contatosData = [];
@@ -430,6 +436,37 @@ document.addEventListener("DOMContentLoaded", function() {
             alert(`Falha ao atualizar: ${result.error || 'Erro desconhecido'}`);
         }
     });
+
+    // --- ADIÇÃO v6.0: Event Listeners para o fluxo de nova oportunidade ---
+    if (btnNovaOportunidade) {
+        btnNovaOportunidade.addEventListener('click', () => {
+            novaOportunidadeModal.show();
+        });
+
+        formNovaOportunidade.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novaOportunidadeData = {
+                conta_id: CONTA_ID,
+                titulo: formNovaOportunidade.querySelector('#nova-lead-titulo').value,
+                valor_estimado: formNovaOportunidade.querySelector('#nova-lead-valor').value,
+            };
+
+            const response = await fetch('/api/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novaOportunidadeData)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                formNovaOportunidade.reset();
+                novaOportunidadeModal.hide();
+                await populateDropdownsAndFetchDetails(); // Recarrega a lista de leads
+            } else {
+                alert(`Erro ao criar oportunidade: ${result.error || 'Erro desconhecido'}`);
+            }
+        });
+    }
 
     formNovoContato.addEventListener('submit', async function(e) {
         e.preventDefault();

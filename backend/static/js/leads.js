@@ -103,6 +103,22 @@ document.addEventListener("DOMContentLoaded", function() {
         renderPagination(pagination);
     };
     
+    // --- ADIÇÃO v6.0: Função para assumir um lead ---
+    window.assumirLead = (leadId) => {
+        if (!confirm('Tem certeza que deseja assumir esta oportunidade? Ela e a conta associada serão movidas para a sua carteira.')) return;
+
+        fetch(`/api/leads/${leadId}/assumir`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    meusLeadsTab.click(); // Move para a aba "Minhas Oportunidades" e recarrega
+                } else {
+                    alert(`Erro: ${data.error || 'Não foi possível assumir o lead.'}`);
+                    fetchAndRenderLeads(); // Recarrega a aba do pool
+                }
+            });
+    };
+
     const fetchAndRenderLeads = () => {
         container.innerHTML = loadingSpinner;
         const params = new URLSearchParams({

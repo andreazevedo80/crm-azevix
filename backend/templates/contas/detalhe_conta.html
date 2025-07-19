@@ -72,7 +72,12 @@
     </div>
     <div class="col-lg-7">
         <div class="card card-azevix">
-            <div class="card-header"><h5 class="card-title mb-0">Oportunidades (Leads)</h5></div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Oportunidades (Leads)</h5>
+                <button id="btn-nova-oportunidade" class="btn btn-azevix btn-sm">
+                    <i class="fas fa-plus me-1"></i> Adicionar Oportunidade
+                </button>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -179,6 +184,33 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="modal fade" id="novaOportunidadeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-nova-oportunidade">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Oportunidade para {{ conta.nome_fantasia }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nova-lead-titulo" class="form-label">Título da Oportunidade *</label>
+                        <input type="text" id="nova-lead-titulo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nova-lead-valor" class="form-label">Valor Estimado (R$)</label>
+                        <input type="number" step="0.01" id="nova-lead-valor" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-azevix">Salvar Oportunidade</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
