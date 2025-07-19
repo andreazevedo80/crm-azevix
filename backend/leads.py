@@ -68,7 +68,7 @@ def get_leads():
     for lead in pagination.items:
         lead_dict = lead.to_dict()
         lead_dict['conta_nome'] = lead.conta.nome_fantasia
-        lead_dict['conta_id'] = lead.conta_id 
+        lead_dict['conta_id'] = lead.conta_id
         if lead.user_id and lead.owner:
             lead_dict['owner_name'] = lead.owner.name
         else:
