@@ -98,3 +98,8 @@ SELECT * FROM historico_alteracoes WHERE conta_id = 1;
 
 # Verificar status_lead
 SELECT id, estagio_ciclo_vida, temperatura, status_lead FROM leads;
+
+# Verificar Lead sem dono
+INSERT INTO leads (conta_id, user_id, titulo, status_lead, estagio_ciclo_vida, temperatura) VALUES
+(1, NULL, 'Oportunidade Órfã A (do Pool)', 'Novo', 'Lead', 'Frio'),
+(1, NULL, 'Oportunidade Órfã B (do Pool)', 'Novo', 'Lead', 'Morno');

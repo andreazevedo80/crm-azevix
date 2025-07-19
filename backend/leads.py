@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from .models import Lead, User, db, Conta
 from .config_constants import ESTAGIOS_CICLO_VIDA, STATUS_LEADS, TEMPERATURAS
+from datetime import datetime
 
 leads = Blueprint('leads', __name__)
 
@@ -67,6 +68,8 @@ def get_leads():
     for lead in pagination.items:
         lead_dict = lead.to_dict()
         lead_dict['conta_nome'] = lead.conta.nome_fantasia
+        # --- CORREÇÃO DO BUG DO LINK: Adiciona o ID da conta ---
+        lead_dict['conta_id'] = lead.conta_id 
         lead_dict['owner_name'] = lead.owner.name if lead.owner else 'Disponível (Pool)'
         leads_list.append(lead_dict)
     
@@ -78,3 +81,21 @@ def get_leads():
             'has_next': pagination.has_next, 'page': pagination.page
         }
     })
+
+# --- ADIÇÃO: Rota para assumir um lead do pool ---
+@leads.route('/api/leads/<int:lead_id>/assumir', methods=['POST'])
+@login_required
+def assumir_lead(lead_id):
+    lead = Lead.query.get_or_404(lead_id)
+
+    if lead.user_id is not None:
+        return jsonify({'success': False, 'error': f'Este lead já foi assumido por {lead.owner.name}.'}), 409 # 409 Conflict
+
+    lead.user_id = current_user.id
+    lead.status_lead = 'Tentando Contato'
+    lead.data_apropriacao = datetime.utcnow()
+    lead.data_ultima_atualizacao = datetime.utcnow()
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Lead assumido com sucesso!'})

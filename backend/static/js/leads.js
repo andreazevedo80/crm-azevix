@@ -129,6 +129,24 @@ document.addEventListener("DOMContentLoaded", function() {
         fetchAndRenderLeads();
     };
 
+    // --- ADIÇÃO: Nova Função assumirLead ---
+    window.assumirLead = (leadId) => {
+        if (!confirm('Tem certeza que deseja assumir esta oportunidade? Ela será movida para a sua carteira.')) return;
+
+        fetch(`/api/leads/${leadId}/assumir`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Move para a aba "Minhas Oportunidades" e recarrega para ver o novo lead
+                    meusLeadsTab.click();
+                } else {
+                    alert(`Erro: ${data.error || 'Não foi possível assumir o lead.'}`);
+                    // Recarrega a aba do pool para ver se o lead foi assumido por outro
+                    fetchAndRenderLeads();
+                }
+            });
+    };
+
     meusLeadsTab.addEventListener('click', (e) => {
         e.preventDefault();
         currentViewMode = 'meus_leads';
