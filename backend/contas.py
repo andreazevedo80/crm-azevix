@@ -99,7 +99,8 @@ def update_conta(conta_id):
         'Segmento': conta.segmento,
         'Tipo Conta': conta.tipo_conta,
         'Matriz': conta.matriz.nome_fantasia if conta.matriz else "Nenhuma",
-        'Responsável': conta.owner.name
+        'Responsável': conta.owner.name if conta.owner else "Nenhum",
+        'CNPJ': conta.cnpj
     }
     
     # Tratamento especial para CNPJ (mantendo a lógica original)

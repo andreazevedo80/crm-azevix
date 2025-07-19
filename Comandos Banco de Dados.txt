@@ -26,25 +26,25 @@ SELECT * FROM roles;
 #Adicionar usuários
 -- Criando os Gerentes
 INSERT INTO users (id, name, email, password_hash, is_active, gerente_id) VALUES
-(3, 'Gerente Um', 'gerente1@azevix.com.br', 'senha_provisoria_hash', true, NULL),
-(4, 'Gerente Dois', 'gerente2@azevix.com.br', 'senha_provisoria_hash', true, NULL);
+(2, 'Gerente Um', 'gerente1@azevix.com.br', 'senha_provisoria_hash', true, NULL),
+(3, 'Gerente Dois', 'gerente2@azevix.com.br', 'senha_provisoria_hash', true, NULL);
 
 -- Criando os Vendedores e associando ao Gerente Um (ID 3 e 4)
 INSERT INTO users (id, name, email, password_hash, is_active, gerente_id) VALUES
-(5, 'Vendedor Um', 'vendedor1@azevix.com.br', 'senha_provisoria_hash', true, 3),
-(6, 'Vendedor Dois', 'vendedor2@azevix.com.br', 'senha_provisoria_hash', true, 3),
-(7, 'Vendedor Tres', 'vendedor3@azevix.com.br', 'senha_provisoria_hash', true, 4),
-(8, 'Vendedor Quatro', 'vendedor4@azevix.com.br', 'senha_provisoria_hash', true, 4);
+(4, 'Vendedor Um', 'vendedor1@azevix.com.br', 'senha_provisoria_hash', true, 2),
+(5, 'Vendedor Dois', 'vendedor2@azevix.com.br', 'senha_provisoria_hash', true, 2),
+(6, 'Vendedor Tres', 'vendedor3@azevix.com.br', 'senha_provisoria_hash', true, 3),
+(7, 'Vendedor Quatro', 'vendedor4@azevix.com.br', 'senha_provisoria_hash', true, 3);
 
 -- Associando os papéis (Roles) aos novos usuários
 -- Lembre-se: Role 'gerente' é ID 2, Role 'vendedor' é ID 3
 INSERT INTO user_roles (user_id, role_id) VALUES
-(3, 2), -- Gerente Um
-(4, 2), -- Gerente Dois
-(5, 3), -- Vendedor Um
-(6, 3), -- Vendedor Dois
-(7, 3), -- Vendedor Tres
-(8, 3); -- Vendedor Quatro
+(2, 2), -- Gerente Um
+(3, 2), -- Gerente Dois
+(4, 3), -- Vendedor Um
+(5, 3), -- Vendedor Dois
+(6, 3), -- Vendedor Tres
+(7, 3); -- Vendedor Quatro
 
 -- Atualiza a sequência de IDs para evitar conflitos futuros
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
@@ -66,7 +66,7 @@ UPDATE users SET gerente_id = 4 WHERE id = 8;
 python gerar_hash
 após no banco
 
-UPDATE users SET password_hash = 'scrypt:32768:8:1$PSiIEa1a461vKLMm$b7cbe0b408e710117b1eb475d7d840f3bf620ee6f256832f5be72999065cb6dc6cc8ed2e82a02a6e6e258d055d42d27702a48831de6749595a6196a2bddc6826' WHERE id IN (3, 4, 5, 6, 7, 8);
+UPDATE users SET password_hash = 'scrypt:32768:8:1$PSiIEa1a461vKLMm$b7cbe0b408e710117b1eb475d7d840f3bf620ee6f256832f5be72999065cb6dc6cc8ed2e82a02a6e6e258d055d42d27702a48831de6749595a6196a2bddc6826' WHERE id IN (2, 3, 4, 5, 6, 7);
 
 #Popular com clientes
 INSERT INTO contas (user_id, nome_fantasia, razao_social, tipo_conta, segmento, is_active) VALUES
@@ -87,48 +87,47 @@ INSERT INTO contas (user_id, nome_fantasia, razao_social, tipo_conta, segmento, 
 (1, 'Universidade Livre 15', 'Centro Educacional 15', 'Privada', 'Educação', TRUE),
 (NULL, 'Manufatura Digital 16', 'Indústria 4.0 Soluções 16', 'Privada', 'Indústria', TRUE),
 (NULL, 'Exportadora de Grãos 17', 'AgroExport 17', 'Privada', 'Agronegócio', TRUE),
-(NULL, 'Crédito Fácil 18', 'Financeira Resolve 18', 'Privada', 'Financeiro', TRUE);
-
-(3, 'Tech Vision 19', 'Tecnologia Visionária 19 LTDA', 'Privada', 'Tecnologia', TRUE),
-(3, 'Serviço Ágil 20', 'Prestadora Ágil 20 ME', 'Privada', 'Serviços', TRUE),
-(3, 'Bem Viver Saúde 21', 'Clínica Vida Plena 21', 'Privada', 'Saúde', TRUE),
-(3, 'Loja Virtual 22', 'E-Commerce Brasil 22 SA', 'Privada', 'Varejo', TRUE),
-(3, 'Educar+ 23', 'Centro Educacional Avançado 23', 'Privada', 'Educação', TRUE),
-(3, 'Ferro & Aço 24', 'Indústria Metalúrgica 24', 'Privada', 'Indústria', TRUE),
-(3, 'Agro Forte 25', 'Plantação Verdejante 25', 'Privada', 'Agronegócio', TRUE),
-(3, 'PagFácil 26', 'Solucard Financeira 26', 'Privada', 'Financeiro', TRUE),
-(3, 'HabitaBem 27', 'Construtora Imóveis Bons 27', 'Privada', 'Imobiliário', TRUE),
-(3, 'Planeja Consultoria 28', 'Consultores Profissionais 28', 'Privada', 'Serviços', TRUE),
-(4, 'Digital Insights 29', 'Dados Inteligentes 29 SA', 'Privada', 'Tecnologia', TRUE),
-(4, 'ServiMais 30', 'Serviços Gerais 30 LTDA', 'Privada', 'Serviços', TRUE),
-(4, 'Clínica do Povo 31', 'Atendimento Popular 31', 'Privada', 'Saúde', TRUE),
-(4, 'Vende Rápido 32', 'Comércio Veloz 32', 'Privada', 'Varejo', TRUE),
-(4, 'Ensina Brasil 33', 'Instituição de Ensino Nacional 33', 'Privada', 'Educação', TRUE),
-(4, 'Máquinas BR 34', 'Fábrica de Equipamentos 34', 'Privada', 'Indústria', TRUE),
-(4, 'Terra Fértil 35', 'Produtora Agrícola 35', 'Privada', 'Agronegócio', TRUE),
-(4, 'Fácil Crédito 36', 'Serviços Financeiros 36 LTDA', 'Privada', 'Financeiro', TRUE),
-(4, 'ConstruMais 37', 'Engenharia e Imóveis 37', 'Privada', 'Imobiliário', FALSE),
-(4, 'Global Solutions 38', 'Consultoria Internacional 38', 'Privada', 'Serviços', FALSE),
-(5, 'TechNet 39', 'Redes e Sistemas 39 LTDA', 'Privada', 'Tecnologia', TRUE),
-(5, 'Serviços Úteis 40', 'Utilidades e Soluções 40', 'Privada', 'Serviços', TRUE),
-(5, 'Clínica Vida+ 41', 'Saúde e Bem-Estar 41', 'Privada', 'Saúde', TRUE),
-(5, 'Mega Varejo 42', 'Loja de Tudo 42', 'Privada', 'Varejo', TRUE),
-(8, 'Alfa Educação 43', 'Escola Moderna Alfa 43', 'Privada', 'Educação', TRUE),
-(8, 'Engenho Forte 44', 'Engenharia Mecânica 44', 'Privada', 'Indústria', TRUE),
-(8, 'Fazenda Luz 45', 'Cultivo Sustentável 45', 'Privada', 'Agronegócio', TRUE),
+(NULL, 'Crédito Fácil 18', 'Financeira Resolve 18', 'Privada', 'Financeiro', TRUE),
+(2, 'Tech Vision 19', 'Tecnologia Visionária 19 LTDA', 'Privada', 'Tecnologia', TRUE),
+(2, 'Serviço Ágil 20', 'Prestadora Ágil 20 ME', 'Privada', 'Serviços', TRUE),
+(2, 'Bem Viver Saúde 21', 'Clínica Vida Plena 21', 'Privada', 'Saúde', TRUE),
+(2, 'Loja Virtual 22', 'E-Commerce Brasil 22 SA', 'Privada', 'Varejo', TRUE),
+(2, 'Educar+ 23', 'Centro Educacional Avançado 23', 'Privada', 'Educação', TRUE),
+(2, 'Ferro & Aço 24', 'Indústria Metalúrgica 24', 'Privada', 'Indústria', TRUE),
+(2, 'Agro Forte 25', 'Plantação Verdejante 25', 'Privada', 'Agronegócio', TRUE),
+(2, 'PagFácil 26', 'Solucard Financeira 26', 'Privada', 'Financeiro', TRUE),
+(2, 'HabitaBem 27', 'Construtora Imóveis Bons 27', 'Privada', 'Imobiliário', TRUE),
+(2, 'Planeja Consultoria 28', 'Consultores Profissionais 28', 'Privada', 'Serviços', TRUE),
+(3, 'Digital Insights 29', 'Dados Inteligentes 29 SA', 'Privada', 'Tecnologia', TRUE),
+(3, 'ServiMais 30', 'Serviços Gerais 30 LTDA', 'Privada', 'Serviços', TRUE),
+(3, 'Clínica do Povo 31', 'Atendimento Popular 31', 'Privada', 'Saúde', TRUE),
+(3, 'Vende Rápido 32', 'Comércio Veloz 32', 'Privada', 'Varejo', TRUE),
+(3, 'Ensina Brasil 33', 'Instituição de Ensino Nacional 33', 'Privada', 'Educação', TRUE),
+(3, 'Máquinas BR 34', 'Fábrica de Equipamentos 34', 'Privada', 'Indústria', TRUE),
+(3, 'Terra Fértil 35', 'Produtora Agrícola 35', 'Privada', 'Agronegócio', TRUE),
+(3, 'Fácil Crédito 36', 'Serviços Financeiros 36 LTDA', 'Privada', 'Financeiro', TRUE),
+(3, 'ConstruMais 37', 'Engenharia e Imóveis 37', 'Privada', 'Imobiliário', FALSE),
+(3, 'Global Solutions 38', 'Consultoria Internacional 38', 'Privada', 'Serviços', FALSE),
+(4, 'TechNet 39', 'Redes e Sistemas 39 LTDA', 'Privada', 'Tecnologia', TRUE),
+(4, 'Serviços Úteis 40', 'Utilidades e Soluções 40', 'Privada', 'Serviços', TRUE),
+(4, 'Clínica Vida+ 41', 'Saúde e Bem-Estar 41', 'Privada', 'Saúde', TRUE),
+(4, 'Mega Varejo 42', 'Loja de Tudo 42', 'Privada', 'Varejo', TRUE),
+(7, 'Alfa Educação 43', 'Escola Moderna Alfa 43', 'Privada', 'Educação', TRUE),
+(7, 'Engenho Forte 44', 'Engenharia Mecânica 44', 'Privada', 'Indústria', TRUE),
+(7, 'Fazenda Luz 45', 'Cultivo Sustentável 45', 'Privada', 'Agronegócio', TRUE),
 (NULL, 'FinancePay 46', 'Pagamentos Rápidos 46', 'Privada', 'Financeiro', TRUE),
 (NULL, 'Viva Imóveis 47', 'Empreendimentos Imobiliários 47', 'Privada', 'Imobiliário', TRUE),
 (NULL, 'Eficaz Consultoria 48', 'Eficaz Soluções Empresariais 48', 'Privada', 'Serviços', TRUE),
-(6, 'Future Code 49', 'Desenvolvimento de Sistemas 49', 'Privada', 'Tecnologia', TRUE),
-(6, 'Ajuda Já 50', 'Serviços Imediatos 50', 'Privada', 'Serviços', TRUE,
-(6, 'Saúde Global 51', 'Consultórios Integrados 51', 'Privada', 'Saúde', TRUE),
-(6, 'Compra Certa 52', 'Distribuidora Nacional 52', 'Privada', 'Varejo', TRUE),
-(6, 'EducaTop 53', 'Ensino de Excelência 53', 'Privada', 'Educação', TRUE),
-(6, 'Ferrovia 54', 'Transportadora Industrial 54', 'Privada', 'Indústria', TRUE),
-(7, 'Semente Boa 55', 'Agropecuária Moderna 55', 'Privada', 'Agronegócio', TRUE),
-(7, 'CreditoWeb 56', 'Plataforma Financeira 56', 'Privada', 'Financeiro', TRUE),
-(7, 'Imóvel Ideal 57', 'Consultoria Imobiliária 57', 'Privada', 'Imobiliário', TRUE),
-(7, 'Soluções & Gestão 58', 'Planejamento Corporativo 58', 'Privada', 'Serviços', TRUE);
+(5, 'Future Code 49', 'Desenvolvimento de Sistemas 49', 'Privada', 'Tecnologia', TRUE),
+(5, 'Ajuda Já 50', 'Serviços Imediatos 50', 'Privada', 'Serviços', TRUE),
+(5, 'Saúde Global 51', 'Consultórios Integrados 51', 'Privada', 'Saúde', TRUE),
+(5, 'Compra Certa 52', 'Distribuidora Nacional 52', 'Privada', 'Varejo', TRUE),
+(5, 'EducaTop 53', 'Ensino de Excelência 53', 'Privada', 'Educação', TRUE),
+(5, 'Ferrovia 54', 'Transportadora Industrial 54', 'Privada', 'Indústria', TRUE),
+(6, 'Semente Boa 55', 'Agropecuária Moderna 55', 'Privada', 'Agronegócio', TRUE),
+(6, 'CreditoWeb 56', 'Plataforma Financeira 56', 'Privada', 'Financeiro', TRUE),
+(6, 'Imóvel Ideal 57', 'Consultoria Imobiliária 57', 'Privada', 'Imobiliário', TRUE),
+(6, 'Soluções & Gestão 58', 'Planejamento Corporativo 58', 'Privada', 'Serviços', TRUE);
 
 
 -- Comando extra para garantir que o próximo ID automático não entre em conflito
@@ -141,7 +140,24 @@ SELECT * FROM historico_alteracoes WHERE conta_id = 1;
 # Verificar status_lead
 SELECT id, estagio_ciclo_vida, temperatura, status_lead FROM leads;
 
+SELECT id, conta_id, user_id, titulo, status_lead, estagio_ciclo_vida, temperatura, follow_up_necessario FROM leads;
+
 # Verificar Lead sem dono
-INSERT INTO leads (conta_id, user_id, titulo, status_lead, estagio_ciclo_vida, temperatura) VALUES
-(1, NULL, 'Oportunidade Órfã A (do Pool)', 'Novo', 'Lead', 'Frio'),
-(1, NULL, 'Oportunidade Órfã B (do Pool)', 'Novo', 'Lead', 'Morno');
+INSERT INTO leads (conta_id, user_id, titulo, status_lead, estagio_ciclo_vida, temperatura, follow_up_necessario) VALUES
+(1, NULL, 'Oportunidade Órfã A (do Pool)', 'Novo', 'Lead', 'Frio', FALSE);
+(1, NULL, 'Oportunidade Órfã B (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(2, NULL, 'Oportunidade Órfã C (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(3, NULL, 'Oportunidade Órfã D (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(3, NULL, 'Oportunidade Órfã E (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(5, NULL, 'Oportunidade Órfã F (do Pool)', 'Novo', 'Lead', 'Morno', FALSE);
+
+-- Comando extra para garantir que o próximo ID automático não entre em conflito
+SELECT setval('leads_id_seq', (SELECT MAX(id) FROM leads));
+
+
+# Deletar Lead sem dono
+DELETE FROM leads
+WHERE user_id IS NULL
+  AND titulo IN (
+    'Oportunidade Órfã A (do Pool)'
+  );

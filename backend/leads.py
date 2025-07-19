@@ -68,9 +68,11 @@ def get_leads():
     for lead in pagination.items:
         lead_dict = lead.to_dict()
         lead_dict['conta_nome'] = lead.conta.nome_fantasia
-        # --- CORREÇÃO DO BUG DO LINK: Adiciona o ID da conta ---
         lead_dict['conta_id'] = lead.conta_id 
-        lead_dict['owner_name'] = lead.owner.name if lead.owner else 'Disponível (Pool)'
+        if lead.user_id and lead.owner:
+            lead_dict['owner_name'] = lead.owner.name
+        else:
+            lead_dict['owner_name'] = 'Disponível (Pool)'
         leads_list.append(lead_dict)
     
     return jsonify({
