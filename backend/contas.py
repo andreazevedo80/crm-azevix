@@ -3,13 +3,9 @@ from flask_login import login_required, current_user
 from .models import Conta, Contato, Lead, User, db, HistoricoAlteracao
 from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
 from datetime import datetime
+from .config_constants import SEGMENTOS, STATUS_LEADS
 
 contas = Blueprint('contas', __name__)
-
-SEGMENTOS = ['Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros']
-
-# --- ALTERAÇÃO v5.03: Nova lista de status alinhada ao processo de vendas ---
-STATUS_LEADS = ['Novo', 'Tentando Contato', 'Contatado', 'Interesse Demonstrado', 'Qualificado', 'Reunião Agendada', 'Proposta Apresentada', 'Em Negociação', 'Aguardando Aprovação', 'Ganho', 'Perdido', 'Não Qualificado']
 
 # --- Função Auxiliar para Checagem de Permissão ---
 def check_permission(conta):
@@ -48,7 +44,7 @@ def detalhe_conta(conta_id):
 @contas.route('/api/contas', methods=['GET'])
 @login_required
 def get_contas():
-    # --- ALTERAÇÃO v4.01: Lógica de Paginação ---
+    # --- Lógica de Paginação ---
     page = request.args.get('page', 1, type=int)
     per_page = 15 # Itens por página
     
@@ -71,7 +67,7 @@ def get_contas():
     segmento = request.args.get('segmento', '').strip()
     if segmento: query = query.filter(Conta.segmento == segmento)
     
-    # --- ALTERAÇÃO v4.01: Usando .paginate() em vez de .all() ---
+    # --- Usando .paginate() em vez de .all() ---
     pagination = query.order_by(Conta.nome_fantasia).paginate(page=page, per_page=per_page, error_out=False)
     contas_list = [c.to_dict() for c in pagination.items]
     
@@ -96,7 +92,7 @@ def update_conta(conta_id):
     
     data = request.get_json()
     
-    # --- ALTERAÇÃO v4.02: Lógica de gravação de histórico aprimorada ---
+    # --- Lógica de gravação de histórico aprimorada ---
     dados_antigos = {
         'Nome Fantasia': conta.nome_fantasia,
         'Razão Social': conta.razao_social,
@@ -199,7 +195,7 @@ def get_conta_details(conta_id):
     contatos_ativos = conta.contatos.filter_by(is_active=True).all()
     return jsonify({'success': True, 'conta': conta.to_dict(), 'contatos': [c.to_dict() for c in contatos_ativos], 'leads': [l.to_dict() for l in conta.leads.all()]})
 
-# --- ADIÇÃO v4.02: Rota para buscar o histórico de uma conta ---
+# --- Rota para buscar o histórico de uma conta ---
 @contas.route('/api/contas/<int:conta_id>/historico', methods=['GET'])
 @login_required
 def get_conta_historico(conta_id):
@@ -278,11 +274,9 @@ def update_lead_processo(lead_id):
     
     # Atualiza Status e verifica transições
     if 'status_lead' in data and data['status_lead'] != lead.status_lead:
-        # AQUI ENTRARÁ A LÓGICA DE VALIDAÇÃO DE WORKFLOW DA v7.0
         changes_to_log.append({'campo': 'Status', 'valor_antigo': lead.status_lead, 'valor_novo': data['status_lead']})
         lead.status_lead = data['status_lead']
         
-        # Lógica de automação do Estágio do Ciclo de Vida
         if lead.status_lead == 'Qualificado' and lead.estagio_ciclo_vida == 'Lead':
             changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': 'Oportunidade'})
             lead.estagio_ciclo_vida = 'Oportunidade'
@@ -290,7 +284,6 @@ def update_lead_processo(lead_id):
             changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': 'Cliente'})
             lead.estagio_ciclo_vida = 'Cliente'
 
-    # Atualiza outros campos do processo
     if 'temperatura' in data and data['temperatura'] != lead.temperatura:
         changes_to_log.append({'campo': 'Temperatura', 'valor_antigo': lead.temperatura, 'valor_novo': data['temperatura']})
         lead.temperatura = data['temperatura']
@@ -305,7 +298,6 @@ def update_lead_processo(lead_id):
 
     lead.data_ultima_atualizacao = datetime.utcnow()
 
-    # Grava o histórico
     for change in changes_to_log:
         historico = HistoricoAlteracao(
             user_id=current_user.id, lead_id=lead.id, campo=change['campo'],

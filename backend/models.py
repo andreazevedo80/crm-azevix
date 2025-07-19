@@ -127,7 +127,7 @@ class Lead(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     contato_id = db.Column(db.Integer, db.ForeignKey('contatos.id'), nullable=True)
     titulo = db.Column(db.String(255), nullable=False)
-    status_lead = db.Column(db.String(50), nullable=False, default='NOVO_LEAD')
+    status_lead = db.Column(db.String(50), nullable=False, default='Novo')
     valor_estimado = db.Column(db.Numeric(10, 2), nullable=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
