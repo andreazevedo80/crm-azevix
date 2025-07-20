@@ -170,3 +170,258 @@ Objetivo: Criar a nova interface central para a gestão do funil de vendas.
 - Adicionar botão na pagina detalhe_conta.htlm "Adicionar Nova Oportunidade"
 - Ao clicar em um lead na lista, o usuário será levado para a página de detalhe_conta correspondente.
 📊 Filtros: se forem muitos, pense em URL parametrizada para facilitar bookmarks e análises.
+
+
+
+# Plano de Ação Mestre CRM - Versão 8.4
+## Requisitos Organizados por Versão
+
+---
+
+## Versão 6.1: Gestão de Leads para Gerentes e Admins
+
+### Requisitos Funcionais
+- Adicionar contador de leads por status (métricas básicas)
+- Na tela /leads, um gerente poderá filtrar para ver os leads de seus liderados
+- Implementar a funcionalidade de "Reatribuir Lead" para gerentes e admins
+- **[NOVO]** Implementar sistema de notificações para o vendedor quando um lead for reatribuído
+
+### Requisitos Técnicos
+- Usar log de auditoria para rastrear ações de reatribuição
+- Criar tabela de notificações ou usar sistema de eventos
+
+---
+
+## Versão 7.0: Módulo de Administração (Configurações do Sistema)
+
+### Requisitos Funcionais
+- Implementar interface para gerenciar domínios de e-mail permitidos para convites
+- Implementar interface para configurar dados do servidor de e-mail (SMTP)
+- Implementar campo para configurar "URL Base do Site" (SITE_URL)
+- Habilitar botão "Convidar Novo Usuário" em /admin/users
+- **[NOVO]** Implementar configurações da Empresa (nome, endereço, contato, etc.)
+- **[NOVO]** Implementar diferentes níveis de permissão (Super Admin vs Admin)
+
+### Requisitos Técnicos
+- Criar tabela config_global com estrutura chave-valor flexível
+- **[NOVO]** Implementar criptografia para credenciais SMTP sensíveis no banco
+- Implementar testes de SMTP antes de salvar configurações
+- Implementar controle de tokens vencidos e prevenção de convites indevidos
+- Criar sistema de hierarquia de permissões
+
+---
+
+## Versão 8.0: Importação de Dados
+
+### Requisitos Funcionais
+- Criar interface no painel admin para upload de arquivos CSV
+- Implementar preview dos dados antes da importação
+- Gerar relatório de erros/sucessos na importação
+- **[NOVO]** Criar e disponibilizar templates de CSV para facilitar preparação dos dados
+- **[NOVO]** Implementar histórico de importações (quem fez, quando, quantos registros)
+
+### Requisitos Técnicos
+- Implementar lógica para processar arquivo e criar leads no "Lead Pool"
+- **[NOVO]** Implementar validação de encoding do CSV (UTF-8, ISO-8859-1)
+- **[NOVO]** Implementar processamento assíncrono para grandes volumes
+- Validar CNPJs duplicados e dados inconsistentes
+- **[NOVO]** Armazenar arquivo original associado ao job de histórico
+- Implementar sistema de jobs para rastreabilidade
+
+### Requisitos de Segurança
+- **[NOVO]** Implementar backup automático antes de importações grandes
+- Validação robusta de dados de entrada
+
+---
+
+## Versão 9.0: Workflow Inteligente de Vendas
+
+### Requisitos Funcionais
+- Interface para Admin gerenciar (CRUD) Status de Lead e Motivos de Perda
+- Interface para Admin definir regras de transição entre status (Workflow)
+- Na tela do Lead, campo "Status" mostrará apenas transições permitidas
+- Exigir "Motivo de Perda" quando aplicável
+- **[NOVO]** Implementar versionamento do workflow para auditoria de mudanças
+- **[NOVO]** Implementar migração automática para status "genérico" quando status é removido
+
+### Requisitos Técnicos
+- Implementar validações de negócio para transições de status
+- Criar tabela `status` (lista de status disponíveis)
+- Criar tabela `status_transicoes` (regras de transição)
+- **[NOVO]** Criar tabela `workflow_versoes` para controle de versionamento
+- Implementar lógica para lidar com leads órfãos
+
+---
+
+## Versão 10.0: Catálogo de Produtos e Serviços
+
+### Requisitos Funcionais
+- Área no painel admin para cadastrar Catálogo de Produtos e Serviços
+- Campos: Nome, Preço unitário, Descrição, Tipo (Produto, Serviço, Manutenção)
+- **[NOVO]** Implementar categorização de produtos/serviços
+- **[NOVO]** Implementar sistema de descontos por volume ou cliente
+- **[NOVO]** Implementar produtos combo/bundle
+
+### Requisitos Técnicos
+- Criar estrutura de banco para catálogo
+- **[NOVO]** Criar tabela de categorias
+- **[NOVO]** Criar tabela de regras de desconto
+- **[NOVO]** Criar tabela de combos/bundles
+- Permitir relatórios inteligentes por produto
+
+---
+
+## Versão 11.0: Módulo de Propostas (Estrutura e Custos)
+
+### Requisitos Funcionais
+- Criar propostas detalhadas com múltiplos produtos/serviços do catálogo
+- Adicionar custos (fixos/percentuais) para calcular margem de lucro estimada
+- Lógica de custos sensível ao tipo_conta (Pública vs. Privada)
+- Propostas com status e prazos
+- **[NOVO]** Implementar controle de versionamento das propostas (v1.0, v1.1, etc.)
+- **[NOVO]** Implementar funcionalidade de cancelamento de proposta
+- **[NOVO]** Implementar funcionalidade de duplicação de proposta
+
+### Requisitos Técnicos
+- Usar enum/status para controlar fluxo (RASCUNHO, ENVIADA, ACEITA, REJEITADA)
+- **[NOVO]** Criar tabela de versões de propostas
+- Implementar cálculos automáticos de margem
+
+---
+
+## Versão 12.0: Automação de Documentos e Comunicação
+
+### Requisitos Funcionais
+- Gerar documento PDF profissional e personalizável a partir dos dados da proposta
+- Enviar proposta por e-mail diretamente do sistema usando e-mail do vendedor
+- Permitir customização de template PDF por empresa (branding)
+- **[NOVO]** Implementar assinatura digital das propostas
+- **[NOVO]** Implementar tracking de abertura de email (pixel invisível)
+
+### Requisitos Técnicos
+- Adicionar rota para geração de PDF em backend/propostas.py
+- Criar módulo backend/email.py para envio de e-mails
+- Criar sistema de templates com placeholders ({{empresa.nome}}, {{proposta.valor_total}})
+- **[NOVO]** Implementar sistema de assinatura digital
+- **[NOVO]** Implementar sistema de tracking de emails
+
+---
+
+## Versão 13.0: Módulo de Atividades e Tarefas
+
+### Requisitos Funcionais
+- Criar entidade Atividade/Tarefa com campos:
+  - Tipo (Ligação, E-mail, Reunião, Tarefa)
+  - Data_prazo
+  - Status (Pendente, Concluída)
+  - Prioridade
+  - Associação a Conta, Contato ou Lead
+- Seção "Minhas Tarefas para Hoje" no Dashboard
+- **[NOVO]** Sistema de lembretes por e-mail
+- **[NOVO]** Integração com calendário
+
+### Requisitos Técnicos
+- Criar tabela de atividades
+- Implementar sistema de notificações/lembretes
+- **[NOVO]** Implementar integração com APIs de calendário (Google, Outlook)
+- Tríade: Prioridade + Prazo + Status
+
+---
+
+## Versão 14.0: Módulo de Relatórios e Dashboard Inteligente
+
+### Requisitos Funcionais
+- Dashboard com Funil de Vendas visual (valores por etapa)
+- Métricas chave: Taxa de Conversão, Valor Médio das Propostas
+- Página de Relatórios com filtros (data, vendedor)
+- Exportação de relatórios para PDF
+- **[NOVO]** Exportação para Excel/CSV
+- **[NOVO]** Agendamento de envio periódico de relatórios
+
+### Requisitos Técnicos
+- **[NOVO]** Usar agregações em SQL com cache Redis para performance
+- **[NOVO]** Armazenar logs de envio (data, destinatário, sucesso/erro)
+- **[NOVO]** Implementar validação de credenciais de e-mail (OAuth ou SMTP direto)
+- Otimizar queries para relatórios
+
+---
+
+## Requisitos Gerais de Sistema
+
+### Segurança
+- **[NOVO]** Implementar rate limiting nas APIs
+- **[NOVO]** Log de auditoria em todas as ações críticas
+- **[NOVO]** Backup automático antes de importações grandes
+
+### Performance
+- **[NOVO]** Indexação adequada no banco para relatórios
+- **[NOVO]** Paginação em todas as listagens
+- **[NOVO]** Cache para dados frequentemente acessados
+
+### UX/UI
+- **[NOVO]** Loading states para operações longas
+- **[NOVO]** Feedback visual imediato para ações do usuário
+- **[NOVO]** Tour guiado para novos usuários
+
+### Funcionalidades Futuras (Backlog)
+- **[NOVO]** Mobile responsivo: Vendedores precisam acessar em campo
+- **[NOVO]** Integração com WhatsApp/Telefonia: Para registro automático de interações
+- **[NOVO]** Backup/Restore: Plano de contingência
+- **[NOVO]** Multi-tenancy: Se planeja SaaS futuramente
+
+---
+
+## Resumo de Novos Requisitos Adicionados na v8.4
+- 23 novos requisitos funcionais
+- 15 novos requisitos técnicos
+- 8 novos requisitos de segurança/performance/UX
+- 4 funcionalidades para backlog futuro
+
+**Total: 50 novos requisitos organizados e formalizados**
+
+---
+
+## 🏛️ Governança de Projeto e Documentação
+
+### Controle de Versão e Documentação
+- **[CRÍTICO]** Versionar este plano em Markdown no Git com changelog detalhado
+  - Cada versão do plano deve ter tag no Git
+  - Changelog deve incluir: novos requisitos, modificações, remoções
+  - Histórico de decisões arquiteturais documentado
+
+### Critérios de Pronto (Definition of Done)
+- **[FUNDAMENTAL]** Definir critérios de pronto (DoD) específicos para cada versão:
+  - **Código**: Testes unitários, code review, documentação
+  - **Funcional**: Testes de aceitação, validação com stakeholders
+  - **Técnico**: Performance, segurança, compatibilidade
+  - **Deploy**: Ambiente de homologação testado, rollback plan
+
+### Especificação Técnica
+- **[ESSENCIAL]** Iniciar especificação de API REST baseada nos módulos:
+  - Documentação OpenAPI/Swagger para cada endpoint
+  - Exemplos de request/response
+  - Códigos de erro padronizados
+  - Versionamento de API (v1, v2, etc.)
+
+### Modelagem de Dados
+- **[FUNDAMENTAL]** Mapear entidades de dados e relacionamentos (ERD):
+  - Diagrama ER completo do sistema
+  - Dicionário de dados detalhado
+  - Scripts de migração versionados
+  - Políticas de backup e retenção
+
+### Processo de Release
+- **[NOVO]** Implementar pipeline de release estruturado:
+  - Ambiente de desenvolvimento → staging → produção
+  - Testes automatizados em cada ambiente
+  - Validação de performance antes do deploy
+  - Comunicação de releases para usuários
+
+### Métricas e Monitoramento
+- **[NOVO]** Definir KPIs de desenvolvimento e produto:
+  - Tempo de desenvolvimento por feature
+  - Taxa de bugs em produção
+  - Satisfação do usuário por funcionalidade
+  - Performance e uptime do sistema
+
+---
