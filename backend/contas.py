@@ -92,7 +92,7 @@ def update_conta(conta_id):
     
     data = request.get_json()
     
-    # --- Lógica de gravação de histórico aprimorada ---
+    # --- CORREÇÃO: Lógica mais robusta para lidar com contas sem dono ---
     dados_antigos = {
         'Nome Fantasia': conta.nome_fantasia,
         'Razão Social': conta.razao_social,

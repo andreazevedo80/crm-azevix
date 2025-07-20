@@ -12,7 +12,8 @@ UPDATE users SET role = 'admin' WHERE id = 1; [antigo]
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 
 #Select contas
-SELECT id, user_id, matriz_id, razao_social, nome_fantasia, tipo_conta, segmento, is_active, data_cadastro FROM contas;
+
+
 
 #Select roles
 SELECT * FROM roles;
@@ -85,9 +86,6 @@ INSERT INTO contas (user_id, nome_fantasia, razao_social, tipo_conta, segmento, 
 (1, 'Logística Express 13', 'Transportes Velozes 13', 'Privada', 'Serviços', TRUE),
 (1, 'Clínica Sorriso 14', 'Odontologia de Ponta 14', 'Privada', 'Saúde', TRUE),
 (1, 'Universidade Livre 15', 'Centro Educacional 15', 'Privada', 'Educação', TRUE),
-(NULL, 'Manufatura Digital 16', 'Indústria 4.0 Soluções 16', 'Privada', 'Indústria', TRUE),
-(NULL, 'Exportadora de Grãos 17', 'AgroExport 17', 'Privada', 'Agronegócio', TRUE),
-(NULL, 'Crédito Fácil 18', 'Financeira Resolve 18', 'Privada', 'Financeiro', TRUE),
 (2, 'Tech Vision 19', 'Tecnologia Visionária 19 LTDA', 'Privada', 'Tecnologia', TRUE),
 (2, 'Serviço Ágil 20', 'Prestadora Ágil 20 ME', 'Privada', 'Serviços', TRUE),
 (2, 'Bem Viver Saúde 21', 'Clínica Vida Plena 21', 'Privada', 'Saúde', TRUE),
@@ -112,12 +110,6 @@ INSERT INTO contas (user_id, nome_fantasia, razao_social, tipo_conta, segmento, 
 (4, 'Serviços Úteis 40', 'Utilidades e Soluções 40', 'Privada', 'Serviços', TRUE),
 (4, 'Clínica Vida+ 41', 'Saúde e Bem-Estar 41', 'Privada', 'Saúde', TRUE),
 (4, 'Mega Varejo 42', 'Loja de Tudo 42', 'Privada', 'Varejo', TRUE),
-(7, 'Alfa Educação 43', 'Escola Moderna Alfa 43', 'Privada', 'Educação', TRUE),
-(7, 'Engenho Forte 44', 'Engenharia Mecânica 44', 'Privada', 'Indústria', TRUE),
-(7, 'Fazenda Luz 45', 'Cultivo Sustentável 45', 'Privada', 'Agronegócio', TRUE),
-(NULL, 'FinancePay 46', 'Pagamentos Rápidos 46', 'Privada', 'Financeiro', TRUE),
-(NULL, 'Viva Imóveis 47', 'Empreendimentos Imobiliários 47', 'Privada', 'Imobiliário', TRUE),
-(NULL, 'Eficaz Consultoria 48', 'Eficaz Soluções Empresariais 48', 'Privada', 'Serviços', TRUE),
 (5, 'Future Code 49', 'Desenvolvimento de Sistemas 49', 'Privada', 'Tecnologia', TRUE),
 (5, 'Ajuda Já 50', 'Serviços Imediatos 50', 'Privada', 'Serviços', TRUE),
 (5, 'Saúde Global 51', 'Consultórios Integrados 51', 'Privada', 'Saúde', TRUE),
@@ -127,7 +119,17 @@ INSERT INTO contas (user_id, nome_fantasia, razao_social, tipo_conta, segmento, 
 (6, 'Semente Boa 55', 'Agropecuária Moderna 55', 'Privada', 'Agronegócio', TRUE),
 (6, 'CreditoWeb 56', 'Plataforma Financeira 56', 'Privada', 'Financeiro', TRUE),
 (6, 'Imóvel Ideal 57', 'Consultoria Imobiliária 57', 'Privada', 'Imobiliário', TRUE),
-(6, 'Soluções & Gestão 58', 'Planejamento Corporativo 58', 'Privada', 'Serviços', TRUE);
+(6, 'Soluções & Gestão 58', 'Planejamento Corporativo 58', 'Privada', 'Serviços', TRUE),
+(7, 'Alfa Educação 43', 'Escola Moderna Alfa 43', 'Privada', 'Educação', TRUE),
+(7, 'Engenho Forte 44', 'Engenharia Mecânica 44', 'Privada', 'Indústria', TRUE),
+(7, 'Fazenda Luz 45', 'Cultivo Sustentável 45', 'Privada', 'Agronegócio', TRUE),
+(NULL, 'Manufatura Digital 16', 'Indústria 4.0 Soluções 16', 'Privada', 'Indústria', TRUE),
+(NULL, 'Exportadora de Grãos 17', 'AgroExport 17', 'Privada', 'Agronegócio', TRUE),
+(NULL, 'Crédito Fácil 18', 'Financeira Resolve 18', 'Privada', 'Financeiro', TRUE),
+(NULL, 'FinancePay 46', 'Pagamentos Rápidos 46', 'Privada', 'Financeiro', TRUE),
+(NULL, 'Viva Imóveis 47', 'Empreendimentos Imobiliários 47', 'Privada', 'Imobiliário', TRUE),
+(NULL, 'Eficaz Consultoria 48', 'Eficaz Soluções Empresariais 48', 'Privada', 'Serviços', TRUE);
+
 
 
 -- Comando extra para garantir que o próximo ID automático não entre em conflito
@@ -144,12 +146,12 @@ SELECT id, conta_id, user_id, titulo, status_lead, estagio_ciclo_vida, temperatu
 
 # Verificar Lead sem dono
 INSERT INTO leads (conta_id, user_id, titulo, status_lead, estagio_ciclo_vida, temperatura, follow_up_necessario) VALUES
-(1, NULL, 'Oportunidade Órfã A (do Pool)', 'Novo', 'Lead', 'Frio', FALSE),
-(1, NULL, 'Oportunidade Órfã B (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
-(2, NULL, 'Oportunidade Órfã C (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
-(3, NULL, 'Oportunidade Órfã D (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
-(3, NULL, 'Oportunidade Órfã E (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
-(5, NULL, 'Oportunidade Órfã F (do Pool)', 'Novo', 'Lead', 'Morno', FALSE);
+(54, NULL, 'Oportunidade Órfã A (do Pool)', 'Novo', 'Lead', 'Frio', FALSE),
+(55, NULL, 'Oportunidade Órfã B (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(56, NULL, 'Oportunidade Órfã C (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(57, NULL, 'Oportunidade Órfã D (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(58, NULL, 'Oportunidade Órfã E (do Pool)', 'Novo', 'Lead', 'Morno', FALSE),
+(59, NULL, 'Oportunidade Órfã F (do Pool)', 'Novo', 'Lead', 'Morno', FALSE);
 
 -- Comando extra para garantir que o próximo ID automático não entre em conflito
 SELECT setval('leads_id_seq', (SELECT MAX(id) FROM leads));

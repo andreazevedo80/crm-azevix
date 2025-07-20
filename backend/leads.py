@@ -31,7 +31,6 @@ def get_leads():
     """API para buscar, filtrar e paginar leads com base nas permissões do usuário."""
     page = request.args.get('page', 1, type=int)
     per_page = 15
-    
     view_mode = request.args.get('view_mode', 'meus_leads')
     search = request.args.get('search', '').strip()
     estagio = request.args.get('estagio', '')
