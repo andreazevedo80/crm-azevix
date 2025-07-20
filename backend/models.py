@@ -145,9 +145,8 @@ class Lead(db.Model):
             'titulo': self.titulo,
             'status_lead': self.status_lead,
             'valor_estimado': str(self.valor_estimado) if self.valor_estimado else '0.00',
-            'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y'),
+            'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y') if self.data_cadastro else None,
             'contato_principal_nome': contato_principal.nome if contato_principal else 'N/A',
-            # --- ADIÇÃO: Incluindo novos campos na resposta da API ---
             'estagio_ciclo_vida': self.estagio_ciclo_vida,
             'temperatura': self.temperatura,
             'follow_up_necessario': self.follow_up_necessario,
