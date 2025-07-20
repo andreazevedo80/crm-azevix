@@ -153,3 +153,20 @@ Objetivo: Enriquecer o modelo Lead com os novos campos e status para suportar o 
 - Atualizar a lista STATUS_LEADS no contas.py para os novos valores.
 - Implementar a lógica de mudança automática do estagio_ciclo_vida no backend.
 - Adicionar logs de auditoria para mudanças de status
+
+# versão 6.0: Módulo de Gestão de Leads (A Nova Tela)
+Objetivo: Criar a nova interface central para a gestão do funil de vendas.
+
+# Requisitos:
+- Criar um novo link e página /leads, na barra de navegação principal.
+- Este link levará a uma nova página (/leads).
+- A página exibirá o "Lead Pool" (leads sem dono) e os leads do próprio usuário.
+- Implementar o botão e a lógica de "Assumir Lead".
+- Implementar uma verificação no momento de salvar "Assumir Lead", para garantir que o lead ainda não tem um dono.
+- Criar filtros poderosos por Estágio, Status e o novo flag de "Follow-up".
+- Implementar paginação desde o início
+- Adicionar contador de leads por status (métricas básicas)
+- Incluir busca por nome/empresa
+- Adicionar botão na pagina detalhe_conta.htlm "Adicionar Nova Oportunidade"
+- Ao clicar em um lead na lista, o usuário será levado para a página de detalhe_conta correspondente.
+📊 Filtros: se forem muitos, pense em URL parametrizada para facilitar bookmarks e análises.

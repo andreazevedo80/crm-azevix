@@ -1,43 +1,14 @@
-### Plano de Ação Mestre (Revisão 8.2 - Proposta Reorganizada)
-
-# versão 6.0: Módulo de Gestão de Leads (A Nova Tela)
-Objetivo: Criar a nova interface central para a gestão do funil de vendas.
-
-# Requisitos:
-- Criar um novo link e página /leads, na barra de navegação principal.
-- Este link levará a uma nova página (/leads).
-- A página exibirá o "Lead Pool" (leads sem dono) e os leads do próprio usuário.
-- Implementar o botão e a lógica de "Assumir Lead".
-- Implementar uma verificação no momento de salvar "Assumir Lead", para garantir que o lead ainda não tem um dono.
-- Criar filtros poderosos por Estágio, Status e o novo flag de "Follow-up".
-- Implementar paginação desde o início
-- Adicionar contador de leads por status (métricas básicas)
-- Incluir busca por nome/empresa
-- Adicionar botão na pagina detalhe_conta.htlm "Adicionar Nova Oportunidade"
-- Ao clicar em um lead na lista, o usuário será levado para a página de detalhe_conta correspondente.
-📊 Filtros: se forem muitos, pense em URL parametrizada para facilitar bookmarks e análises.
-
+### Plano de Ação Mestre (Revisão 8.3 - Novos itens) 
 ## versão 6.1: Gestão de Leads para Gerentes e Admins
 Objetivo: Dar aos gestores as ferramentas para gerenciar suas equipes.
 
 # Requisitos:
+- Adicionar contador de leads por status (métricas básicas)
 - Na tela /leads, um gerente poderá filtrar para ver os leads de seus liderados.
 - Implementar a funcionalidade de "Reatribuir Lead" para gerentes e admins.
 🔄 Reatribuir lead: use log de auditoria para rastrear essas ações também.
 
-## versão 7.0: Importação de Dados
-Objetivo: Permitir que o administrador importe uma base de leads de uma planilha.
-
-# Requisitos:
-- Criar uma interface no painel de admin para upload de arquivos CSV.
-- Implementar a lógica no backend para processar o arquivo e criar os leads no "Lead Pool".
-- Validação de dados na importação
-- Preview dos dados antes da importação
-- Relatório de erros/sucessos na importação
-👀 Verifique como validar CNPJs duplicados ou dados inconsistentes.
-💡 Sugestão: armazene o histórico de importações (quem fez, quando, quantos registros).
-
-## versão 8.0: Módulo de Administração (Configurações do Sistema)
+## versão 7.0: Módulo de Administração (Configurações do Sistema)
 # Objetivo:
 - Permitir que o administrador configure parâmetros essenciais do sistema.
 
@@ -49,6 +20,18 @@ Objetivo: Permitir que o administrador importe uma base de leads de uma planilha
 📨 Configuração de SMTP é sensível — prever testes antes de salvar.
 - Configurações da Empresa, Nome da empresa, endereço... contato... etc (ara usar futuramente nas propostas e relatórios).
 👮 Cuidado com convites indevidos e com o reset de tokens vencidos.
+
+## versão 8.0: Importação de Dados
+Objetivo: Permitir que o administrador importe uma base de leads de uma planilha.
+
+# Requisitos:
+- Criar uma interface no painel de admin para upload de arquivos CSV.
+- Implementar a lógica no backend para processar o arquivo e criar os leads no "Lead Pool".
+- Validação de dados na importação
+- Preview dos dados antes da importação
+- Relatório de erros/sucessos na importação
+👀 Verifique como validar CNPJs duplicados ou dados inconsistentes.
+💡 Sugestão: armazene o histórico de importações (quem fez, quando, quantos registros).
 
 ## versão 9.0: Workflow Inteligente de Vendas
 # Objetivo:
@@ -62,7 +45,17 @@ Objetivo: Permitir que o administrador importe uma base de leads de uma planilha
 ⚠️ Atenção à integridade dos dados: se um admin remove um status, o que acontece com os leads existentes?
 🔍 Validações de transição de status: sugiro uma tabela auxiliar status_transicoes com regras, para evitar lógica engessada no código.
 
-## versão 10.00: Módulo de Propostas (Estrutura e Custos)
+## versão 10.0: Catálogo de Produtos e Serviços
+O que é? Na v10.00, planejamos adicionar "produtos/serviços" a uma proposta. Mas de onde eles vêm?
+Como funciona: Antes de criar propostas, o Admin precisaria de uma área no painel de administração para cadastrar o Catálogo de Produtos e Serviços da empresa. Cada item do catálogo teria:
+Nome ("Licença do Software XPTO - Anual").
+Preço unitário.
+Descrição.
+Talvez um "Tipo" (Produto, Serviço, Manutenção).
+
+Por que é importante? Isso padroniza as propostas, evita erros de digitação nos preços e permite gerar relatórios futuros muito mais inteligentes (ex: "Qual foi o nosso produto mais vendido no último trimestre?").
+
+## versão 11.0: Módulo de Propostas (Estrutura e Custos)
 # Objetivo:
 - Implementar o módulo de propostas, o coração financeiro do CRM.
 
@@ -73,7 +66,7 @@ Objetivo: Permitir que o administrador importe uma base de leads de uma planilha
 - Propostas devem ter status e prazos.
 💡 Use enum/status para controlar fluxo de propostas (Ex: RASCUNHO, ENVIADA, ACEITA, REJEITADA).
 
-# versão 11.00 [Automação de Documentos e Comunicação]
+# versão 12.0 [Automação de Documentos e Comunicação]
 # Objetivo
 - Automatizar a criação e o envio de propostas.
 
@@ -86,7 +79,17 @@ Objetivo: Permitir que o administrador importe uma base de leads de uma planilha
 - backend/propostas.py: Adicionar a rota para geração de PDF e a lógica de envio de e-mail.
 - backend/email.py (Novo): Módulo utilitário para envio de e-mails, lendo as configurações do banco de dados.
 
-# versão 11.01 [Módulo de Relatórios e Dashboard Inteligente]
+## versão 13.0 versão 12.0: Módulo de Atividades e Tarefas
+O que é? Atualmente, o trabalho do vendedor está implícito no "Status da Oportunidade". Mas e as ações concretas? "Ligar para o cliente na terça-feira", "Enviar o e-mail de follow-up até as 17h", "Agendar a demonstração para a próxima semana".
+Como funciona: Criaríamos uma nova entidade Atividade (ou Tarefa). Uma Atividade teria:
+Um tipo (Ligação, E-mail, Reunião, Tarefa).
+Uma data_prazo.
+Um status (Pendente, Concluída).
+Uma associação a uma Conta, Contato ou Lead.
+Por que é importante? Isso transforma o CRM de um sistema de registro (o que foi feito) em um sistema de produtividade (o que precisa ser feito). O Dashboard, por exemplo, poderia ter uma seção "Minhas Tarefas para Hoje".
+
+
+# versão 14.0 [Módulo de Relatórios e Dashboard Inteligente]
 # Objetivo
 - Fornecer inteligência de negócio, consolidando os dados em relatórios e em um dashboard dinâmico.
 
