@@ -170,9 +170,11 @@ document.addEventListener("DOMContentLoaded", function() {
             status: statusFilter.value,
             temperatura: temperaturaFilter.value,
             followup: followupFilter.checked,
-            // --- ADIÇÃO v6.1: Adiciona owner_id aos parâmetros ---
-            owner_id: ownerFilter ? ownerFilter.value : ''
         });
+        // --- CORREÇÃO: Garante que o valor do filtro de owner seja adicionado corretamente ---
+        if ((IS_ADMIN || IS_MANAGER) && ownerFilter && ownerFilter.value) {
+            params.append('owner_id', ownerFilter.value);
+        }
 
         fetch(`/api/leads?${params.toString()}`)
             .then(res => res.json())

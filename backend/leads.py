@@ -74,8 +74,12 @@ def get_leads():
             query = query.filter(Lead.user_id == current_user.id)
     
     # --- ALTERAÇÃO v6.1: Aplica o filtro de responsável se fornecido ---
-    if (current_user.has_role('admin') or current_user.has_role('gerente')) and owner_id:
-        query = query.filter(Lead.user_id == owner_id)
+    if (current_user.has_role('admin') or current_user.has_role('gerente')) and owner_id_str:
+        try:
+            owner_id = int(owner_id_str)
+            query = query.filter(Lead.user_id == owner_id)
+        except (ValueError, TypeError):
+            pass # Ignora o filtro se o valor não for um número válido
 
     if search:
         query = query.filter(db.or_(Lead.titulo.ilike(f'%{search}%'), Conta.nome_fantasia.ilike(f'%{search}%')))
