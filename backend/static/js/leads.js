@@ -253,12 +253,10 @@ document.addEventListener("DOMContentLoaded", function() {
     [estagioFilter, statusFilter, temperaturaFilter, followupFilter].forEach(el => {
         el.addEventListener('change', applyFiltersAndSearch);
     });
-
-    // --- ADIÇÃO v6.1: Adiciona listener para o filtro de owner ---
     if (ownerFilter) {
         ownerFilter.addEventListener('change', applyFiltersAndSearch);
     }
-
+    // --- INICIALIZAÇÃO ---
     const init = async () => {
         await populateFilters();
         fetchAndRenderLeads();

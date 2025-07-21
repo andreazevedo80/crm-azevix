@@ -58,8 +58,7 @@ def get_leads():
     status = request.args.get('status', '')
     temperatura = request.args.get('temperatura', '')
     follow_up = request.args.get('followup', type=lambda v: v.lower() == 'true')
-    # --- ADIÇÃO v6.1: Filtro por responsável ---
-    owner_id = request.args.get('owner_id')
+    owner_id_str = request.args.get('owner_id')
 
     query = Lead.query.join(Conta)
     
@@ -73,7 +72,7 @@ def get_leads():
         elif not current_user.has_role('admin'):
             query = query.filter(Lead.user_id == current_user.id)
     
-    # --- ALTERAÇÃO v6.1: Aplica o filtro de responsável se fornecido ---
+    # --- CORREÇÃO: Usa a variável correta e garante que o valor é um inteiro ---
     if (current_user.has_role('admin') or current_user.has_role('gerente')) and owner_id_str:
         try:
             owner_id = int(owner_id_str)
