@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
+    // --- ELEMENTOS DA PÁGINA ---
     const container = document.getElementById('leads-table-container');
     const paginationContainer = document.getElementById('pagination-container');
     const searchInput = document.getElementById('lead-search-input');
@@ -8,6 +9,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const statusFilter = document.getElementById('filter-status');
     const temperaturaFilter = document.getElementById('filter-temperatura');
     const followupFilter = document.getElementById('filter-followup');
+    // --- ADIÇÃO v6.1 ---
+    const ownerFilter = document.getElementById('filter-owner');
+    const statusCountersContainer = document.getElementById('status-counters-container');
+    const reatribuirModalEl = document.getElementById('reatribuirLeadModal');
+    const reatribuirModal = new bootstrap.Modal(reatribuirModalEl);
+    const formReatribuirLead = document.getElementById('form-reatribuir-lead');
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
     
@@ -28,7 +35,38 @@ document.addEventListener("DOMContentLoaded", function() {
                 populateSelect(statusFilter, data.status);
                 populateSelect(temperaturaFilter, data.temperaturas);
             }
+            // --- ADIÇÃO v6.1: Popula o filtro de responsáveis para admin/gerente ---
+            if ((IS_ADMIN || IS_MANAGER) && ownerFilter) {
+                const adminDataRes = await fetch('/api/admin/form_data');
+                const adminData = await adminDataRes.json();
+                if (adminData.success) {
+                    populateSelect(ownerFilter, adminData.vendedores);
+                }
+            }
         } catch (error) { console.error("Erro ao carregar filtros:", error); }
+    };
+
+    // --- ADIÇÃO v6.1: Função para buscar e renderizar contadores de status ---
+    const fetchAndRenderStats = () => {
+        if (!statusCountersContainer) return;
+        fetch('/api/leads/stats')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    statusCountersContainer.innerHTML = '';
+                    for (const [status, count] of Object.entries(data.stats)) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge rounded-pill bg-light text-dark p-2';
+                        badge.style.cursor = 'pointer';
+                        badge.textContent = `${status} (${count})`;
+                        badge.onclick = () => {
+                            statusFilter.value = status;
+                            applyFiltersAndSearch();
+                        };
+                        statusCountersContainer.appendChild(badge);
+                    }
+                }
+            });
     };
 
     const renderPagination = (pagination) => {
@@ -81,6 +119,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 let actionButton = `<a href="/contas/${lead.conta_id}" class="btn btn-sm btn-outline-secondary">Ver Conta</a>`;
                 if (currentViewMode === 'pool') {
                     actionButton = `<button class="btn btn-sm btn-success" onclick="assumirLead(${lead.id})">Assumir</button>`;
+                } else if (IS_ADMIN || IS_MANAGER) {
+                    // --- ADIÇÃO v6.1: Adiciona o botão de Reatribuir ---
+                    actionButton += ` <button class="btn btn-sm btn-outline-info ms-1" onclick="openReatribuirModal(${lead.id}, '${lead.titulo}')" title="Reatribuir"><i class="fas fa-exchange-alt"></i></button>`;
                 }
 
                 tableHTML += `
@@ -128,7 +169,9 @@ document.addEventListener("DOMContentLoaded", function() {
             estagio: estagioFilter.value,
             status: statusFilter.value,
             temperatura: temperaturaFilter.value,
-            followup: followupFilter.checked
+            followup: followupFilter.checked,
+            // --- ADIÇÃO v6.1: Adiciona owner_id aos parâmetros ---
+            owner_id: ownerFilter ? ownerFilter.value : ''
         });
 
         fetch(`/api/leads?${params.toString()}`)
@@ -145,23 +188,44 @@ document.addEventListener("DOMContentLoaded", function() {
         fetchAndRenderLeads();
     };
 
-    // --- ADIÇÃO: Nova Função assumirLead ---
-    window.assumirLead = (leadId) => {
-        if (!confirm('Tem certeza que deseja assumir esta oportunidade? Ela será movida para a sua carteira.')) return;
+    // --- ADIÇÃO v6.1: Lógica para Reatribuir Lead ---
+    window.openReatribuirModal = (leadId, leadTitulo) => {
+        formReatribuirLead.querySelector('#reatribuir-lead-id').value = leadId;
+        formReatribuirLead.querySelector('#reatribuir-lead-titulo').textContent = leadTitulo;
+        
+        // Popula o select com os mesmos vendedores do filtro principal
+        const selectOwner = formReatribuirLead.querySelector('#select-novo-owner');
+        selectOwner.innerHTML = ownerFilter.innerHTML;
+        selectOwner.value = ''; // Reseta a seleção
 
-        fetch(`/api/leads/${leadId}/assumir`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    // Move para a aba "Minhas Oportunidades" e recarrega para ver o novo lead
-                    meusLeadsTab.click();
-                } else {
-                    alert(`Erro: ${data.error || 'Não foi possível assumir o lead.'}`);
-                    // Recarrega a aba do pool para ver se o lead foi assumido por outro
-                    fetchAndRenderLeads();
-                }
-            });
+        reatribuirModal.show();
     };
+
+    formReatribuirLead.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const leadId = formReatribuirLead.querySelector('#reatribuir-lead-id').value;
+        const newOwnerId = formReatribuirLead.querySelector('#select-novo-owner').value;
+
+        if (!newOwnerId) {
+            alert('Por favor, selecione um novo responsável.');
+            return;
+        }
+
+        fetch(`/api/leads/${leadId}/reatribuir`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_owner_id: newOwnerId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                reatribuirModal.hide();
+                fetchAndRenderLeads();
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        });
+    });
 
     meusLeadsTab.addEventListener('click', (e) => {
         e.preventDefault();
@@ -188,9 +252,16 @@ document.addEventListener("DOMContentLoaded", function() {
         el.addEventListener('change', applyFiltersAndSearch);
     });
 
+    // --- ADIÇÃO v6.1: Adiciona listener para o filtro de owner ---
+    if (ownerFilter) {
+        ownerFilter.addEventListener('change', applyFiltersAndSearch);
+    }
+
     const init = async () => {
         await populateFilters();
         fetchAndRenderLeads();
+        // --- ADIÇÃO v6.1: Busca os contadores ---
+        fetchAndRenderStats();
     };
     
     init();

@@ -26,6 +26,26 @@ def get_leads_config():
         'temperaturas': TEMPERATURAS
     })
 
+# --- ADIÇÃO v6.1: Rota para buscar as estatísticas de leads por status ---
+@leads.route('/api/leads/stats', methods=['GET'])
+@login_required
+def get_lead_stats():
+    """API que retorna a contagem de leads por status, respeitando as permissões."""
+    base_query = Lead.query.filter(Lead.user_id != None)
+
+    if current_user.has_role('gerente'):
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        liderados_ids.append(current_user.id)
+        base_query = base_query.filter(Lead.user_id.in_(liderados_ids))
+    elif not current_user.has_role('admin'):
+        base_query = base_query.filter(Lead.user_id == current_user.id)
+
+    # Agrupa por status e conta os leads
+    stats = db.session.query(Lead.status_lead, db.func.count(Lead.id)).filter(Lead.status_lead.in_(STATUS_LEADS)).group_by(Lead.status_lead).all()
+    stats_dict = dict(stats)
+
+    return jsonify({'success': True, 'stats': stats_dict})
+
 @leads.route('/api/leads', methods=['GET'])
 @login_required
 def get_leads():
@@ -38,6 +58,8 @@ def get_leads():
     status = request.args.get('status', '')
     temperatura = request.args.get('temperatura', '')
     follow_up = request.args.get('followup', type=lambda v: v.lower() == 'true')
+    # --- ADIÇÃO v6.1: Filtro por responsável ---
+    owner_id = request.args.get('owner_id')
 
     query = Lead.query.join(Conta)
     
@@ -51,6 +73,10 @@ def get_leads():
         elif not current_user.has_role('admin'):
             query = query.filter(Lead.user_id == current_user.id)
     
+    # --- ALTERAÇÃO v6.1: Aplica o filtro de responsável se fornecido ---
+    if (current_user.has_role('admin') or current_user.has_role('gerente')) and owner_id:
+        query = query.filter(Lead.user_id == owner_id)
+
     if search:
         query = query.filter(db.or_(Lead.titulo.ilike(f'%{search}%'), Conta.nome_fantasia.ilike(f'%{search}%')))
     if estagio:
@@ -105,6 +131,48 @@ def assumir_lead(lead_id):
     db.session.commit()
     
     return jsonify({'success': True, 'message': 'Lead assumido com sucesso!'})
+
+# --- ADIÇÃO v6.1: Rota para reatribuir um lead ---
+@leads.route('/api/leads/<int:lead_id>/reatribuir', methods=['POST'])
+@login_required
+def reatribuir_lead(lead_id):
+    lead = Lead.query.get_or_404(lead_id)
+    data = request.get_json()
+    novo_owner_id = data.get('new_owner_id')
+
+    if not novo_owner_id:
+        return jsonify({'success': False, 'error': 'Novo responsável não especificado.'}), 400
+
+    # Lógica de permissão
+    tem_permissao = False
+    if current_user.has_role('admin'):
+        tem_permissao = True
+    elif current_user.has_role('gerente'):
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        if lead.user_id in liderados_ids:
+            tem_permissao = True
+
+    if not tem_permissao:
+        return jsonify({'success': False, 'error': 'Você não tem permissão para reatribuir este lead.'}), 403
+
+    owner_antigo_nome = lead.owner.name if lead.owner else "Ninguém (Pool)"
+    novo_owner = User.query.get_or_404(novo_owner_id)
+
+    lead.user_id = novo_owner_id
+    lead.data_ultima_atualizacao = datetime.utcnow()
+    
+    # Log de auditoria
+    historico = HistoricoAlteracao(
+        user_id=current_user.id, lead_id=lead.id, campo='Responsável',
+        valor_antigo=owner_antigo_nome, valor_novo=novo_owner.name
+    )
+    db.session.add(historico)
+    db.session.commit()
+    
+    # Lógica de notificação (a ser implementada)
+    # Ex: criar_notificacao(novo_owner_id, f"O lead {lead.titulo} foi atribuído a você.")
+
+    return jsonify({'success': True, 'message': 'Lead reatribuído com sucesso.'})
 
 # --- ADIÇÃO v6.0: Rota para criar um novo lead (oportunidade) para uma conta existente ---
 @leads.route('/api/leads', methods=['POST'])

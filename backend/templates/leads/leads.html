@@ -7,6 +7,9 @@
     <h1 class="text-azevix mb-0"><i class="fas fa-bullseye me-2"></i>Gestão de Leads</h1>
 </div>
 
+<div id="status-counters-container" class="mb-3 d-flex flex-wrap gap-2">
+    </div>
+
 <div class="card card-azevix">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
@@ -31,27 +34,60 @@
             <div class="col-md-3">
                 <select id="filter-status" class="form-select form-select-sm"><option value="">Todos os Status</option></select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select id="filter-temperatura" class="form-select form-select-sm"><option value="">Qualquer Temperatura</option></select>
             </div>
-            <div class="col-md-3">
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+            <div class="col-md-2">
+                <select id="filter-owner" class="form-select form-select-sm"><option value="">Todos Responsáveis</option></select>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" role="switch" id="filter-followup">
-                    <label class="form-check-label" for="filter-followup">Apenas com Follow-up</label>
+                    <label class="form-check-label" for="filter-followup">Follow-up</label>
                 </div>
             </div>
         </div>
     </div>
     <div class="card-body">
-        <div class="table-responsive" id="leads-table-container">
-            </div>
+        <div class="table-responsive" id="leads-table-container"></div>
     </div>
     <div class="card-footer d-flex justify-content-center">
         <nav id="pagination-container"></nav>
     </div>
 </div>
+
+<div class="modal fade" id="reatribuirLeadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-reatribuir-lead">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reatribuir Oportunidade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reatribuir-lead-id">
+                    <p>Selecione o novo responsável pela oportunidade <strong id="reatribuir-lead-titulo"></strong>.</p>
+                    <div class="mb-3">
+                        <label for="select-novo-owner" class="form-label">Novo Responsável *</label>
+                        <select id="select-novo-owner" class="form-select" required></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-azevix">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script>
+    const IS_ADMIN = {{ current_user.has_role('admin')|tojson }};
+    const IS_MANAGER = {{ current_user.has_role('gerente')|tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/leads.js') }}"></script>
 {% endblock %}
