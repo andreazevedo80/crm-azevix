@@ -31,14 +31,18 @@ def get_leads_config():
 @login_required
 def get_lead_stats():
     """API que retorna a contagem de leads por status, respeitando as permissões."""
-    base_query = Lead.query.filter(Lead.user_id != None)
-
-    if current_user.has_role('gerente'):
-        liderados_ids = [liderado.id for liderado in current_user.liderados]
-        liderados_ids.append(current_user.id)
-        base_query = base_query.filter(Lead.user_id.in_(liderados_ids))
-    elif not current_user.has_role('admin'):
-        base_query = base_query.filter(Lead.user_id == current_user.id)
+    view_mode = request.args.get('view_mode', 'meus_leads')
+    
+    if view_mode == 'pool':
+        base_query = Lead.query.filter(Lead.user_id == None)
+    else:
+        base_query = Lead.query.filter(Lead.user_id != None)
+        if current_user.has_role('gerente'):
+            liderados_ids = [liderado.id for liderado in current_user.liderados]
+            liderados_ids.append(current_user.id)
+            base_query = base_query.filter(Lead.user_id.in_(liderados_ids))
+        elif not current_user.has_role('admin'):
+            base_query = base_query.filter(Lead.user_id == current_user.id)
 
     # Agrupa por status e conta os leads
     stats = db.session.query(Lead.status_lead, db.func.count(Lead.id)).filter(Lead.status_lead.in_(STATUS_LEADS)).group_by(Lead.status_lead).all()

@@ -22,8 +22,13 @@ document.addEventListener("DOMContentLoaded", function() {
     let currentViewMode = 'meus_leads';
     let searchTimeout;
 
-    const populateSelect = (selectElement, options) => {
-        options.forEach(opt => selectElement.add(new Option(opt, opt)));
+    // ALTERAÇÃO 1: Função populateSelect corrigida para lidar com lista de objetos
+    const populateSelect = (selectElement, options, isObjectList = false) => {
+        if (isObjectList) {
+            options.forEach(opt => selectElement.add(new Option(opt.name, opt.id)));
+        } else {
+            options.forEach(opt => selectElement.add(new Option(opt, opt)));
+        }
     };
 
     const populateFilters = async () => {
@@ -40,16 +45,18 @@ document.addEventListener("DOMContentLoaded", function() {
                 const adminDataRes = await fetch('/api/admin/form_data');
                 const adminData = await adminDataRes.json();
                 if (adminData.success) {
-                    populateSelect(ownerFilter, adminData.vendedores);
+                    // ALTERAÇÃO 2: Corrigido para usar isObjectList = true para vendedores
+                    populateSelect(ownerFilter, adminData.vendedores, true);
                 }
             }
         } catch (error) { console.error("Erro ao carregar filtros:", error); }
     };
 
     // --- ADIÇÃO v6.1: Função para buscar e renderizar contadores de status ---
+    // ALTERAÇÃO 3: fetchAndRenderStats agora envia o view_mode para a API
     const fetchAndRenderStats = () => {
         if (!statusCountersContainer) return;
-        fetch('/api/leads/stats')
+        fetch(`/api/leads/stats?view_mode=${currentViewMode}`)
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
@@ -235,6 +242,8 @@ document.addEventListener("DOMContentLoaded", function() {
         meusLeadsTab.classList.add('active');
         poolTab.classList.remove('active');
         applyFiltersAndSearch();
+        // ALTERAÇÃO 4: Chama fetchAndRenderStats quando muda de aba
+        fetchAndRenderStats();
     });
 
     poolTab.addEventListener('click', (e) => {
@@ -243,6 +252,8 @@ document.addEventListener("DOMContentLoaded", function() {
         poolTab.classList.add('active');
         meusLeadsTab.classList.remove('active');
         applyFiltersAndSearch();
+        // ALTERAÇÃO 4: Chama fetchAndRenderStats quando muda de aba
+        fetchAndRenderStats();
     });
 
     searchInput.addEventListener('keyup', () => {
