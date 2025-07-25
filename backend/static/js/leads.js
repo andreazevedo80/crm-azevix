@@ -63,7 +63,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     statusCountersContainer.innerHTML = '';
                     for (const [status, count] of Object.entries(data.stats)) {
                         const badge = document.createElement('span');
-                        badge.className = 'badge rounded-pill bg-light text-dark p-2';
+                        // ALTERAÇÃO: Classe CSS alterada para bg-primary (melhoria visual)
+                        badge.className = 'badge rounded-pill bg-primary p-2';
                         badge.style.cursor = 'pointer';
                         badge.textContent = `${status} (${count})`;
                         badge.onclick = () => {
