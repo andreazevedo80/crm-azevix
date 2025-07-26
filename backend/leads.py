@@ -76,7 +76,7 @@ def get_leads():
         elif not current_user.has_role('admin'):
             query = query.filter(Lead.user_id == current_user.id)
     
-    # --- CORREÇÃO: Usa a variável correta e garante que o valor é um inteiro ---
+    # --- CORREÇÃO Bug 2: Usa a variável correta e garante que o valor é um inteiro ---
     if (current_user.has_role('admin') or current_user.has_role('gerente')) and owner_id_str:
         try:
             owner_id = int(owner_id_str)
@@ -143,28 +143,21 @@ def assumir_lead(lead_id):
     
     return jsonify({'success': True, 'message': 'Lead e conta assumidos com sucesso!'})
 
-# --- ALTERAÇÃO v6.1.1: Lógica de "Reatribuir Lead" corrigida para "Delegação" ---
+# --- CORREÇÃO Bug 1: Lógica de "Reatribuir Lead" corrigida para usar check_permission na Conta pai ---
 @leads.route('/api/leads/<int:lead_id>/reatribuir', methods=['POST'])
 @login_required
 def reatribuir_lead(lead_id):
     lead = Lead.query.get_or_404(lead_id)
+    conta = Conta.query.get_or_404(lead.conta_id)
     data = request.get_json()
     novo_owner_id = data.get('new_owner_id')
 
     if not novo_owner_id:
         return jsonify({'success': False, 'error': 'Novo responsável não especificado.'}), 400
 
-    # Lógica de permissão
-    tem_permissao = False
-    if current_user.has_role('admin'):
-        tem_permissao = True
-    elif current_user.has_role('gerente'):
-        liderados_ids = [liderado.id for liderado in current_user.liderados]
-        if lead.user_id in liderados_ids:
-            tem_permissao = True
-
-    if not tem_permissao:
-        return jsonify({'success': False, 'error': 'Você não tem permissão para reatribuir este lead.'}), 403
+    # CORREÇÃO: A permissão para reatribuir um lead é a mesma de editar a CONTA pai.
+    if not check_permission(conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para reatribuir leads desta conta.'}), 403
 
     owner_antigo_nome = lead.owner.name if lead.owner else "Ninguém (Pool)"
     novo_owner = User.query.get_or_404(novo_owner_id)
