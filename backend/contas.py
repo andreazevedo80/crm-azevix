@@ -160,8 +160,8 @@ def update_conta(conta_id):
         changes_to_log.append({'campo': 'Tipo Conta', 'valor_antigo': dados_antigos['Tipo Conta'], 'valor_novo': conta.tipo_conta})
     if dados_antigos['Matriz'] != (conta.matriz.nome_fantasia if conta.matriz else "Nenhuma"):
         changes_to_log.append({'campo': 'Conta Matriz', 'valor_antigo': dados_antigos['Matriz'], 'valor_novo': (conta.matriz.nome_fantasia if conta.matriz else "Nenhuma")})
-    if dados_antigos['Responsável'] != conta.owner.name:
-        changes_to_log.append({'campo': 'Responsável', 'valor_antigo': dados_antigos['Responsável'], 'valor_novo': conta.owner.name})
+    if dados_antigos['Responsável'] != (conta.owner.name if conta.owner else "Nenhum"):
+        changes_to_log.append({'campo': 'Responsável', 'valor_antigo': dados_antigos['Responsável'], 'valor_novo': (conta.owner.name if conta.owner else "Nenhum")})
     
     # Tratamento especial para CNPJ se foi alterado
     if 'CNPJ' in dados_antigos:

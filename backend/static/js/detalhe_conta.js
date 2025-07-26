@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function() {
             statusLeadsOptions = configData.status_leads; // Armazena a lista de status
         }
 
-        if (IS_ADMIN) {
+        if ((IS_ADMIN || IS_MANAGER) && adminFields) {
             const adminResponse = await fetch('/api/admin/form_data');
             const adminData = await adminResponse.json();
             if (adminData.success) {
