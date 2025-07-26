@@ -1,6 +1,9 @@
-from flask import Blueprint, render_template, abort, jsonify, request
+from flask import Blueprint, render_template, abort, jsonify, request, current_app
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db
+from .models import User, Role, Conta, db, ConfigGlobal
+from .utils import encrypt_data, decrypt_data
+# --- ADIÇÃO v7.0: Importando o novo módulo de e-mail ---
+from .email import send_test_email
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -106,3 +109,55 @@ def toggle_user_status(user_id):
     user.is_active = not user.is_active
     db.session.commit()
     return jsonify({'success': True, 'message': f'Status do usuário {user.name} alterado.'})
+
+# --- ADIÇÃO v7.0: Novas rotas para Configurações do Sistema ---
+@admin.route('/settings')
+def settings():
+    """Página de configurações gerais do sistema."""
+    return render_template('admin/settings.html')
+
+@admin.route('/api/settings', methods=['GET'])
+def get_settings():
+    """Busca todas as configurações do banco."""
+    settings = ConfigGlobal.query.all()
+    settings_dict = {s.key: (decrypt_data(s.value) if s.is_encrypted else s.value) for s in settings}
+    return jsonify({'success': True, 'settings': settings_dict})
+
+@admin.route('/api/settings', methods=['POST'])
+def save_settings():
+    """Salva um conjunto de configurações no banco."""
+    data = request.get_json()
+    for key, value in data.items():
+        setting = ConfigGlobal.query.get(key)
+        if not setting:
+            setting = ConfigGlobal(key=key)
+            db.session.add(setting)
+        
+        # Criptografa a senha do SMTP antes de salvar
+        if key == 'SMTP_PASSWORD':
+            setting.value = encrypt_data(value)
+            setting.is_encrypted = True
+        else:
+            setting.value = value
+            setting.is_encrypted = False
+            
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Configurações salvas com sucesso!'})
+
+@admin.route('/api/settings/test-smtp', methods=['POST'])
+def test_smtp_settings():
+    """Envia um e-mail de teste com as configurações fornecidas."""
+    data = request.get_json()
+    try:
+        send_test_email(
+            app_config=current_app.config,
+            smtp_server=data.get('SMTP_SERVER'),
+            smtp_port=int(data.get('SMTP_PORT')),
+            smtp_user=data.get('SMTP_USER'),
+            smtp_password=data.get('SMTP_PASSWORD'),
+            smtp_use_tls=data.get('SMTP_USE_TLS'),
+            test_recipient=current_user.email
+        )
+        return jsonify({'success': True, 'message': f'E-mail de teste enviado com sucesso para {current_user.email}!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Falha ao enviar e-mail: {str(e)}'}), 500

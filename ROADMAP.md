@@ -34,6 +34,28 @@
 - Implementar controle de tokens vencidos e prevenção de convites indevidos
 - Criar sistema de hierarquia de permissões
 
+versão 7.0: Módulo de Administração (Configurações do Sistema)
+Objetivo: Permitir que o administrador configure a "identidade" do sistema e as configurações de e-mail.
+Requisitos:
+Criar a nova tabela ConfigGlobal no models.py.
+No painel de admin, criar uma nova página "Configurações Gerais".
+Nesta página, implementar a interface para:
+Configurações da Empresa (nome, endereço, etc.).
+Configuração da URL Base do Site (SITE_URL).
+Configuração do Servidor de E-mail (SMTP), com criptografia e botão de teste.
+
+versão 7.1: Fluxo de Convite de Usuários
+Objetivo: Habilitar o fluxo completo de convite de novos usuários.
+Requisitos:
+No painel de admin, criar uma nova página "Domínios Permitidos" para gerenciar os domínios de e-mail autorizados.
+Na página de "Gestão de Usuários" (/admin/users), habilitar o botão "+Convidar Novo Usuário".
+Ao clicar, um modal aparecerá pedindo o nome, e-mail e role do novo usuário.
+Ao submeter, o backend irá:
+Validar se o domínio do e-mail é permitido.
+Criar o novo usuário com is_active = False.
+Gerar o token de convite seguro.
+Enviar o e-mail de convite usando as configurações de SMTP.
+
 ---
 
 ## Versão 8.0: Importação de Dados

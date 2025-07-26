@@ -6,6 +6,22 @@ from sqlalchemy import Index
 from .utils import encrypt_data, decrypt_data, format_cnpj, get_cnpj_hash
 from uuid import uuid4
 
+# --- ADIÇÃO v7.0: Novo modelo para configurações globais ---
+class ConfigGlobal(db.Model):
+    __tablename__ = 'config_global'
+    key = db.Column(db.String(255), primary_key=True)
+    value = db.Column(db.Text, nullable=True)
+    is_encrypted = db.Column(db.Boolean, default=False)
+
+    @classmethod
+    def get_setting(cls, key, default=None):
+        setting = cls.query.get(key)
+        if not setting:
+            return default
+        if setting.is_encrypted:
+            return decrypt_data(setting.value)
+        return setting.value
+
 # --- ADIÇÃO: Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),

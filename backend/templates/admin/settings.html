@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações do Sistema - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-azevix mb-0"><i class="fas fa-cogs me-2"></i>Configurações do Sistema</h1>
+</div>
+
+<div id="alert-container"></div>
+
+<form id="settingsForm">
+    <div class="card card-azevix mb-4">
+        <div class="card-header"><h5 class="card-title mb-0">Informações da Empresa</h5></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="COMPANY_NAME" class="form-label">Nome da Empresa</label>
+                    <input type="text" id="COMPANY_NAME" name="COMPANY_NAME" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="COMPANY_CONTACT" class="form-label">Contato (Email/Telefone)</label>
+                    <input type="text" id="COMPANY_CONTACT" name="COMPANY_CONTACT" class="form-control">
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="COMPANY_ADDRESS" class="form-label">Endereço</label>
+                    <textarea id="COMPANY_ADDRESS" name="COMPANY_ADDRESS" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-azevix mb-4">
+        <div class="card-header"><h5 class="card-title mb-0">Configurações do Site</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="SITE_URL" class="form-label">URL Base do Site</label>
+                <input type="url" id="SITE_URL" name="SITE_URL" class="form-control" placeholder="http://54.209.133.228">
+                <div class="form-text">Esta é a URL que será usada nos links de convite por e-mail.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-azevix mb-4">
+        <div class="card-header"><h5 class="card-title mb-0">Configurações de E-mail (SMTP)</h5></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label for="SMTP_SERVER" class="form-label">Servidor SMTP</label><input type="text" id="SMTP_SERVER" name="SMTP_SERVER" class="form-control"></div>
+                <div class="col-md-3 mb-3"><label for="SMTP_PORT" class="form-label">Porta</label><input type="number" id="SMTP_PORT" name="SMTP_PORT" class="form-control"></div>
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="SMTP_USE_TLS" name="SMTP_USE_TLS"><label class="form-check-label" for="SMTP_USE_TLS">Usar TLS</label></div>
+                </div>
+                <div class="col-md-6 mb-3"><label for="SMTP_USER" class="form-label">Usuário SMTP</label><input type="text" id="SMTP_USER" name="SMTP_USER" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label for="SMTP_PASSWORD" class="form-label">Senha SMTP</label><input type="password" id="SMTP_PASSWORD" name="SMTP_PASSWORD" class="form-control"></div>
+            </div>
+            <button type="button" id="testSmtpBtn" class="btn btn-outline-secondary">Testar Conexão SMTP</button>
+        </div>
+    </div>
+
+    <div class="text-end mb-4">
+        <button type="submit" class="btn btn-azevix btn-lg">Salvar Todas as Configurações</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/settings.js') }}"></script>
+{% endblock %}
