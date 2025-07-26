@@ -117,7 +117,7 @@ def get_leads():
         }
     })
 
-# --- ADIÇÃO v6.0: Rota para assumir um lead do pool ---
+# --- ALTERAÇÃO v6.1.1: Lógica de "Assumir Lead" corrigida ---
 @leads.route('/api/leads/<int:lead_id>/assumir', methods=['POST'])
 @login_required
 def assumir_lead(lead_id):
@@ -127,24 +127,27 @@ def assumir_lead(lead_id):
     if lead.user_id is not None:
         return jsonify({'success': False, 'error': f'Este lead já foi assumido por {lead.owner.name}.'}), 409
 
-    lead.user_id = current_user.id
+    # 1. Atribui a conta ao usuário, se ela estiver no pool
     if conta.user_id is None:
         conta.user_id = current_user.id
-    conta.user_id = current_user.id # Atribui a conta também
-    lead.status_lead = 'Tentando Contato'
-    lead.data_apropriacao = datetime.utcnow()
-    lead.data_ultima_atualizacao = datetime.utcnow()
+
+    # 2. Atribui o lead clicado e todos os outros leads órfãos da mesma conta
+    leads_orfans_da_conta = Lead.query.filter_by(conta_id=conta.id, user_id=None).all()
+    for l in leads_orfans_da_conta:
+        l.user_id = current_user.id
+        l.status_lead = 'Tentando Contato'
+        l.data_apropriacao = datetime.utcnow()
+        l.data_ultima_atualizacao = datetime.utcnow()
     
     db.session.commit()
     
-    return jsonify({'success': True, 'message': 'Lead assumido com sucesso!'})
+    return jsonify({'success': True, 'message': 'Lead e conta assumidos com sucesso!'})
 
-# --- ALTERAÇÃO v6.1.1: Lógica de reatribuição com auditoria e correção de posse da conta ---
+# --- ALTERAÇÃO v6.1.1: Lógica de "Reatribuir Lead" corrigida para "Delegação" ---
 @leads.route('/api/leads/<int:lead_id>/reatribuir', methods=['POST'])
 @login_required
 def reatribuir_lead(lead_id):
     lead = Lead.query.get_or_404(lead_id)
-    conta = Conta.query.get_or_404(lead.conta_id)
     data = request.get_json()
     novo_owner_id = data.get('new_owner_id')
 
@@ -166,29 +169,22 @@ def reatribuir_lead(lead_id):
     owner_antigo_nome = lead.owner.name if lead.owner else "Ninguém (Pool)"
     novo_owner = User.query.get_or_404(novo_owner_id)
 
-    # --- CORREÇÃO: Altera o dono do Lead E da Conta pai ---
+    # CORREÇÃO: Altera APENAS o dono do Lead, não da conta.
     lead.user_id = novo_owner_id
-    conta.user_id = novo_owner_id
     lead.data_ultima_atualizacao = datetime.utcnow()
     
     # Log de auditoria para o Lead
     historico_lead = HistoricoAlteracao(
-        user_id=current_user.id, lead_id=lead.id, campo='Responsável',
-        valor_antigo=owner_antigo_nome, valor_novo=novo_owner.name
-    )
-    # Log de auditoria para a Conta
-    historico_conta = HistoricoAlteracao(
-        user_id=current_user.id, conta_id=conta.id, campo='Responsável',
+        user_id=current_user.id, lead_id=lead.id, campo='Responsável (Oportunidade)',
         valor_antigo=owner_antigo_nome, valor_novo=novo_owner.name
     )
     db.session.add(historico_lead)
-    db.session.add(historico_conta)
     db.session.commit()
     
     # Lógica de notificação (a ser implementada)
     # Ex: criar_notificacao(novo_owner_id, f"O lead {lead.titulo} foi atribuído a você.")
 
-    return jsonify({'success': True, 'message': 'Lead e Conta reatribuídos com sucesso.'})
+    return jsonify({'success': True, 'message': 'Oportunidade reatribuída com sucesso.'})
 
 # --- ADIÇÃO v6.0: Rota para criar um novo lead (oportunidade) para uma conta existente ---
 @leads.route('/api/leads', methods=['POST'])

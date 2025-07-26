@@ -8,15 +8,27 @@ from .config_constants import SEGMENTOS, STATUS_LEADS
 contas = Blueprint('contas', __name__)
 
 # --- Função Auxiliar para Checagem de Permissão ---
-def check_permission(conta):
-    """Verifica se o usuário atual tem permissão para acessar/modificar uma conta."""
+def check_permission(conta, for_editing=False):
+    """Verifica se o usuário atual tem permissão para uma conta."""
     if not conta: return False
+    
+    # Dono da conta e admin sempre têm permissão total
     if current_user.has_role('admin') or conta.user_id == current_user.id:
         return True
+    
+    # Gerente pode ver/editar contas de seus liderados
     if current_user.has_role('gerente'):
         liderados_ids = [liderado.id for liderado in current_user.liderados]
         if conta.user_id in liderados_ids:
             return True
+            
+    # Se a verificação for apenas para VISUALIZAÇÃO (não para edição)
+    if not for_editing:
+        # Vendedor pode ver uma conta se tiver pelo menos um lead nela
+        user_leads_in_this_account = Lead.query.filter_by(conta_id=conta.id, user_id=current_user.id).count()
+        if user_leads_in_this_account > 0:
+            return True
+            
     return False
 
 # --- ROTAS DE PÁGINAS ---
@@ -34,7 +46,7 @@ def nova_conta_form():
 @login_required
 def detalhe_conta(conta_id):
     conta = Conta.query.get_or_404(conta_id)
-    if not check_permission(conta):
+    if not check_permission(conta, for_editing=False):
         flash("Você não tem permissão para ver esta conta.", "danger")
         return redirect(url_for('contas.listar_contas'))
     return render_template('contas/detalhe_conta.html', conta=conta)
@@ -87,7 +99,7 @@ def get_contas():
 @login_required
 def update_conta(conta_id):
     conta = Conta.query.get_or_404(conta_id)
-    if not check_permission(conta):
+    if not check_permission(conta, for_editing=True):
         return jsonify({'success': False, 'error': 'Você não tem permissão para editar esta conta.'}), 403
     
     data = request.get_json()
