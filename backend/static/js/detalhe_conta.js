@@ -314,7 +314,7 @@ document.addEventListener("DOMContentLoaded", function() {
         btnEditConta.style.display = isEditing ? 'none' : 'block';
         hierarchyHr.style.display = isEditing ? 'none' : (hierarchyInfo.innerHTML ? 'block' : 'none');
         hierarchyInfo.style.display = isEditing ? 'none' : 'block';
-        if (IS_ADMIN && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
+        if ((IS_ADMIN || IS_MANAGER) && adminFields) { adminFields.style.display = isEditing ? 'block' : 'none'; }
     };
 
     btnEditConta.addEventListener('click', () => {
