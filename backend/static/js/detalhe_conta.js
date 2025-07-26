@@ -303,8 +303,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const toggleEditMode = (isEditing) => {
         formEditConta.querySelectorAll('input, select').forEach(field => {
             // Permite editar se CAN_EDIT_THIS_ACCOUNT for verdadeiro
-            if (field.id === 'edit-owner' && !IS_ADMIN) {
-                field.disabled = true; // O campo de dono só é editável pelo admin
+            if (field.id === 'edit-owner') {
+                field.disabled = !isEditing || !(IS_ADMIN || IS_MANAGER);
             } else {
                 field.disabled = !isEditing;
             }
