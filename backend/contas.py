@@ -144,7 +144,9 @@ def update_conta(conta_id):
                 return jsonify({'success': False, 'error': 'Você só pode atribuir contas para vendedores da sua equipe.'}), 403
         # Apenas admin ou gerente (que passou na validação) podem alterar
         if current_user.has_role('admin') or current_user.has_role('gerente'):
-            conta.user_id = novo_owner_id
+            owner_id = request.args.get('owner_id')
+            if owner_id:
+                query = query.filter(Conta.user_id == owner_id)
     
     # Compara e registra no histórico
     db.session.flush() # Aplica as mudanças à sessão para leitura
