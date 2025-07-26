@@ -69,9 +69,10 @@ def get_contas():
     elif not current_user.has_role('admin'):
         query = query.filter_by(user_id=current_user.id)
     
-    if current_user.has_role('admin'):
+    if current_user.has_role('admin') or current_user.has_role('gerente'):
         owner_id = request.args.get('owner_id')
-        if owner_id: query = query.filter_by(user_id=owner_id)
+        if owner_id:
+            query = query.filter(Conta.user_id == owner_id)
 
     search = request.args.get('search', '').strip()
     if search: query = query.filter(db.or_(Conta.nome_fantasia.ilike(f'%{search}%'), Conta.razao_social.ilike(f'%{search}%')))
@@ -134,8 +135,16 @@ def update_conta(conta_id):
         matriz_id = data.get('matriz_id')
         conta.matriz_id = int(matriz_id) if matriz_id and int(matriz_id) != conta.id else None
         
-    if current_user.has_role('admin') and 'owner_id' in data and data.get('owner_id'):
-        conta.user_id = int(data['owner_id'])
+    if 'owner_id' in data and data.get('owner_id'):
+        novo_owner_id = int(data['owner_id'])
+        # Validação de segurança: Gerente só pode atribuir para sua equipe
+        if current_user.has_role('gerente') and not current_user.has_role('admin'):
+            liderados_ids = [liderado.id for liderado in current_user.liderados]
+            if novo_owner_id not in liderados_ids:
+                return jsonify({'success': False, 'error': 'Você só pode atribuir contas para vendedores da sua equipe.'}), 403
+        # Apenas admin ou gerente (que passou na validação) podem alterar
+        if current_user.has_role('admin') or current_user.has_role('gerente'):
+            conta.user_id = novo_owner_id
     
     # Compara e registra no histórico
     db.session.flush() # Aplica as mudanças à sessão para leitura
