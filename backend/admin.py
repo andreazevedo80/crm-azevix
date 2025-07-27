@@ -143,13 +143,9 @@ def test_smtp_settings():
     """Envia um e-mail de teste com as configurações fornecidas."""
     data = request.get_json()
     try:
+        # --- ALTERAÇÃO: A função agora recebe o dicionário de dados e o destinatário ---
         send_test_email(
-            app_config=current_app.config,
-            smtp_server=data.get('SMTP_SERVER'),
-            smtp_port=int(data.get('SMTP_PORT')),
-            smtp_user=data.get('SMTP_USER'),
-            smtp_password=data.get('SMTP_PASSWORD'),
-            smtp_use_tls=data.get('SMTP_USE_TLS'),
+            smtp_settings=data,
             test_recipient=current_user.email
         )
         return jsonify({'success': True, 'message': f'E-mail de teste enviado com sucesso para {current_user.email}!'})

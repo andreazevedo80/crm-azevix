@@ -24,12 +24,28 @@ def setup_dynamic_mail():
     temp_mail.init_app(temp_app)
     return temp_mail, temp_app
 
-def send_test_email(test_recipient):
-    """Envia um e-mail de teste com as configurações do banco."""
-    temp_mail, temp_app = setup_dynamic_mail()
-    msg = Message('E-mail de Teste - CRM Azevix', recipients=[test_recipient])
+def send_test_email(smtp_settings, test_recipient):
+    """Função para enviar um e-mail de teste com configurações dinâmicas."""
+    temp_mail = Mail()
+    temp_app = current_app._get_current_object()
+
+    temp_app.config.update(
+        MAIL_SERVER=smtp_settings.get('SMTP_SERVER'),
+        MAIL_PORT=int(smtp_settings.get('SMTP_PORT')),
+        MAIL_USE_TLS=smtp_settings.get('SMTP_USE_TLS'),
+        MAIL_USE_SSL=not smtp_settings.get('SMTP_USE_TLS'),
+        MAIL_USERNAME=smtp_settings.get('SMTP_USER'),
+        MAIL_PASSWORD=smtp_settings.get('SMTP_PASSWORD'),
+        MAIL_DEFAULT_SENDER=(ConfigGlobal.get_setting('COMPANY_NAME', 'CRM Azevix'), smtp_settings.get('SMTP_USER'))
+    )
+    temp_mail.init_app(temp_app)
+
+    msg = Message(
+        'E-mail de Teste - CRM Azevix',
+        recipients=[test_recipient]
+    )
     msg.body = 'Se você está recebendo este e-mail, suas configurações de SMTP estão funcionando corretamente!'
-    
+
     with temp_app.app_context():
         temp_mail.send(msg)
 
