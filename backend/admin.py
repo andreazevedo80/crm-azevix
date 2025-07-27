@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, abort, jsonify, request, current_a
 from flask_login import login_required, current_user
 from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos
 from .utils import encrypt_data, decrypt_data
-from .email import send_test_email
+from .email import send_test_email, send_invitation_email
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -197,3 +197,54 @@ def delete_domain(domain_id):
     db.session.delete(domain)
     db.session.commit()
     return jsonify({'success': True, 'message': 'Domínio removido com sucesso.'})
+
+# --- ADIÇÃO v7.1: Nova rota de API para convidar usuários ---
+@admin.route('/api/users/invite', methods=['POST'])
+def invite_user():
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    name = data.get('name', '').strip()
+    role_ids = data.get('roles', [])
+
+    if not email or not name or not role_ids:
+        return jsonify({'success': False, 'error': 'Nome, e-mail e pelo menos um papel são obrigatórios.'}), 400
+
+    # 1. Valida se o domínio do e-mail é permitido
+    permitidos = DominiosPermitidos.query.all()
+    if permitidos: # Se a lista não estiver vazia, a validação é obrigatória
+        domain = email.split('@')[-1]
+        if not any(d.domain == domain for d in permitidos):
+            return jsonify({'success': False, 'error': f'O domínio "{domain}" não está autorizado para receber convites.'}), 403
+
+    # 2. Valida se o e-mail já existe
+    if User.query.filter_by(email=email).first():
+        return jsonify({'success': False, 'error': 'Este e-mail já está cadastrado no sistema.'}), 409
+
+    # 3. Cria o novo usuário (inativo) e gera o token
+    novo_usuario = User(email=email, name=name)
+    novo_usuario.generate_invitation_token()
+    
+    roles = Role.query.filter(Role.id.in_(role_ids)).all()
+    novo_usuario.roles = roles
+    
+    db.session.add(novo_usuario)
+    db.session.commit()
+
+    # 4. Envia o e-mail de convite
+    try:
+        site_url = ConfigGlobal.get_setting('SITE_URL', request.url_root)
+        invitation_link = url_for('auth.set_password_with_token', token=novo_usuario.invitation_token, _external=True)
+        # Garante que a URL externa use a URL base configurada
+        if 'localhost' in invitation_link or '127.0.0.1' in invitation_link:
+             base_url = site_url.strip('/')
+             path = url_for('auth.set_password_with_token', token=novo_usuario.invitation_token)
+             invitation_link = f"{base_url}{path}"
+
+        send_invitation_email(novo_usuario, invitation_link)
+    except Exception as e:
+        # Se o e-mail falhar, reverte a criação do usuário para não deixar lixo no banco
+        db.session.delete(novo_usuario)
+        db.session.commit()
+        return jsonify({'success': False, 'error': f'Não foi possível enviar o e-mail de convite. Verifique as configurações de SMTP. Erro: {str(e)}'}), 500
+
+    return jsonify({'success': True, 'message': f'Convite enviado com sucesso para {email}!'})

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="text-azevix mb-0"><i class="fas fa-user-cog me-2"></i>Gestão de Usuários</h1>
-    <button class="btn btn-azevix">
+    <button class="btn btn-azevix" data-bs-toggle="modal" data-bs-target="#inviteUserModal">
         <i class="fas fa-user-plus me-1"></i> Convidar Novo Usuário
     </button>
 </div>
@@ -82,6 +82,31 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-azevix">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="inviteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="form-invite-user">
+                <div class="modal-header">
+                    <h5 class="modal-title">Convidar Novo Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="invite-alert-container"></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="invite-user-name" class="form-label">Nome *</label><input type="text" id="invite-user-name" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label for="invite-user-email" class="form-label">Email *</label><input type="email" id="invite-user-email" class="form-control" required></div>
+                        <div class="col-md-12 mb-3"><label for="invite-user-roles" class="form-label">Papéis (Roles) *</label><select id="invite-user-roles" class="form-select" multiple required></select></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-azevix">Enviar Convite</button>
                 </div>
             </form>
         </div>

@@ -1,31 +1,61 @@
 from flask_mail import Mail, Message
-from flask import current_app
+from flask import current_app, render_template
 from .models import ConfigGlobal
 
 mail = Mail()
 
-def send_test_email(app_config, smtp_server, smtp_port, smtp_user, smtp_password, smtp_use_tls, test_recipient):
-    """Função para enviar um e-mail de teste com configurações dinâmicas."""
-    # Configura uma instância temporária do Mail com os dados do formulário
+# --- Função de setup de e-mail reutilizável ---
+def setup_dynamic_mail():
+    """Busca as configurações de SMTP do banco e prepara o objeto Mail."""
     temp_mail = Mail()
     temp_app = current_app._get_current_object()
     
+    smtp_user = ConfigGlobal.get_setting('SMTP_USER')
+    
     temp_app.config.update(
-        MAIL_SERVER=smtp_server,
-        MAIL_PORT=smtp_port,
-        MAIL_USE_TLS=smtp_use_tls,
-        MAIL_USE_SSL=not smtp_use_tls,
+        MAIL_SERVER=ConfigGlobal.get_setting('SMTP_SERVER'),
+        MAIL_PORT=int(ConfigGlobal.get_setting('SMTP_PORT', 587)),
+        MAIL_USE_TLS=ConfigGlobal.get_setting('SMTP_USE_TLS', 'true').lower() == 'true',
+        MAIL_USE_SSL=not (ConfigGlobal.get_setting('SMTP_USE_TLS', 'true').lower() == 'true'),
         MAIL_USERNAME=smtp_user,
-        MAIL_PASSWORD=smtp_password,
+        MAIL_PASSWORD=ConfigGlobal.get_setting('SMTP_PASSWORD'),
         MAIL_DEFAULT_SENDER=(ConfigGlobal.get_setting('COMPANY_NAME', 'CRM Azevix'), smtp_user)
     )
     temp_mail.init_app(temp_app)
+    return temp_mail, temp_app
+
+def send_test_email(test_recipient):
+    """Envia um e-mail de teste com as configurações do banco."""
+    temp_mail, temp_app = setup_dynamic_mail()
+    msg = Message('E-mail de Teste - CRM Azevix', recipients=[test_recipient])
+    msg.body = 'Se você está recebendo este e-mail, suas configurações de SMTP estão funcionando corretamente!'
+    
+    with temp_app.app_context():
+        temp_mail.send(msg)
+
+# --- ADIÇÃO v7.1: Função para enviar e-mail de convite ---
+def send_invitation_email(user, invitation_link):
+    """Envia um e-mail de convite para um novo usuário."""
+    temp_mail, temp_app = setup_dynamic_mail()
+    company_name = ConfigGlobal.get_setting('COMPANY_NAME', 'CRM Azevix')
     
     msg = Message(
-        'E-mail de Teste - CRM Azevix',
-        recipients=[test_recipient]
+        f'Você foi convidado para o CRM {company_name}',
+        recipients=[user.email]
     )
-    msg.body = 'Se você está recebendo este e-mail, suas configurações de SMTP estão funcionando corretamente!'
+    # Usaremos um template HTML para o corpo do e-mail no futuro, por enquanto será texto simples.
+    msg.body = f"""
+    Olá, {user.name}!
+
+    Você foi convidado para se juntar ao sistema CRM da empresa {company_name}.
+    Para ativar sua conta e definir sua senha, por favor, acesse o link abaixo:
+    {invitation_link}
+
+    Este link é válido por 24 horas.
+
+    Atenciosamente,
+    Equipe {company_name}
+    """
     
     with temp_app.app_context():
         temp_mail.send(msg)

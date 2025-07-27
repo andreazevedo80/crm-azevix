@@ -3,6 +3,10 @@
 const editUserModalEl = document.getElementById('editUserModal');
 const editUserModal = new bootstrap.Modal(editUserModalEl);
 const formEditUser = document.getElementById('form-edit-user');
+// --- Elementos do Modal de Convite ---
+const inviteUserModalEl = document.getElementById('inviteUserModal');
+const inviteUserModal = new bootstrap.Modal(inviteUserModalEl);
+const formInviteUser = document.getElementById('form-invite-user');
 
 // Função para popular selects, incluindo 'multiple'
 const populateSelect = (selectElement, options, selectedValues = []) => {
@@ -87,3 +91,53 @@ window.toggleUserStatus = (userId) => {
         });
     }
 };
+// --- ADIÇÃO v7.1: Abre e prepara o modal de convite ---
+document.querySelector('[data-bs-target="#inviteUserModal"]').addEventListener('click', () => {
+    // Busca a lista de roles para popular o select
+    fetch('/admin/api/users/1') // Usamos o usuário 1 (admin) como base para pegar a lista de roles
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const rolesSelect = formInviteUser.querySelector('#invite-user-roles');
+                populateSelect(rolesSelect, data.all_roles);
+            }
+        });
+});
+
+// --- ADIÇÃO v7.1: Listener para o formulário de convite ---
+formInviteUser.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const alertContainer = formInviteUser.querySelector('#invite-alert-container');
+    const submitButton = formInviteUser.querySelector('button[type="submit"]');
+    
+    const selectedRoles = Array.from(formInviteUser.querySelector('#invite-user-roles').selectedOptions).map(opt => opt.value);
+
+    const inviteData = {
+        name: formInviteUser.querySelector('#invite-user-name').value,
+        email: formInviteUser.querySelector('#invite-user-email').value,
+        roles: selectedRoles,
+    };
+
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+
+    fetch('/admin/api/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inviteData)
+    })
+    .then(res => res.json())
+    .then(result => {
+        if(result.success) {
+            inviteUserModal.hide();
+            alert(result.message); // Alerta simples por enquanto
+            window.location.reload();
+        } else {
+            alertContainer.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
+        }
+    })
+    .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enviar Convite';
+    });
+});
