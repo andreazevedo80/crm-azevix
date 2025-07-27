@@ -1,5 +1,6 @@
 from flask_mail import Mail, Message
 from flask import current_app
+from .models import ConfigGlobal
 
 mail = Mail()
 
