@@ -79,6 +79,46 @@ Enviar o e-mail de convite usando as configurações de SMTP.
 - **[NOVO]** Implementar backup automático antes de importações grandes
 - Validação robusta de dados de entrada
 
+versão 8.0: Importação de Dados (MVP - Mínimo Produto Viável)
+Objetivo: Entregar o fluxo essencial de importação de ponta a ponta, de forma síncrona.
+
+Requisitos:
+
+Criar a interface no painel de admin para upload de arquivos CSV.
+
+Oferecer um template de CSV para download nesta página.
+
+Implementar a lógica no backend para processar o arquivo, validar CNPJs duplicados e criar as Contas e Leads no "Lead Pool".
+
+Ao final, gerar um relatório simples de sucessos e erros (ex: "Linha 5: CNPJ já existe").
+
+O que entregamos aqui: A funcionalidade principal, que já agrega um valor imenso ao sistema.
+
+versão 8.1: Importação de Dados (Usabilidade e Auditoria)
+Objetivo: Refinar a experiência do administrador, tornando o processo mais seguro e rastreável.
+
+Requisitos:
+
+Implementar a funcionalidade de preview dos dados antes da importação final.
+
+Implementar o histórico de importações (quem fez, quando, quantos registros, com um link para o relatório de erros).
+
+Armazenar o arquivo CSV original associado ao histórico.
+
+Adicionar validações mais robustas, como a de encoding do arquivo.
+
+O que entregamos aqui: Uma experiência de importação mais segura e com total rastreabilidade.
+
+versão 8.2: Importação de Dados (Performance e Segurança)
+Objetivo: Preparar o módulo de importação para lidar com grandes volumes de dados de forma segura.
+
+Requisitos:
+
+Implementar o processamento assíncrono da importação. O admin fará o upload, o sistema começará a processar em segundo plano, e o admin será notificado (via e-mail ou notificação no sistema, em uma versão futura) quando terminar.
+
+Backup Automático: Antes de iniciar um grande job de importação, o sistema poderia acionar um script de backup do banco de dados (esta é uma feature de infraestrutura complexa que podemos detalhar mais à frente).
+
+
 ---
 
 ## Versão 9.0: Workflow Inteligente de Vendas
