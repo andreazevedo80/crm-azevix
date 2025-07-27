@@ -15,4 +15,4 @@ python -c "from backend import create_app, db; app = create_app(); app.app_conte
 
 # Inicia o servidor Gunicorn
 echo "Iniciando o servidor Gunicorn..."
-exec gunicorn --bind 0.0.0.0:5090 --workers 4 run:app
+exec gunicorn --bind 0.0.0.0:5090 --workers 4 --timeout 120 run:app
