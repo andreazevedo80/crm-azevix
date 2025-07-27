@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db, ConfigGlobal
+from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos
 from .utils import encrypt_data, decrypt_data
 from .email import send_test_email
 
