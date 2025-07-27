@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Domínios - Admin{% endblock %}
+
+{% block content %}
+<h1 class="text-azevix mb-4"><i class="fas fa-at me-2"></i>Gestão de Domínios Permitidos</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card card-azevix">
+            <div class="card-header"><h5 class="card-title mb-0">Adicionar Novo Domínio</h5></div>
+            <div class="card-body">
+                <form id="addDomainForm">
+                    <label for="domain-name" class="form-label">Domínio</label>
+                    <div class="input-group">
+                        <span class="input-group-text">@</span>
+                        <input type="text" id="domain-name" class="form-control" placeholder="exemplo.com.br" required>
+                        <button type="submit" class="btn btn-azevix">Adicionar</button>
+                    </div>
+                    <div class="form-text">Apenas usuários com e-mails destes domínios poderão ser convidados. Se a lista estiver vazia, qualquer domínio será permitido.</div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card card-azevix">
+            <div class="card-header"><h5 class="card-title mb-0">Domínios Cadastrados</h5></div>
+            <div class="card-body">
+                <ul class="list-group" id="domain-list">
+                    </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/domains.js') }}"></script>
+{% endblock %}

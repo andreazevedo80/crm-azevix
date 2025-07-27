@@ -21,6 +21,15 @@ class ConfigGlobal(db.Model):
         if setting.is_encrypted:
             return decrypt_data(setting.value)
         return setting.value
+# --- ADIÇÃO v7.1: Novo modelo para Domínios Permitidos ---
+class DominiosPermitidos(db.Model):
+    __tablename__ = 'dominios_permitidos'
+    id = db.Column(db.Integer, primary_key=True)
+    domain = db.Column(db.String(255), unique=True, nullable=False)
+    data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {'id': self.id, 'domain': self.domain}
 
 # --- ADIÇÃO: Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
 user_roles = db.Table('user_roles',

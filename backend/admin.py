@@ -2,7 +2,6 @@ from flask import Blueprint, render_template, abort, jsonify, request, current_a
 from flask_login import login_required, current_user
 from .models import User, Role, Conta, db, ConfigGlobal
 from .utils import encrypt_data, decrypt_data
-# --- ADIÇÃO v7.0: Importando o novo módulo de e-mail ---
 from .email import send_test_email
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
@@ -30,7 +29,7 @@ def account_management():
     """Página de listagem e gestão de contas."""
     return render_template('admin/account_management.html')
 
-# --- ALTERAÇÃO v5.01.2: Adicionada lógica de busca e paginação ---
+# --- ALTERAÇÃO Adicionada lógica de busca e paginação ---
 @admin.route('/api/accounts', methods=['GET'])
 def get_all_accounts():
     """API que busca todas as contas, com filtro de status, busca e paginação."""
@@ -161,3 +160,40 @@ def test_smtp_settings():
         return jsonify({'success': True, 'message': f'E-mail de teste enviado com sucesso para {current_user.email}!'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Falha ao enviar e-mail: {str(e)}'}), 500
+
+# --- ADIÇÃO v7.1: Novas rotas para Gestão de Domínios ---
+@admin.route('/domains')
+def domain_management():
+    """Página de gestão de domínios permitidos."""
+    return render_template('admin/domains.html')
+
+@admin.route('/api/domains', methods=['GET'])
+def get_domains():
+    """Busca todos os domínios permitidos."""
+    domains = DominiosPermitidos.query.order_by(DominiosPermitidos.domain).all()
+    return jsonify({'success': True, 'domains': [d.to_dict() for d in domains]})
+
+@admin.route('/api/domains', methods=['POST'])
+def add_domain():
+    """Adiciona um novo domínio permitido."""
+    data = request.get_json()
+    domain_name = data.get('domain', '').strip().lower()
+    if not domain_name:
+        return jsonify({'success': False, 'error': 'O nome do domínio é obrigatório.'}), 400
+    
+    existing = DominiosPermitidos.query.filter_by(domain=domain_name).first()
+    if existing:
+        return jsonify({'success': False, 'error': 'Este domínio já está cadastrado.'}), 409
+        
+    new_domain = DominiosPermitidos(domain=domain_name)
+    db.session.add(new_domain)
+    db.session.commit()
+    return jsonify({'success': True, 'domain': new_domain.to_dict()})
+
+@admin.route('/api/domains/<int:domain_id>', methods=['DELETE'])
+def delete_domain(domain_id):
+    """Remove um domínio permitido."""
+    domain = DominiosPermitidos.query.get_or_404(domain_id)
+    db.session.delete(domain)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Domínio removido com sucesso.'})
