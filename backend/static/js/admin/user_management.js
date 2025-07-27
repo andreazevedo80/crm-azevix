@@ -1,4 +1,4 @@
-// --- ADIÇÃO v5.01: Lógica para a página de Gestão de Usuários ---
+// --- Lógica para a página de Gestão de Usuários ---
 
 const editUserModalEl = document.getElementById('editUserModal');
 const editUserModal = new bootstrap.Modal(editUserModalEl);
@@ -7,15 +7,16 @@ const formEditUser = document.getElementById('form-edit-user');
 const inviteUserModalEl = document.getElementById('inviteUserModal');
 const inviteUserModal = new bootstrap.Modal(inviteUserModalEl);
 const formInviteUser = document.getElementById('form-invite-user');
+const inviteButton = document.querySelector('[data-bs-target="#inviteUserModal"]');
 
 // Função para popular selects, incluindo 'multiple'
 const populateSelect = (selectElement, options, selectedValues = []) => {
     selectElement.innerHTML = '';
-    if (selectElement.id === 'edit-user-gerente') {
+    if (selectElement.id === 'edit-user-gerente' || selectElement.id === 'invite-user-gerente') {
         selectElement.add(new Option('Nenhum', ''));
     }
     
-    const selectedSet = new Set(selectedValues);
+    const selectedSet = new Set(selectedValues.map(String)); 
 
     options.forEach(opt => {
         const option = new Option(opt.name, opt.id);

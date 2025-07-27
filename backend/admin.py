@@ -82,6 +82,23 @@ def get_admin_form_data():
         'all_managers': [{'id': m.id, 'name': m.name} for m in potential_managers]
     })
 
+@admin.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user_details(user_id):
+    user = User.query.get_or_404(user_id)
+    roles = Role.query.all()
+    potential_managers = User.query.join(User.roles).filter(Role.name.in_(['admin', 'gerente'])).all()
+    
+    user_data = {
+        'id': user.id, 'name': user.name, 'email': user.email,
+        'gerente_id': user.gerente_id, 'roles': [role.id for role in user.roles]
+    }
+    
+    return jsonify({
+        'success': True, 'user': user_data,
+        'all_roles': [{'id': r.id, 'name': r.name} for r in roles],
+        'all_managers': [{'id': m.id, 'name': m.name} for m in potential_managers]
+    })
+
 @admin.route('/api/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
