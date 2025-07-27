@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, jsonify, request, current_app
+from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for
 from flask_login import login_required, current_user
 from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos
 from .utils import encrypt_data, decrypt_data
@@ -69,20 +69,15 @@ def reactivate_account(conta_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Conta reativada com sucesso.'})
 
-# --- APIs de Gestão de Usuários (sem alterações) ---
-@admin.route('/api/users/<int:user_id>', methods=['GET'])
-def get_user_details(user_id):
-    user = User.query.get_or_404(user_id)
-    roles = Role.query.all()
-    potential_managers = User.query.join(User.roles).filter(Role.name.in_(['admin', 'gerente'])).all()
-    
-    user_data = {
-        'id': user.id, 'name': user.name, 'email': user.email,
-        'gerente_id': user.gerente_id, 'roles': [role.id for role in user.roles]
-    }
+# --- ALTERAÇÃO v7.1: Rota centralizada para dados de formulários de admin ---
+@admin.route('/api/admin/form_data', methods=['GET'])
+def get_admin_form_data():
+    """Busca todos os dados necessários para os formulários de gestão (roles, gerentes, etc.)."""
+    roles = Role.query.order_by(Role.name).all()
+    potential_managers = User.query.join(User.roles).filter(Role.name.in_(['admin', 'gerente']), User.is_active==True).order_by(User.name).all()
     
     return jsonify({
-        'success': True, 'user': user_data,
+        'success': True,
         'all_roles': [{'id': r.id, 'name': r.name} for r in roles],
         'all_managers': [{'id': m.id, 'name': m.name} for m in potential_managers]
     })
