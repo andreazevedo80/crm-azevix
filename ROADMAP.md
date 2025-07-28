@@ -138,6 +138,32 @@ Backup Automático: Antes de iniciar um grande job de importação, o sistema po
 - **[NOVO]** Criar tabela `workflow_versoes` para controle de versionamento
 - Implementar lógica para lidar com leads órfãos
 
+versão 9.0: Administração de Entidades de Vendas
+Objetivo: Dar ao admin o poder de customizar as peças do funil de vendas, eliminando as listas "hardcoded".
+Requisitos:
+Backend (models.py): Criar as novas tabelas: ConfigStatusLead, ConfigMotivosPerda e ConfigSegmento.
+Backend (admin.py): Criar as novas rotas e APIs para o admin gerenciar (Adicionar, Editar, Desativar/Reativar) os Status, os Motivos de Perda e os Segmentos.
+Refinamento do Status: Na interface de edição de um Status, adicionar os dois "flags" que discutimos:
+[ ] É um status de perda?
+[ ] É o status inicial após assumir um lead?
+Frontend (admin/): Criar as novas páginas para o admin fazer a gestão de todas essas entidades.
+
+versão 9.1: Definição do Workflow de Vendas
+Objetivo: Permitir que o admin desenhe o processo do funil, definindo as conexões entre as peças que criamos na v9.0.
+Requisitos:
+Backend (models.py): Criar a nova tabela StatusTransicoes para armazenar as regras (ex: do status com ID 1, pode-se ir para os status com ID 2 e 5).
+Interface do Admin: Na página de edição de um Status, adicionar uma nova seção com checkboxes onde o admin poderá selecionar quais são os "próximos status permitidos".
+Backend (admin.py): Criar a API para salvar essas regras de transição na nova tabela.
+O que entregamos aqui: As regras do processo de vendas estão salvas no banco de dados, prontas para serem usadas.
+
+versão 9.2: Aplicação do Workflow na Interface do Vendedor
+Objetivo: Fazer com que a interface do vendedor respeite e reforce o processo de vendas definido pelo administrador.
+Requisitos:
+Frontend (detalhe_conta.js): A lógica do modal de "Alterar Status" do lead será refatorada. Agora, o dropdown de status não mostrará mais todas as opções, mas sim apenas as transições permitidas a partir do status atual daquela oportunidade.
+Backend (contas.py): A rota /api/leads/<id>/processo terá uma camada final de validação para garantir que a transição de status enviada pelo frontend é permitida pelas regras do workflow.
+Frontend (detalhe_conta.js): A lógica para exigir o "Motivo de Perda" será implementada, aparecendo apenas quando o vendedor selecionar um status que foi marcado como "de perda".
+O que entregamos aqui: O workflow inteligente está 100% funcional e visível para o usuário final, guiando a equipe de vendas no processo correto.
+
 ---
 
 ## Versão 10.0: Catálogo de Produtos e Serviços
