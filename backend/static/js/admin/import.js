@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // --- CORREÇÃO: ID do formulário corrigido para "importForm" ---
-    const importForm = document.getElementById('importForm');
-    const previewStep = document.getElementById('preview-step');
     const uploadStep = document.getElementById('upload-step');
+    const previewStep = document.getElementById('preview-step');
+    // --- CORREÇÃO: O ID do formulário no HTML é "uploadForm" ---
+    const uploadForm = document.getElementById('uploadForm');
     const fileInput = document.getElementById('csvFile');
-    const submitButton = importForm.querySelector('button[type="submit"]');
+    const submitButton = uploadForm.querySelector('button[type="submit"]');
 
     const previewAlert = document.getElementById('preview-alert');
     const previewErrors = document.getElementById('preview-errors');

@@ -1,35 +1,25 @@
 {% extends "base.html" %}
-
 {% block title %}Importação de Dados - Admin{% endblock %}
-
 {% block content %}
 <h1 class="text-azevix mb-4"><i class="fas fa-file-import me-2"></i>Importação de Dados</h1>
-
 <div id="upload-step">
     <div class="card card-azevix">
         <div class="card-body">
             <h5 class="card-title">Passo 1: Fazer Upload do Arquivo CSV</h5>
             <p class="card-text">Faça o upload de um arquivo no formato CSV para criar novas Contas, Contatos e Oportunidades no "Lead Pool".</p>
-            
             <div class="mb-3">
-                <a href="{{ url_for('admin.download_template') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-download me-1"></i> Baixar Template CSV
-                </a>
+                <a href="{{ url_for('admin.download_template') }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download me-1"></i> Baixar Template CSV</a>
             </div>
-
-            <form id="importForm">
+            <form id="uploadForm">
                 <div class="mb-3">
                     <label for="csvFile" class="form-label">Selecione o arquivo CSV</label>
                     <input class="form-control" type="file" id="csvFile" name="file" accept=".csv" required>
                 </div>
-                <button type="submit" class="btn btn-azevix">
-                    <i class="fas fa-eye me-1"></i> Validar e Ver Preview
-                </button>
+                <button type="submit" class="btn btn-azevix"><i class="fas fa-eye me-1"></i> Validar e Ver Preview</button>
             </form>
         </div>
     </div>
 </div>
-
 <div id="preview-step" style="display:none;">
     <div class="card card-azevix">
         <div class="card-body">
@@ -51,7 +41,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin/import.js') }}"></script>
 {% endblock %}

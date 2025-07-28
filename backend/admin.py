@@ -339,40 +339,45 @@ def import_csv_preview():
         return jsonify({'success': False, 'error': 'Nenhum arquivo selecionado.'}), 400
 
     try:
-        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        # Tenta decodificar com UTF-8, se falhar, tenta com ISO-8859-1 (Latin-1)
+        try:
+            stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        except UnicodeDecodeError:
+            file.stream.seek(0)
+            stream = io.StringIO(file.stream.read().decode("ISO-8859-1"), newline=None)
+
         valid_rows, report = processar_csv(stream)
         
+        # Pega os cabeçalhos do CSV original para o preview
+        stream.seek(0)
+        headers = next(csv.reader(stream))
+
         return jsonify({
             'success': True,
             'report': report,
-            'valid_data': valid_rows
+            'preview_data': valid_rows,
+            'headers': headers
         })
-
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': f'Erro ao processar o arquivo: {str(e)}'}), 500
 
 @admin.route('/api/import/execute', methods=['POST'])
 def import_csv_execute():
     """Executa a importação com base nos dados validados do preview."""
-    data = request.get_json()
-    valid_rows = data.get('valid_data', [])
+    data = request.get_json().get('data', [])
+    filename = request.get_json().get('filename', 'import.csv')
     
-    if not valid_rows:
+    if not data:
         return jsonify({'success': False, 'error': 'Nenhum dado válido para importar.'}), 400
-
-    try:
-        report = {'success_count': 0, 'error_count': 0, 'errors': []}
         
-        for row in valid_rows:
-            nome_fantasia = row.get('Nome Fantasia Empresa', '').strip()
-            cnpj = row.get('CNPJ Empresa', '').strip()
-            
-            # Se passou por todas as validações, cria as entidades
+    try:
+        success_count = 0
+        for row in data:
             nova_conta = Conta(
                 user_id=None,
-                nome_fantasia=nome_fantasia,
-                razao_social=row.get('Razão Social Empresa', nome_fantasia),
-                cnpj=cnpj if is_valid_cnpj(cnpj) else None
+                nome_fantasia=row.get('Nome Fantasia Empresa'),
+                razao_social=row.get('Razão Social Empresa', row.get('Nome Fantasia Empresa')),
+                cnpj=row.get('CNPJ Empresa') if is_valid_cnpj(row.get('CNPJ Empresa')) else None
             )
             db.session.add(nova_conta)
             db.session.flush()
@@ -380,8 +385,8 @@ def import_csv_execute():
             novo_contato = Contato(
                 conta_id=nova_conta.id,
                 nome=row.get('Nome Contato', 'Contato Principal').strip() or 'Contato Principal',
-                email=row.get('Email Contato', '').strip(),
-                telefone=row.get('Telefone Contato', '').strip()
+                email=row.get('Email Contato'),
+                telefone=row.get('Telefone Contato')
             )
             db.session.add(novo_contato)
             db.session.flush()
@@ -391,29 +396,26 @@ def import_csv_execute():
                 contato_id=novo_contato.id,
                 user_id=None,
                 titulo=row.get('Título Oportunidade', 'Oportunidade de Prospecção Inicial').strip() or 'Oportunidade de Prospecção Inicial',
-                valor_estimado=float(row['Valor Oportunidade']) if row.get('Valor Oportunidade') else None,
-                estagio_ciclo_vida='Lead',
-                status_lead='Novo',
-                temperatura='Morno'
+                valor_estimado=float(row['Valor Oportunidade']) if row.get('Valor Oportunidade') else None
             )
             db.session.add(novo_lead)
-            report['success_count'] += 1
+            success_count += 1
 
-        # Cria o registro no histórico de importações
+        # Cria o registro de histórico
         historico = HistoricoImportacao(
             user_id=current_user.id,
-            total_registros=report['success_count'],
-            registros_importados=report['success_count'],
-            dados_importacao=json.dumps(valid_rows)
+            nome_arquivo=filename,
+            sucesso_count=success_count,
+            erro_count=0 # Erros já foram filtrados no preview
         )
         db.session.add(historico)
-        
         db.session.commit()
-        return jsonify({'success': True, 'report': report})
+        
+        return jsonify({'success': True, 'message': f'{success_count} registros importados com sucesso!'})
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado durante a importação: {str(e)}'}), 500
 
 # --- ADIÇÃO v8.1: Novas rotas para Histórico de Importações ---
 @admin.route('/imports')
