@@ -17,7 +17,7 @@
                 </a>
             </div>
 
-            <form id="uploadForm">
+            <form id="importForm">
                 <div class="mb-3">
                     <label for="csvFile" class="form-label">Selecione o arquivo CSV</label>
                     <input class="form-control" type="file" id="csvFile" name="file" accept=".csv" required>
@@ -35,9 +35,7 @@
         <div class="card-body">
             <h5 class="card-title">Passo 2: Revisar e Confirmar Importação</h5>
             <div id="preview-alert"></div>
-
             <div id="preview-errors" class="mb-3" style="max-height: 200px; overflow-y: auto;"></div>
-
             <h6 class="mt-4">Pré-visualização dos dados a serem importados:</h6>
             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                 <table class="table table-sm table-striped">
@@ -45,7 +43,6 @@
                     <tbody id="preview-table-body"></tbody>
                 </table>
             </div>
-
             <div class="mt-4">
                 <button id="cancel-import-btn" class="btn btn-secondary">Cancelar</button>
                 <button id="confirm-import-btn" class="btn btn-azevix">Confirmar e Importar</button>

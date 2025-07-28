@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const uploadStep = document.getElementById('upload-step');
+    // --- CORREÇÃO: ID do formulário corrigido para "importForm" ---
+    const importForm = document.getElementById('importForm');
     const previewStep = document.getElementById('preview-step');
-    const uploadForm = document.getElementById('uploadForm');
+    const uploadStep = document.getElementById('upload-step');
     const fileInput = document.getElementById('csvFile');
-    const submitButton = uploadForm.querySelector('button[type="submit"]');
+    const submitButton = importForm.querySelector('button[type="submit"]');
 
     const previewAlert = document.getElementById('preview-alert');
     const previewErrors = document.getElementById('preview-errors');
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let validDataToImport = [];
 
-    uploadForm.addEventListener('submit', function(e) {
+    importForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const file = fileInput.files[0];
         if (!file) {
@@ -38,11 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const { report, preview_data, headers } = data;
                 validDataToImport = preview_data;
                 
-                // Exibe relatório
                 previewAlert.className = `alert alert-${report.error_count > 0 ? 'warning' : 'success'}`;
                 previewAlert.innerHTML = `<strong>Validação Concluída:</strong> ${report.success_count} registros prontos para importar. ${report.error_count} registros com erros.`;
                 
-                // Exibe erros
                 previewErrors.innerHTML = '';
                 if (report.errors.length > 0) {
                     let errorListHTML = '<p><strong>Erros encontrados:</strong></p><ul class="list-group">';
@@ -53,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewErrors.innerHTML = errorListHTML;
                 }
 
-                // Exibe preview
                 previewTableHead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
                 previewTableBody.innerHTML = preview_data.map(row => `<tr>${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}</tr>`).join('');
 
@@ -73,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cancelBtn.addEventListener('click', () => {
         uploadStep.style.display = 'block';
         previewStep.style.display = 'none';
-        uploadForm.reset();
+        importForm.reset();
     });
 
     confirmBtn.addEventListener('click', () => {
@@ -89,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if(data.success) {
                 alert('Importação concluída com sucesso!');
-                window.location.href = '/admin/imports'; // Redireciona para o histórico
+                window.location.href = '/admin/imports';
             } else {
                 alert(`Erro na importação: ${data.error}`);
             }
