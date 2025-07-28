@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Importação de Dados - Admin{% endblock %}
+
+{% block content %}
+<h1 class="text-azevix mb-4"><i class="fas fa-file-import me-2"></i>Importação de Dados</h1>
+
+<div class="card card-azevix">
+    <div class="card-body">
+        <h5 class="card-title">Importar Leads de Arquivo CSV</h5>
+        <p class="card-text">Faça o upload de um arquivo no formato CSV para criar novas Contas, Contatos e Oportunidades no "Lead Pool".</p>
+        
+        <div class="mb-3">
+            <a href="{{ url_for('admin.download_template') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-download me-1"></i> Baixar Template CSV
+            </a>
+        </div>
+
+        <form id="importForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="csvFile" class="form-label">Selecione o arquivo CSV</label>
+                <input class="form-control" type="file" id="csvFile" name="file" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-azevix">
+                <i class="fas fa-upload me-1"></i> Iniciar Importação
+            </button>
+        </form>
+
+        <div id="result-container" class="mt-4" style="display:none;">
+            <h5>Resultado da Importação</h5>
+            <div id="import-alert"></div>
+            <div id="import-errors" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/import.js') }}"></script>
+{% endblock %}

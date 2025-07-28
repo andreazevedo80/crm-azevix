@@ -105,7 +105,7 @@ def update_conta(conta_id):
     
     data = request.get_json()
     
-    # --- CORREÇÃO: Lógica mais robusta para lidar com contas sem dono ---
+    # --- Lógica para lidar com contas sem dono ---
     dados_antigos = {
         'Nome Fantasia': conta.nome_fantasia,
         'Razão Social': conta.razao_social,
@@ -282,7 +282,7 @@ def delete_contato(contato_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Contato desativado.'})
 
-# --- ADIÇÃO v5.03: Rota dedicada para atualizar o processo de um Lead ---
+# --- Rota dedicada para atualizar o processo de um Lead ---
 @contas.route('/api/leads/<int:lead_id>/processo', methods=['PUT'])
 @login_required
 def update_lead_processo(lead_id):
@@ -368,7 +368,7 @@ def criar_conta():
         db.session.add(novo_contato)
         db.session.commit()
     if data.get('lead_titulo'):
-        # --- ALTERAÇÃO v5.03: Define os valores padrão para os novos campos do Lead ---
+        # --- Define os valores padrão para os novos campos do Lead ---
         novo_lead = Lead(
             conta_id=nova_conta.id, 
             user_id=current_user.id, 

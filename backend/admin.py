@@ -1,8 +1,10 @@
-from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for
+from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos
-from .utils import encrypt_data, decrypt_data
+from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato
+from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
+import csv
+import io
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -69,7 +71,7 @@ def reactivate_account(conta_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Conta reativada com sucesso.'})
 
-# --- ALTERAÇÃO v7.1: Rota centralizada para dados de formulários de admin ---
+# --- Rota centralizada para dados de formulários de admin ---
 @admin.route('/api/admin/form_data', methods=['GET'])
 def get_admin_form_data():
     """Busca todos os dados necessários para os formulários de gestão (roles, gerentes, etc.)."""
@@ -121,7 +123,7 @@ def toggle_user_status(user_id):
     db.session.commit()
     return jsonify({'success': True, 'message': f'Status do usuário {user.name} alterado.'})
 
-# --- ADIÇÃO v7.0: Novas rotas para Configurações do Sistema ---
+# --- Rotas para Configurações do Sistema ---
 @admin.route('/settings')
 def settings():
     """Página de configurações gerais do sistema."""
@@ -160,7 +162,7 @@ def test_smtp_settings():
     """Envia um e-mail de teste com as configurações fornecidas."""
     data = request.get_json()
     try:
-        # --- ALTERAÇÃO: A função agora recebe o dicionário de dados e o destinatário ---
+        # --- Função recebe o dicionário de dados e o destinatário ---
         send_test_email(
             smtp_settings=data,
             test_recipient=current_user.email
@@ -169,7 +171,7 @@ def test_smtp_settings():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Falha ao enviar e-mail: {str(e)}'}), 500
 
-# --- ADIÇÃO v7.1: Novas rotas para Gestão de Domínios ---
+# --- Rotas para Gestão de Domínios ---
 @admin.route('/domains')
 def domain_management():
     """Página de gestão de domínios permitidos."""
@@ -206,7 +208,7 @@ def delete_domain(domain_id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Domínio removido com sucesso.'})
 
-# --- ADIÇÃO v7.1: Nova rota de API para convidar usuários ---
+# --- Rota de API para convidar usuários ---
 @admin.route('/api/users/invite', methods=['POST'])
 def invite_user():
     data = request.get_json()
@@ -256,3 +258,99 @@ def invite_user():
         return jsonify({'success': False, 'error': f'Não foi possível enviar o e-mail de convite. Verifique as configurações de SMTP. Erro: {str(e)}'}), 500
 
     return jsonify({'success': True, 'message': f'Convite enviado com sucesso para {email}!'})
+
+# --- ADIÇÃO v8.0: Novas rotas para Importação de Dados ---
+@admin.route('/import')
+def import_data():
+    """Página para importação de dados via CSV."""
+    return render_template('admin/import.html')
+
+@admin.route('/api/import/template')
+def download_template():
+    """Fornece o template CSV para download."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Nome Fantasia Empresa', 'CNPJ Empresa', 'Telefone Contato', 'Email Contato', 'Nome Contato', 'Título Oportunidade', 'Valor Oportunidade'])
+    writer.writerow(['Exemplo Fantasia', '00.000.000/0001-00', '(11) 99999-8888', 'contato@exemplo.com', 'João Silva', 'Novo Projeto de TI', '15000.00'])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=template_importacao.csv"}
+    )
+
+@admin.route('/api/import/csv', methods=['POST'])
+def import_csv():
+    """Processa o upload do arquivo CSV para criar Contas, Contatos e Leads."""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'Nenhum arquivo enviado.'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Nenhum arquivo selecionado.'}), 400
+
+    try:
+        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        csv_reader = csv.DictReader(stream)
+        
+        report = {'success_count': 0, 'error_count': 0, 'errors': []}
+        
+        for row_num, row in enumerate(csv_reader, 2):
+            nome_fantasia = row.get('Nome Fantasia Empresa', '').strip()
+            telefone_contato = row.get('Telefone Contato', '').strip()
+            cnpj = row.get('CNPJ Empresa', '').strip()
+
+            if not nome_fantasia or not telefone_contato:
+                report['error_count'] += 1
+                report['errors'].append(f"Linha {row_num}: 'Nome Fantasia Empresa' e 'Telefone Contato' são obrigatórios.")
+                continue
+
+            # Validação de CNPJ duplicado (reaproveitando a lógica)
+            if cnpj and is_valid_cnpj(cnpj):
+                cnpj_hash = get_cnpj_hash(cnpj)
+                existing_conta = Conta.query.filter_by(cnpj_hash=cnpj_hash).first()
+                if existing_conta:
+                    report['error_count'] += 1
+                    report['errors'].append(f"Linha {row_num}: CNPJ '{cnpj}' já pertence à conta '{existing_conta.nome_fantasia}'.")
+                    continue
+            
+            # Cria a Conta no Pool (user_id=NULL)
+            nova_conta = Conta(
+                user_id=None,
+                nome_fantasia=nome_fantasia,
+                razao_social=row.get('Razão Social Empresa', nome_fantasia),
+                cnpj=cnpj if is_valid_cnpj(cnpj) else None
+            )
+            db.session.add(nova_conta)
+            db.session.flush() # Para obter o ID da nova conta
+
+            # Cria o Contato
+            novo_contato = Contato(
+                conta_id=nova_conta.id,
+                nome=row.get('Nome Contato', 'Contato Principal').strip() or 'Contato Principal',
+                email=row.get('Email Contato', '').strip(),
+                telefone=row.get('Telefone Contato', '').strip()
+            )
+            db.session.add(novo_contato)
+            db.session.flush() # Para obter o ID do novo contato
+
+            # Cria o Lead no Pool (user_id=NULL)
+            novo_lead = Lead(
+                conta_id=nova_conta.id,
+                contato_id=novo_contato.id,
+                user_id=None,
+                titulo=row.get('Título Oportunidade', 'Oportunidade de Prospecção Inicial').strip() or 'Oportunidade de Prospecção Inicial',
+                valor_estimado=float(row['Valor Oportunidade']) if row.get('Valor Oportunidade') else None,
+                estagio_ciclo_vida='Lead',
+                status_lead='Novo',
+                temperatura='Morno'
+            )
+            db.session.add(novo_lead)
+            report['success_count'] += 1
+
+        db.session.commit()
+        return jsonify({'success': True, 'report': report})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
