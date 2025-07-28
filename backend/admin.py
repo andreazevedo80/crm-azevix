@@ -271,7 +271,10 @@ def download_template():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Nome Fantasia Empresa', 'CNPJ Empresa', 'Telefone Contato', 'Email Contato', 'Nome Contato', 'Título Oportunidade', 'Valor Oportunidade'])
+    # Exemplo completo
     writer.writerow(['Exemplo Fantasia', '00.000.000/0001-00', '(11) 99999-8888', 'contato@exemplo.com', 'João Silva', 'Novo Projeto de TI', '15000.00'])
+    # --- ADIÇÃO: Exemplo com dados mínimos ---
+    writer.writerow(['Outra Empresa Exemplo', '', '(81) 98877-6655', '', '', '', ''])
     
     return Response(
         output.getvalue(),
