@@ -2,11 +2,11 @@ from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-from sqlalchemy import Index
+from sqlalchemy import Index, JSON
 from .utils import encrypt_data, decrypt_data, format_cnpj, get_cnpj_hash
 from uuid import uuid4
 
-# --- ADIÇÃO v7.0: Novo modelo para configurações globais ---
+# --- Modelo para configurações globais ---
 class ConfigGlobal(db.Model):
     __tablename__ = 'config_global'
     key = db.Column(db.String(255), primary_key=True)
@@ -21,7 +21,7 @@ class ConfigGlobal(db.Model):
         if setting.is_encrypted:
             return decrypt_data(setting.value)
         return setting.value
-# --- ADIÇÃO v7.1: Novo modelo para Domínios Permitidos ---
+# --- Modelo para Domínios Permitidos ---
 class DominiosPermitidos(db.Model):
     __tablename__ = 'dominios_permitidos'
     id = db.Column(db.Integer, primary_key=True)
@@ -31,13 +31,13 @@ class DominiosPermitidos(db.Model):
     def to_dict(self):
         return {'id': self.id, 'domain': self.domain}
 
-# --- ADIÇÃO: Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
+# --- Tabela de associação para a relação Muitos-para-Muitos User <-> Role ---
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True)
 )
 
-# --- ADIÇÃO: Novo modelo para os Papéis (Roles) ---
+# --- Modelo para os Papéis (Roles) ---
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,13 +52,13 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=True)
     is_active = db.Column(db.Boolean, default=False, nullable=False)
     
-    # --- ADIÇÃO: Novos campos e relações para hierarquia e permissões ---
+    # --- Campos e relações para hierarquia e permissões ---
     gerente_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     roles = db.relationship('Role', secondary=user_roles, lazy='subquery',
                             backref=db.backref('users', lazy=True))
     liderados = db.relationship('User', backref=db.backref('gerente', remote_side=[id]), lazy='dynamic')
     
-    # --- ADIÇÃO: Novos campos para o fluxo de convite ---
+    # --- Campos para o fluxo de convite ---
     invitation_token = db.Column(db.String(255), unique=True, nullable=True)
     invitation_expiration = db.Column(db.DateTime, nullable=True)
     
@@ -74,7 +74,7 @@ class User(UserMixin, db.Model):
             return False
         return check_password_hash(self.password_hash, password)
 
-    # --- ADIÇÃO: Função auxiliar para verificar o papel do usuário ---
+    # --- Função auxiliar para verificar o papel do usuário ---
     def has_role(self, role_name):
         """Verifica se o usuário possui um determinado papel."""
         for role in self.roles:
@@ -154,13 +154,13 @@ class Lead(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # --- ADIÇÃO: Novos campos para o processo de vendas ---
+    # --- Campos para o processo de vendas ---
     estagio_ciclo_vida = db.Column(db.String(50), nullable=False, default='Lead')
     temperatura = db.Column(db.String(50), default='Morno') # Quente, Morno, Frio
     follow_up_necessario = db.Column(db.Boolean, default=False, nullable=False)
     motivo_perda = db.Column(db.String(255), nullable=True)
     
-    # --- ADIÇÃO: Campos de auditoria de apropriação ---
+    # --- Campos de auditoria de apropriação ---
     data_apropriacao = db.Column(db.DateTime, nullable=True)
     
     def to_dict(self):
@@ -189,3 +189,28 @@ class HistoricoAlteracao(db.Model):
     campo = db.Column(db.String(100), nullable=False)
     valor_antigo = db.Column(db.Text)
     valor_novo = db.Column(db.Text)
+
+# --- Novo modelo para Histórico de Importações ---
+class HistoricoImportacao(db.Model):
+    __tablename__ = 'historico_importacoes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    nome_arquivo = db.Column(db.String(255), nullable=False)
+    data_importacao = db.Column(db.DateTime, default=datetime.utcnow)
+    sucesso_count = db.Column(db.Integer, default=0)
+    erro_count = db.Column(db.Integer, default=0)
+    erros = db.Column(JSON, nullable=True) # Armazena a lista de erros em formato JSON
+    
+    # Relacionamento com o usuário que importou
+    importer = db.relationship('User', backref='importacoes')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_name': self.importer.name if self.importer else 'Desconhecido',
+            'nome_arquivo': self.nome_arquivo,
+            'data_importacao': self.data_importacao.strftime('%d/%m/%Y %H:%M'),
+            'sucesso_count': self.sucesso_count,
+            'erro_count': self.erro_count,
+            'erros': self.erros or []
+        }

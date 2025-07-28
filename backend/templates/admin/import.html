@@ -5,31 +5,51 @@
 {% block content %}
 <h1 class="text-azevix mb-4"><i class="fas fa-file-import me-2"></i>Importação de Dados</h1>
 
-<div class="card card-azevix">
-    <div class="card-body">
-        <h5 class="card-title">Importar Leads de Arquivo CSV</h5>
-        <p class="card-text">Faça o upload de um arquivo no formato CSV para criar novas Contas, Contatos e Oportunidades no "Lead Pool".</p>
-        
-        <div class="mb-3">
-            <a href="{{ url_for('admin.download_template') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-download me-1"></i> Baixar Template CSV
-            </a>
-        </div>
-
-        <form id="importForm" enctype="multipart/form-data">
+<div id="upload-step">
+    <div class="card card-azevix">
+        <div class="card-body">
+            <h5 class="card-title">Passo 1: Fazer Upload do Arquivo CSV</h5>
+            <p class="card-text">Faça o upload de um arquivo no formato CSV para criar novas Contas, Contatos e Oportunidades no "Lead Pool".</p>
+            
             <div class="mb-3">
-                <label for="csvFile" class="form-label">Selecione o arquivo CSV</label>
-                <input class="form-control" type="file" id="csvFile" name="file" accept=".csv" required>
+                <a href="{{ url_for('admin.download_template') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-download me-1"></i> Baixar Template CSV
+                </a>
             </div>
-            <button type="submit" class="btn btn-azevix">
-                <i class="fas fa-upload me-1"></i> Iniciar Importação
-            </button>
-        </form>
 
-        <div id="result-container" class="mt-4" style="display:none;">
-            <h5>Resultado da Importação</h5>
-            <div id="import-alert"></div>
-            <div id="import-errors" style="max-height: 300px; overflow-y: auto;"></div>
+            <form id="uploadForm">
+                <div class="mb-3">
+                    <label for="csvFile" class="form-label">Selecione o arquivo CSV</label>
+                    <input class="form-control" type="file" id="csvFile" name="file" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn btn-azevix">
+                    <i class="fas fa-eye me-1"></i> Validar e Ver Preview
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="preview-step" style="display:none;">
+    <div class="card card-azevix">
+        <div class="card-body">
+            <h5 class="card-title">Passo 2: Revisar e Confirmar Importação</h5>
+            <div id="preview-alert"></div>
+
+            <div id="preview-errors" class="mb-3" style="max-height: 200px; overflow-y: auto;"></div>
+
+            <h6 class="mt-4">Pré-visualização dos dados a serem importados:</h6>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm table-striped">
+                    <thead id="preview-table-head"></thead>
+                    <tbody id="preview-table-body"></tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <button id="cancel-import-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-import-btn" class="btn btn-azevix">Confirmar e Importar</button>
+            </div>
         </div>
     </div>
 </div>

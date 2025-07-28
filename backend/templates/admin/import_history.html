@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Importações - Admin{% endblock %}
+
+{% block content %}
+<h1 class="text-azevix mb-4"><i class="fas fa-history me-2"></i>Histórico de Importações</h1>
+
+<div class="card card-azevix">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Usuário</th>
+                        <th>Arquivo</th>
+                        <th>Sucessos</th>
+                        <th>Erros</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="errorDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalhes dos Erros da Importação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group" id="error-list-container"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/import_history.js') }}"></script>
+{% endblock %}

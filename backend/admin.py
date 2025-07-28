@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato
+from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
 import csv
 import io
+import json
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -281,6 +282,150 @@ def download_template():
         mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=template_importacao.csv"}
     )
+
+def processar_csv(stream):
+    """Função auxiliar para ler e validar o CSV, retornando os dados e um relatório."""
+    csv_reader = csv.DictReader(stream)
+    report = {'success_count': 0, 'error_count': 0, 'errors': []}
+    valid_rows = []
+    
+    for row_num, row in enumerate(csv_reader, 2):
+        nome_fantasia = row.get('Nome Fantasia Empresa', '').strip()
+        telefone_contato = row.get('Telefone Contato', '').strip()
+        cnpj = row.get('CNPJ Empresa', '').strip()
+
+        if not nome_fantasia or not telefone_contato:
+            report['error_count'] += 1
+            report['errors'].append(f"Linha {row_num}: 'Nome Fantasia Empresa' e 'Telefone Contato' são obrigatórios.")
+            continue
+
+        # --- ALTERAÇÃO: Lógica de validação de duplicatas aprimorada ---
+        existing_conta = None
+        if cnpj and is_valid_cnpj(cnpj):
+            cnpj_hash = get_cnpj_hash(cnpj)
+            existing_conta = Conta.query.filter_by(cnpj_hash=cnpj_hash).first()
+            if existing_conta:
+                report['error_count'] += 1
+                report['errors'].append(f"Linha {row_num}: CNPJ '{cnpj}' já pertence à conta '{existing_conta.nome_fantasia}'.")
+                continue
+        else:
+            # Se não há CNPJ, valida pelo nome fantasia normalizado
+            normalized_name_search = normalize_name(nome_fantasia)
+            # Precisamos buscar em todas as contas e normalizar os nomes para comparar
+            all_contas = Conta.query.all()
+            for conta in all_contas:
+                if normalize_name(conta.nome_fantasia) == normalized_name_search:
+                    existing_conta = conta
+                    break
+            
+            if existing_conta:
+                report['error_count'] += 1
+                report['errors'].append(f"Linha {row_num}: Nome Fantasia '{nome_fantasia}' já pertence à conta '{existing_conta.nome_fantasia}'.")
+                continue
+            
+        valid_rows.append(row)
+        report['success_count'] += 1
+        
+    return valid_rows, report
+
+@admin.route('/api/import/preview', methods=['POST'])
+def import_csv_preview():
+    """Processa o CSV para validação e retorna um preview."""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'Nenhum arquivo enviado.'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Nenhum arquivo selecionado.'}), 400
+
+    try:
+        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        valid_rows, report = processar_csv(stream)
+        
+        return jsonify({
+            'success': True,
+            'report': report,
+            'valid_data': valid_rows
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
+
+@admin.route('/api/import/execute', methods=['POST'])
+def import_csv_execute():
+    """Executa a importação com base nos dados validados do preview."""
+    data = request.get_json()
+    valid_rows = data.get('valid_data', [])
+    
+    if not valid_rows:
+        return jsonify({'success': False, 'error': 'Nenhum dado válido para importar.'}), 400
+
+    try:
+        report = {'success_count': 0, 'error_count': 0, 'errors': []}
+        
+        for row in valid_rows:
+            nome_fantasia = row.get('Nome Fantasia Empresa', '').strip()
+            cnpj = row.get('CNPJ Empresa', '').strip()
+            
+            # Se passou por todas as validações, cria as entidades
+            nova_conta = Conta(
+                user_id=None,
+                nome_fantasia=nome_fantasia,
+                razao_social=row.get('Razão Social Empresa', nome_fantasia),
+                cnpj=cnpj if is_valid_cnpj(cnpj) else None
+            )
+            db.session.add(nova_conta)
+            db.session.flush()
+
+            novo_contato = Contato(
+                conta_id=nova_conta.id,
+                nome=row.get('Nome Contato', 'Contato Principal').strip() or 'Contato Principal',
+                email=row.get('Email Contato', '').strip(),
+                telefone=row.get('Telefone Contato', '').strip()
+            )
+            db.session.add(novo_contato)
+            db.session.flush()
+
+            novo_lead = Lead(
+                conta_id=nova_conta.id,
+                contato_id=novo_contato.id,
+                user_id=None,
+                titulo=row.get('Título Oportunidade', 'Oportunidade de Prospecção Inicial').strip() or 'Oportunidade de Prospecção Inicial',
+                valor_estimado=float(row['Valor Oportunidade']) if row.get('Valor Oportunidade') else None,
+                estagio_ciclo_vida='Lead',
+                status_lead='Novo',
+                temperatura='Morno'
+            )
+            db.session.add(novo_lead)
+            report['success_count'] += 1
+
+        # Cria o registro no histórico de importações
+        historico = HistoricoImportacao(
+            user_id=current_user.id,
+            total_registros=report['success_count'],
+            registros_importados=report['success_count'],
+            dados_importacao=json.dumps(valid_rows)
+        )
+        db.session.add(historico)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'report': report})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
+
+# --- ADIÇÃO v8.1: Novas rotas para Histórico de Importações ---
+@admin.route('/imports')
+def import_history():
+    """Página para visualizar o histórico de importações."""
+    return render_template('admin/import_history.html')
+
+@admin.route('/api/imports', methods=['GET'])
+def get_import_history():
+    """API que busca o histórico de importações."""
+    history = HistoricoImportacao.query.order_by(HistoricoImportacao.data_importacao.desc()).all()
+    return jsonify({'success': True, 'history': [h.to_dict() for h in history]})
 
 @admin.route('/api/import/csv', methods=['POST'])
 def import_csv():
