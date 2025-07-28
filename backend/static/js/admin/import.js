@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadStep = document.getElementById('upload-step');
     const previewStep = document.getElementById('preview-step');
     // --- CORREÇÃO: O ID do formulário no HTML é "uploadForm" ---
-    const uploadForm = document.getElementById('uploadForm');
+    const importForm = document.getElementById('importForm');
     const fileInput = document.getElementById('csvFile');
-    const submitButton = uploadForm.querySelector('button[type="submit"]');
+    const submitButton = importForm.querySelector('button[type="submit"]');
 
     const previewAlert = document.getElementById('preview-alert');
     const previewErrors = document.getElementById('preview-errors');
