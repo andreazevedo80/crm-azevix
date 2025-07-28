@@ -308,7 +308,8 @@ def import_csv():
                 report['errors'].append(f"Linha {row_num}: 'Nome Fantasia Empresa' e 'Telefone Contato' são obrigatórios.")
                 continue
 
-            # Validação de CNPJ duplicado (reaproveitando a lógica)
+            # --- ALTERAÇÃO: Lógica de validação de duplicatas aprimorada ---
+            existing_conta = None
             if cnpj and is_valid_cnpj(cnpj):
                 cnpj_hash = get_cnpj_hash(cnpj)
                 existing_conta = Conta.query.filter_by(cnpj_hash=cnpj_hash).first()
@@ -316,8 +317,22 @@ def import_csv():
                     report['error_count'] += 1
                     report['errors'].append(f"Linha {row_num}: CNPJ '{cnpj}' já pertence à conta '{existing_conta.nome_fantasia}'.")
                     continue
+            else:
+                # Se não há CNPJ, valida pelo nome fantasia normalizado
+                normalized_name_search = normalize_name(nome_fantasia)
+                # Precisamos buscar em todas as contas e normalizar os nomes para comparar
+                all_contas = Conta.query.all()
+                for conta in all_contas:
+                    if normalize_name(conta.nome_fantasia) == normalized_name_search:
+                        existing_conta = conta
+                        break
+                
+                if existing_conta:
+                    report['error_count'] += 1
+                    report['errors'].append(f"Linha {row_num}: Nome Fantasia '{nome_fantasia}' já pertence à conta '{existing_conta.nome_fantasia}'.")
+                    continue
             
-            # Cria a Conta no Pool (user_id=NULL)
+            # Se passou por todas as validações, cria as entidades
             nova_conta = Conta(
                 user_id=None,
                 nome_fantasia=nome_fantasia,
@@ -325,9 +340,8 @@ def import_csv():
                 cnpj=cnpj if is_valid_cnpj(cnpj) else None
             )
             db.session.add(nova_conta)
-            db.session.flush() # Para obter o ID da nova conta
+            db.session.flush()
 
-            # Cria o Contato
             novo_contato = Contato(
                 conta_id=nova_conta.id,
                 nome=row.get('Nome Contato', 'Contato Principal').strip() or 'Contato Principal',
@@ -335,9 +349,8 @@ def import_csv():
                 telefone=row.get('Telefone Contato', '').strip()
             )
             db.session.add(novo_contato)
-            db.session.flush() # Para obter o ID do novo contato
+            db.session.flush()
 
-            # Cria o Lead no Pool (user_id=NULL)
             novo_lead = Lead(
                 conta_id=nova_conta.id,
                 contato_id=novo_contato.id,

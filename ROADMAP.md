@@ -124,7 +124,7 @@ Backup Automático: Antes de iniciar um grande job de importação, o sistema po
 ## Versão 9.0: Workflow Inteligente de Vendas
 
 ### Requisitos Funcionais
-- Interface para Admin gerenciar (CRUD) Status de Lead e Motivos de Perda
+- Interface para Admin gerenciar (CRUD) Status de Lead, Seguimentos e Motivos de Perda
 - Interface para Admin definir regras de transição entre status (Workflow)
 - Na tela do Lead, campo "Status" mostrará apenas transições permitidas
 - Exigir "Motivo de Perda" quando aplicável
