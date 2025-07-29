@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao
+# --- ALTERAÇÃO v9.0: Importa os novos modelos ---
+from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
 import csv
@@ -259,6 +260,38 @@ def invite_user():
         return jsonify({'success': False, 'error': f'Não foi possível enviar o e-mail de convite. Verifique as configurações de SMTP. Erro: {str(e)}'}), 500
 
     return jsonify({'success': True, 'message': f'Convite enviado com sucesso para {email}!'})
+
+# --- ADIÇÃO v9.0: Novas rotas para Administração de Entidades de Vendas ---
+
+# --- Gestão de Status de Lead ---
+@admin.route('/statuses')
+def status_management():
+    return render_template('admin/statuses.html')
+
+@admin.route('/api/statuses', methods=['GET'])
+def get_statuses():
+    statuses = ConfigStatusLead.query.order_by(ConfigStatusLead.nome).all()
+    return jsonify({'success': True, 'statuses': [s.to_dict() for s in statuses]})
+
+# --- Gestão de Motivos de Perda ---
+@admin.route('/loss-reasons')
+def loss_reason_management():
+    return render_template('admin/loss_reasons.html')
+
+@admin.route('/api/loss-reasons', methods=['GET'])
+def get_loss_reasons():
+    reasons = ConfigMotivosPerda.query.order_by(ConfigMotivosPerda.motivo).all()
+    return jsonify({'success': True, 'reasons': [r.to_dict() for r in reasons]})
+
+# --- Gestão de Segmentos ---
+@admin.route('/segments')
+def segment_management():
+    return render_template('admin/segments.html')
+
+@admin.route('/api/segments', methods=['GET'])
+def get_segments():
+    segments = ConfigSegmento.query.order_by(ConfigSegmento.nome).all()
+    return jsonify({'success': True, 'segments': [s.to_dict() for s in segments]})
 
 # --- ADIÇÃO v8.0: Novas rotas para Importação de Dados ---
 @admin.route('/import')

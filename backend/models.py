@@ -21,6 +21,44 @@ class ConfigGlobal(db.Model):
         if setting.is_encrypted:
             return decrypt_data(setting.value)
         return setting.value
+
+# --- ADIÇÃO v9.0: Novos modelos para entidades de vendas configuráveis ---
+class ConfigStatusLead(db.Model):
+    __tablename__ = 'config_status_lead'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+    descricao = db.Column(db.String(255))
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    # Flags para controle do workflow
+    estagio_alvo = db.Column(db.String(50), nullable=True) # Ex: Oportunidade, Cliente
+    is_loss_status = db.Column(db.Boolean, default=False, nullable=False)
+    is_initial_status = db.Column(db.Boolean, default=False, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'nome': self.nome, 'descricao': self.descricao, 
+            'is_active': self.is_active, 'estagio_alvo': self.estagio_alvo,
+            'is_loss_status': self.is_loss_status, 'is_initial_status': self.is_initial_status
+        }
+
+class ConfigMotivosPerda(db.Model):
+    __tablename__ = 'config_motivos_perda'
+    id = db.Column(db.Integer, primary_key=True)
+    motivo = db.Column(db.String(255), unique=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    
+    def to_dict(self):
+        return {'id': self.id, 'motivo': self.motivo, 'is_active': self.is_active}
+
+class ConfigSegmento(db.Model):
+    __tablename__ = 'config_segmento'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    def to_dict(self):
+        return {'id': self.id, 'nome': self.nome, 'is_active': self.is_active}
+
 # --- Modelo para Domínios Permitidos ---
 class DominiosPermitidos(db.Model):
     __tablename__ = 'dominios_permitidos'
