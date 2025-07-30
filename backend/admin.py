@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
-# --- ALTERAÇÃO v9.0: Importa os novos modelos ---
 from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
@@ -33,7 +32,7 @@ def account_management():
     """Página de listagem e gestão de contas."""
     return render_template('admin/account_management.html')
 
-# --- ALTERAÇÃO Adicionada lógica de busca e paginação ---
+# --- Lógica de busca e paginação ---
 @admin.route('/api/accounts', methods=['GET'])
 def get_all_accounts():
     """API que busca todas as contas, com filtro de status, busca e paginação."""
@@ -261,7 +260,7 @@ def invite_user():
 
     return jsonify({'success': True, 'message': f'Convite enviado com sucesso para {email}!'})
 
-# --- ADIÇÃO v9.0: Novas rotas para Administração de Entidades de Vendas ---
+# --- Novas rotas para Administração de Entidades de Vendas ---
 
 # --- Gestão de Status de Lead ---
 @admin.route('/statuses')
@@ -293,7 +292,7 @@ def get_segments():
     segments = ConfigSegmento.query.order_by(ConfigSegmento.nome).all()
     return jsonify({'success': True, 'segments': [s.to_dict() for s in segments]})
 
-# --- ADIÇÃO v8.0: Novas rotas para Importação de Dados ---
+# --- Novas rotas para Importação de Dados ---
 @admin.route('/import')
 def import_data():
     """Página para importação de dados via CSV."""
@@ -332,7 +331,7 @@ def processar_csv(stream):
             report['errors'].append(f"Linha {row_num}: 'Nome Fantasia Empresa' e 'Telefone Contato' são obrigatórios.")
             continue
 
-        # --- ALTERAÇÃO: Lógica de validação de duplicatas aprimorada ---
+        # --- Lógica de validação de duplicatas aprimorada ---
         existing_conta = None
         if cnpj and is_valid_cnpj(cnpj):
             cnpj_hash = get_cnpj_hash(cnpj)
@@ -450,7 +449,7 @@ def import_csv_execute():
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado durante a importação: {str(e)}'}), 500
 
-# --- ADIÇÃO v8.1: Novas rotas para Histórico de Importações ---
+# --- Novas rotas para Histórico de Importações ---
 @admin.route('/imports')
 def import_history():
     """Página para visualizar o histórico de importações."""
@@ -488,7 +487,7 @@ def import_csv():
                 report['errors'].append(f"Linha {row_num}: 'Nome Fantasia Empresa' e 'Telefone Contato' são obrigatórios.")
                 continue
 
-            # --- ALTERAÇÃO: Lógica de validação de duplicatas aprimorada ---
+            # --- Lógica de validação de duplicatas aprimorada ---
             existing_conta = None
             if cnpj and is_valid_cnpj(cnpj):
                 cnpj_hash = get_cnpj_hash(cnpj)

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Status de Leads - Admin{% endblock %}
+
+{% block content %}
+<h1 class="text-azevix mb-4"><i class="fas fa-tasks me-2"></i>Gestão de Status de Leads</h1>
+
+<div class="card card-azevix mb-4">
+    <div class="card-header"><h5 id="form-title" class="card-title mb-0">Adicionar Novo Status</h5></div>
+    <div class="card-body">
+        <form id="status-form">
+            <input type="hidden" id="status-id">
+            <div class="row">
+                <div class="col-md-4 mb-3"><label for="status-nome" class="form-label">Nome *</label><input type="text" id="status-nome" class="form-control" required></div>
+                <div class="col-md-8 mb-3"><label for="status-descricao" class="form-label">Descrição</label><input type="text" id="status-descricao" class="form-control"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="status-estagio" class="form-label">Estágio do Ciclo de Vida</label>
+                    <select id="status-estagio" class="form-select"></select>
+                </div>
+                <div class="col-md-8 d-flex align-items-center">
+                    <div class="form-check form-switch me-4"><input class="form-check-input" type="checkbox" id="status-is-loss"><label class="form-check-label" for="status-is-loss">É um status de perda?</label></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="status-is-initial"><label class="form-check-label" for="status-is-initial">É o status inicial ao assumir do Pool?</label></div>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="button" id="cancel-btn" class="btn btn-secondary" style="display: none;">Cancelar</button>
+                <button type="submit" class="btn btn-azevix">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card card-azevix">
+    <div class="card-header"><h5 class="card-title mb-0">Status Cadastrados</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Nome</th><th>Descrição</th><th>Estágio Alvo</th><th>Status de Perda</th><th>Status Inicial</th><th>Ativo</th><th>Ações</th></tr></thead>
+                <tbody id="statuses-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/statuses.js') }}"></script>
+{% endblock %}
