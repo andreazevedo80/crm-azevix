@@ -272,6 +272,44 @@ def get_statuses():
     statuses = ConfigStatusLead.query.order_by(ConfigStatusLead.nome).all()
     return jsonify({'success': True, 'statuses': [s.to_dict() for s in statuses]})
 
+# --- ADIÇÃO v9.0: APIs para gerenciar Status de Leads ---
+@admin.route('/api/statuses', methods=['POST'])
+def add_status():
+    data = request.get_json()
+    
+    # Garante que apenas um status seja o inicial
+    if data.get('is_initial_status'):
+        ConfigStatusLead.query.update({ConfigStatusLead.is_initial_status: False})
+
+    new_status = ConfigStatusLead(
+        nome=data['nome'],
+        descricao=data.get('descricao'),
+        estagio_alvo=data.get('estagio_alvo'),
+        is_loss_status=data.get('is_loss_status', False),
+        is_initial_status=data.get('is_initial_status', False)
+    )
+    db.session.add(new_status)
+    db.session.commit()
+    return jsonify({'success': True, 'status': new_status.to_dict()})
+
+@admin.route('/api/statuses/<int:status_id>', methods=['PUT'])
+def update_status(status_id):
+    status = ConfigStatusLead.query.get_or_404(status_id)
+    data = request.get_json()
+
+    # Garante que apenas um status seja o inicial
+    if data.get('is_initial_status'):
+        ConfigStatusLead.query.filter(ConfigStatusLead.id != status_id).update({ConfigStatusLead.is_initial_status: False})
+
+    status.nome = data.get('nome', status.nome)
+    status.descricao = data.get('descricao', status.descricao)
+    status.is_active = data.get('is_active', status.is_active)
+    status.estagio_alvo = data.get('estagio_alvo', status.estagio_alvo)
+    status.is_loss_status = data.get('is_loss_status', status.is_loss_status)
+    status.is_initial_status = data.get('is_initial_status', status.is_initial_status)
+    db.session.commit()
+    return jsonify({'success': True, 'status': status.to_dict()})
+
 # --- Gestão de Motivos de Perda ---
 @admin.route('/loss-reasons')
 def loss_reason_management():
