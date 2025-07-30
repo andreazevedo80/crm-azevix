@@ -348,6 +348,24 @@ def get_segments():
     segments = ConfigSegmento.query.order_by(ConfigSegmento.nome).all()
     return jsonify({'success': True, 'segments': [s.to_dict() for s in segments]})
 
+# --- ADIÇÃO v9.0: APIs para gerenciar Segmentos ---
+@admin.route('/api/segments', methods=['POST'])
+def add_segment():
+    data = request.get_json()
+    new_segment = ConfigSegmento(nome=data['nome'])
+    db.session.add(new_segment)
+    db.session.commit()
+    return jsonify({'success': True, 'segment': new_segment.to_dict()})
+
+@admin.route('/api/segments/<int:segment_id>', methods=['PUT'])
+def update_segment(segment_id):
+    segment = ConfigSegmento.query.get_or_404(segment_id)
+    data = request.get_json()
+    segment.nome = data.get('nome', segment.nome)
+    segment.is_active = data.get('is_active', segment.is_active)
+    db.session.commit()
+    return jsonify({'success': True, 'segment': segment.to_dict()})
+
 # --- Novas rotas para Importação de Dados ---
 @admin.route('/import')
 def import_data():

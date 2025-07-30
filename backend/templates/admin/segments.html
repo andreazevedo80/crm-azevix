@@ -1,8 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Gestão de Segmentos - Admin{% endblock %}
+
 {% block content %}
 <h1 class="text-azevix mb-4"><i class="fas fa-tags me-2"></i>Gestão de Segmentos de Mercado</h1>
+
+<div class="card card-azevix mb-4">
+    <div class="card-header"><h5 id="form-title-sg" class="card-title mb-0">Adicionar Novo Segmento</h5></div>
+    <div class="card-body">
+        <form id="segment-form">
+            <input type="hidden" id="sg-id">
+            <div class="mb-3">
+                <label for="sg-nome" class="form-label">Nome do Segmento *</label>
+                <input type="text" id="sg-nome" class="form-control" required>
+            </div>
+            <div class="text-end">
+                <button type="button" id="cancel-btn-sg" class="btn btn-secondary" style="display: none;">Cancelar</button>
+                <button type="submit" class="btn btn-azevix">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card card-azevix">
+    <div class="card-header"><h5 class="card-title mb-0">Segmentos Cadastrados</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Nome</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody id="segments-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin/segments.js') }}"></script>
 {% endblock %}
