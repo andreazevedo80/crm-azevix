@@ -164,6 +164,17 @@ Backend (contas.py): A rota /api/leads/<id>/processo terá uma camada final de v
 Frontend (detalhe_conta.js): A lógica para exigir o "Motivo de Perda" será implementada, aparecendo apenas quando o vendedor selecionar um status que foi marcado como "de perda".
 O que entregamos aqui: O workflow inteligente está 100% funcional e visível para o usuário final, guiando a equipe de vendas no processo correto.
 
+versão 9.3: Refinamento da Administração (Configuração Rápida)
+Objetivo: Acelerar o processo de onboarding para novos administradores, oferecendo um conjunto de configurações padrão de mercado.
+
+Requisitos:
+
+Em cada uma das páginas de gestão de entidades (Status, Motivos de Perda, Segmentos), adicionar um botão "Aplicar Padrão do Sistema".
+
+Implementar as APIs no backend que populam as respectivas tabelas com os valores padrão, sem criar duplicatas.
+
+(Futuro) Fazer o mesmo para as Regras de Transição, criando um "workflow padrão" com um clique.
+
 ---
 
 ## Versão 10.0: Catálogo de Produtos e Serviços
