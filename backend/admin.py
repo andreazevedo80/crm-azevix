@@ -282,6 +282,24 @@ def get_loss_reasons():
     reasons = ConfigMotivosPerda.query.order_by(ConfigMotivosPerda.motivo).all()
     return jsonify({'success': True, 'reasons': [r.to_dict() for r in reasons]})
 
+# --- ADIÇÃO v9.0: APIs para gerenciar Motivos de Perda ---
+@admin.route('/api/loss-reasons', methods=['POST'])
+def add_loss_reason():
+    data = request.get_json()
+    new_reason = ConfigMotivosPerda(motivo=data['motivo'])
+    db.session.add(new_reason)
+    db.session.commit()
+    return jsonify({'success': True, 'reason': new_reason.to_dict()})
+
+@admin.route('/api/loss-reasons/<int:reason_id>', methods=['PUT'])
+def update_loss_reason(reason_id):
+    reason = ConfigMotivosPerda.query.get_or_404(reason_id)
+    data = request.get_json()
+    reason.motivo = data.get('motivo', reason.motivo)
+    reason.is_active = data.get('is_active', reason.is_active)
+    db.session.commit()
+    return jsonify({'success': True, 'reason': reason.to_dict()})
+
 # --- Gestão de Segmentos ---
 @admin.route('/segments')
 def segment_management():
