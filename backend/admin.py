@@ -272,7 +272,7 @@ def get_statuses():
     statuses = ConfigStatusLead.query.order_by(ConfigStatusLead.nome).all()
     return jsonify({'success': True, 'statuses': [s.to_dict() for s in statuses]})
 
-# --- ADIÇÃO v9.0: APIs para gerenciar Status de Leads ---
+# --- APIs para gerenciar Status de Leads ---
 @admin.route('/api/statuses', methods=['POST'])
 def add_status():
     data = request.get_json()
@@ -297,7 +297,6 @@ def update_status(status_id):
     status = ConfigStatusLead.query.get_or_404(status_id)
     data = request.get_json()
 
-    # Garante que apenas um status seja o inicial
     if data.get('is_initial_status'):
         ConfigStatusLead.query.filter(ConfigStatusLead.id != status_id).update({ConfigStatusLead.is_initial_status: False})
 
@@ -307,6 +306,16 @@ def update_status(status_id):
     status.estagio_alvo = data.get('estagio_alvo', status.estagio_alvo)
     status.is_loss_status = data.get('is_loss_status', status.is_loss_status)
     status.is_initial_status = data.get('is_initial_status', status.is_initial_status)
+
+    # --- ADIÇÃO v9.1: Lógica para atualizar as transições do workflow ---
+    if 'transition_ids' in data:
+        # Limpa as transições antigas
+        status.proximos_status = []
+        # Adiciona as novas transições selecionadas
+        novas_transicoes = ConfigStatusLead.query.filter(ConfigStatusLead.id.in_(data['transition_ids'])).all()
+        for transicao in novas_transicoes:
+            status.proximos_status.append(transicao)
+    
     db.session.commit()
     return jsonify({'success': True, 'status': status.to_dict()})
 
@@ -320,7 +329,7 @@ def get_loss_reasons():
     reasons = ConfigMotivosPerda.query.order_by(ConfigMotivosPerda.motivo).all()
     return jsonify({'success': True, 'reasons': [r.to_dict() for r in reasons]})
 
-# --- ADIÇÃO v9.0: APIs para gerenciar Motivos de Perda ---
+# --- APIs para gerenciar Motivos de Perda ---
 @admin.route('/api/loss-reasons', methods=['POST'])
 def add_loss_reason():
     data = request.get_json()
@@ -348,7 +357,7 @@ def get_segments():
     segments = ConfigSegmento.query.order_by(ConfigSegmento.nome).all()
     return jsonify({'success': True, 'segments': [s.to_dict() for s in segments]})
 
-# --- ADIÇÃO v9.0: APIs para gerenciar Segmentos ---
+# --- APIs para gerenciar Segmentos ---
 @admin.route('/api/segments', methods=['POST'])
 def add_segment():
     data = request.get_json()

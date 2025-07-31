@@ -10,9 +10,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusIsInitialCheck = document.getElementById('status-is-initial');
     const cancelBtn = document.getElementById('cancel-btn');
     const tableBody = document.getElementById('statuses-table-body');
+    const transitionsContainer = document.getElementById('transitions-container');
 
     let currentStatuses = [];
     let estagiosOptions = [];
+
+    // --- ADIÇÃO v9.1: Função para renderizar os checkboxes de transição ---
+    const renderTransitions = (selectedTransitionIds = []) => {
+        transitionsContainer.innerHTML = '';
+        currentStatuses.forEach(status => {
+            // Não pode fazer transição para si mesmo
+            if (status.id === parseInt(statusIdInput.value)) return;
+
+            const isChecked = selectedTransitionIds.includes(status.id);
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${status.id}" id="trans-${status.id}" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label" for="trans-${status.id}">
+                        ${status.nome}
+                    </label>
+                </div>
+            `;
+            transitionsContainer.appendChild(col);
+        });
+    };
 
     // --- FUNÇÕES DE RENDERIZAÇÃO E API ---
     const renderTable = () => {
@@ -73,17 +96,23 @@ document.addEventListener('DOMContentLoaded', function() {
         statusIdInput.value = '';
         formTitle.textContent = 'Adicionar Novo Status';
         cancelBtn.style.display = 'none';
+        transitionsContainer.innerHTML = '<p class="text-muted">Salve o status primeiro para definir as transições.</p>';
     };
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const id = statusIdInput.value;
+        
+        // --- ADIÇÃO v9.1: Coleta os IDs das transições selecionadas ---
+        const selectedTransitions = Array.from(transitionsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+
         const data = {
             nome: statusNomeInput.value,
             descricao: statusDescricaoInput.value,
             estagio_alvo: statusEstagioSelect.value,
             is_loss_status: statusIsLossCheck.checked,
-            is_initial_status: statusIsInitialCheck.checked
+            is_initial_status: statusIsInitialCheck.checked,
+            transition_ids: selectedTransitions // Envia a lista para a API
         };
         
         const url = id ? `/admin/api/statuses/${id}` : '/admin/api/statuses';
@@ -116,6 +145,10 @@ document.addEventListener('DOMContentLoaded', function() {
             statusIsLossCheck.checked = status.is_loss_status;
             statusIsInitialCheck.checked = status.is_initial_status;
             cancelBtn.style.display = 'inline-block';
+            
+            // --- ADIÇÃO v9.1: Renderiza os checkboxes de transição ---
+            renderTransitions(status.proximos_status_ids);
+
             window.scrollTo(0, 0);
         }
     };

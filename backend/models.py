@@ -22,23 +22,39 @@ class ConfigGlobal(db.Model):
             return decrypt_data(setting.value)
         return setting.value
 
-# --- ADIÇÃO v9.0: Novos modelos para entidades de vendas configuráveis ---
+# --- ADIÇÃO v9.1: Tabela de associação para o workflow de status ---
+status_transicoes = db.Table('status_transicoes',
+    db.Column('status_origem_id', db.Integer, db.ForeignKey('config_status_lead.id'), primary_key=True),
+    db.Column('status_destino_id', db.Integer, db.ForeignKey('config_status_lead.id'), primary_key=True)
+)
+# --- Novos modelos para entidades de vendas configuráveis ---
 class ConfigStatusLead(db.Model):
     __tablename__ = 'config_status_lead'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
     descricao = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    # Flags para controle do workflow
-    estagio_alvo = db.Column(db.String(50), nullable=True) # Ex: Oportunidade, Cliente
+    estagio_alvo = db.Column(db.String(50), nullable=True)
     is_loss_status = db.Column(db.Boolean, default=False, nullable=False)
     is_initial_status = db.Column(db.Boolean, default=False, nullable=False)
+
+    # --- ADIÇÃO v9.1: Relacionamento para as regras de transição ---
+    proximos_status = db.relationship(
+        'ConfigStatusLead', 
+        secondary=status_transicoes,
+        primaryjoin=(id == status_transicoes.c.status_origem_id),
+        secondaryjoin=(id == status_transicoes.c.status_destino_id),
+        backref=db.backref('status_anteriores', lazy='dynamic'),
+        lazy='dynamic'
+    )
 
     def to_dict(self):
         return {
             'id': self.id, 'nome': self.nome, 'descricao': self.descricao, 
             'is_active': self.is_active, 'estagio_alvo': self.estagio_alvo,
-            'is_loss_status': self.is_loss_status, 'is_initial_status': self.is_initial_status
+            'is_loss_status': self.is_loss_status, 'is_initial_status': self.is_initial_status,
+            # --- ADIÇÃO v9.1: Inclui os IDs dos próximos status permitidos ---
+            'proximos_status_ids': [status.id for status in self.proximos_status]
         }
 
 class ConfigMotivosPerda(db.Model):
