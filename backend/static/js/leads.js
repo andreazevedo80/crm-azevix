@@ -34,9 +34,9 @@ document.addEventListener("DOMContentLoaded", function() {
             const response = await fetch('/api/contas/config');
             const data = await response.json();
             if (data.success) {
-                populateSelect(estagioFilter, data.estagios);
-                populateSelect(statusFilter, data.status);
-                populateSelect(temperaturaFilter, data.temperaturas);
+                populateSelect(estagioFilter, data.estagios, false);
+                populateSelect(statusFilter, data.status_leads, true); // true para lista de objetos
+                populateSelect(temperaturaFilter, data.temperaturas, false
             }
             // --- Popula o filtro de responsáveis para admin/gerente ---
             if ((IS_ADMIN || IS_MANAGER) && ownerFilter) {
