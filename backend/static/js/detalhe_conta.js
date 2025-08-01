@@ -40,15 +40,15 @@ document.addEventListener("DOMContentLoaded", function() {
     let motivosPerdaOptions = []; // --- ALTERAÇÃO v9.2: Nova variável para motivos de perda ---
 
     // --- ALTERAÇÃO v9.2: populateSelect agora pode lidar com objetos ---
-    const populateSelect = (selectElement, options, selectedValue, isObjectList = false) => {
+    const populateSelect = (selectElement, options, selectedValue, isObjectList = false, key = 'nome') => {
         selectElement.innerHTML = '';
         if (['edit-segmento', 'edit-lead-motivo-perda'].includes(selectElement.id)) {
             selectElement.add(new Option('Selecione...', ''));
         }
         
         options.forEach(opt => {
-            const text = isObjectList ? opt.nome : opt;
-            const value = isObjectList ? opt.nome : opt;
+            const text = isObjectList ? opt[key] : opt;
+            const value = isObjectList ? opt[key] : opt;
             selectElement.add(new Option(text, value));
         });
         selectElement.value = selectedValue || '';
@@ -262,10 +262,10 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             
             // Popula o select de status APENAS com as transições permitidas
-            populateSelect(leadStatusSelect, transicoesPermitidas, lead.status_lead, true);
+            populateSelect(leadStatusSelect, transicoesPermitidas, lead.status_lead, true, 'nome');
             
             // Popula o select de motivos de perda
-            populateSelect(motivoPerdaSelect, motivosPerdaOptions, lead.motivo_perda, true);
+            populateSelect(motivoPerdaSelect, motivosPerdaOptions, lead.motivo_perda, true, 'motivo');
 
             // Controla a visibilidade do motivo da perda
             const checkMotivoPerda = () => {

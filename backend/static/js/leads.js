@@ -21,13 +21,13 @@ document.addEventListener("DOMContentLoaded", function() {
     let searchTimeout;
 
     // Função populateSelect corrigida para lidar com lista de objetos
-    const populateSelect = (selectElement, options, isObjectList = false) => {
+    const populateSelect = (selectElement, options, isObjectList = false, key = 'nome') => {
         options.forEach(opt => {
-            const text = isObjectList ? opt.nome : opt;
-            const value = isObjectList ? opt.nome : opt; // Usa o nome como valor para o filtro
+            const text = isObjectList ? opt[key] : opt;
+            const value = isObjectList ? opt[key] : opt;
             selectElement.add(new Option(text, value));
         });
-    };
+    }
 
     const populateFilters = async () => {
         try {
@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const data = await response.json();
             if (data.success) {
                 populateSelect(estagioFilter, data.estagios, false);
-                populateSelect(statusFilter, data.status_leads, true); // true para lista de objetos
+                populateSelect(statusFilter, data.status_leads, true, 'nome');
                 populateSelect(temperaturaFilter, data.temperaturas, false
             }
             // --- Popula o filtro de responsáveis para admin/gerente ---
@@ -43,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 const adminDataRes = await fetch('/api/admin/form_data');
                 const adminData = await adminDataRes.json();
                 if (adminData.success) {
-                    // Corrigido para usar isObjectList = true para vendedores
                     populateSelect(ownerFilter, adminData.vendedores, true);
                 }
             }

@@ -340,16 +340,16 @@ def update_lead_processo(lead_id):
 @contas.route('/api/contas/config', methods=['GET'])
 @login_required
 def get_contas_config():
-    """Fornece as opções dinâmicas para os formulários."""
+    """Fornece todas as opções dinâmicas e estáticas para os formulários."""
     segmentos_ativos = ConfigSegmento.query.filter_by(is_active=True).order_by(ConfigSegmento.nome).all()
     status_ativos = ConfigStatusLead.query.filter_by(is_active=True).order_by(ConfigStatusLead.nome).all()
     motivos_perda_ativos = ConfigMotivosPerda.query.filter_by(is_active=True).order_by(ConfigMotivosPerda.motivo).all()
     
     return jsonify({
         'success': True,
-        'segmentos': [s.nome for s in segmentos_ativos],
+        'segmentos': [s.to_dict() for s in segmentos_ativos],
         'status_leads': [s.to_dict() for s in status_ativos],
-        'motivos_perda': [m.motivo for m in motivos_perda_ativos],
+        'motivos_perda': [m.to_dict() for m in motivos_perda_ativos],
         'estagios': ESTAGIOS_CICLO_VIDA,
         'temperaturas': TEMPERATURAS
     })
