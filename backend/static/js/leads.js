@@ -9,26 +9,24 @@ document.addEventListener("DOMContentLoaded", function() {
     const statusFilter = document.getElementById('filter-status');
     const temperaturaFilter = document.getElementById('filter-temperatura');
     const followupFilter = document.getElementById('filter-followup');
-    // --- ADIÇÃO v6.1 ---
     const ownerFilter = document.getElementById('filter-owner');
     const statusCountersContainer = document.getElementById('status-counters-container');
     const reatribuirModalEl = document.getElementById('reatribuirLeadModal');
     const reatribuirModal = new bootstrap.Modal(reatribuirModalEl);
     const formReatribuirLead = document.getElementById('form-reatribuir-lead');
-
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
     
     let currentPage = 1;
     let currentViewMode = 'meus_leads';
     let searchTimeout;
 
-    // ALTERAÇÃO 1: Função populateSelect corrigida para lidar com lista de objetos
+    // Função populateSelect corrigida para lidar com lista de objetos
     const populateSelect = (selectElement, options, isObjectList = false) => {
-        if (isObjectList) {
-            options.forEach(opt => selectElement.add(new Option(opt.name, opt.id)));
-        } else {
-            options.forEach(opt => selectElement.add(new Option(opt, opt)));
-        }
+        options.forEach(opt => {
+            const text = isObjectList ? opt.nome : opt;
+            const value = isObjectList ? opt.nome : opt; // Usa o nome como valor para o filtro
+            selectElement.add(new Option(text, value));
+        });
     };
 
     const populateFilters = async () => {
@@ -40,20 +38,20 @@ document.addEventListener("DOMContentLoaded", function() {
                 populateSelect(statusFilter, data.status);
                 populateSelect(temperaturaFilter, data.temperaturas);
             }
-            // --- ADIÇÃO v6.1: Popula o filtro de responsáveis para admin/gerente ---
+            // --- Popula o filtro de responsáveis para admin/gerente ---
             if ((IS_ADMIN || IS_MANAGER) && ownerFilter) {
                 const adminDataRes = await fetch('/api/admin/form_data');
                 const adminData = await adminDataRes.json();
                 if (adminData.success) {
-                    // ALTERAÇÃO 2: Corrigido para usar isObjectList = true para vendedores
+                    // Corrigido para usar isObjectList = true para vendedores
                     populateSelect(ownerFilter, adminData.vendedores, true);
                 }
             }
         } catch (error) { console.error("Erro ao carregar filtros:", error); }
     };
 
-    // --- ADIÇÃO v6.1: Função para buscar e renderizar contadores de status ---
-    // ALTERAÇÃO 3: fetchAndRenderStats agora envia o view_mode para a API
+    // --- Função para buscar e renderizar contadores de status ---
+    // fetchAndRenderStats agora envia o view_mode para a API
     const fetchAndRenderStats = () => {
         if (!statusCountersContainer) return;
         fetch(`/api/leads/stats?view_mode=${currentViewMode}`)
@@ -63,7 +61,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     statusCountersContainer.innerHTML = '';
                     for (const [status, count] of Object.entries(data.stats)) {
                         const badge = document.createElement('span');
-                        // ALTERAÇÃO: Classe CSS alterada para bg-primary (melhoria visual)
                         badge.className = 'badge rounded-pill bg-primary p-2';
                         badge.style.cursor = 'pointer';
                         badge.textContent = `${status} (${count})`;
@@ -128,7 +125,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (currentViewMode === 'pool') {
                     actionButton = `<button class="btn btn-sm btn-success" onclick="assumirLead(${lead.id})">Assumir</button>`;
                 } else if (IS_ADMIN || IS_MANAGER) {
-                    // --- ADIÇÃO v6.1: Adiciona o botão de Reatribuir ---
                     actionButton += ` <button class="btn btn-sm btn-outline-info ms-1" onclick="openReatribuirModal(${lead.id}, '${lead.titulo}')" title="Reatribuir"><i class="fas fa-exchange-alt"></i></button>`;
                 }
 
@@ -152,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function() {
         renderPagination(pagination);
     };
     
-    // --- ADIÇÃO v6.0: Função para assumir um lead ---
+    // --- Função para assumir um lead ---
     window.assumirLead = (leadId) => {
         if (!confirm('Tem certeza que deseja assumir esta oportunidade? Ela e a conta associada serão movidas para a sua carteira.')) return;
 
@@ -179,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function() {
             temperatura: temperaturaFilter.value,
             followup: followupFilter.checked,
         });
-        // --- CORREÇÃO: Garante que o valor do filtro de owner seja adicionado corretamente ---
+
         if ((IS_ADMIN || IS_MANAGER) && ownerFilter && ownerFilter.value) {
             params.append('owner_id', ownerFilter.value);
         }
@@ -198,7 +194,7 @@ document.addEventListener("DOMContentLoaded", function() {
         fetchAndRenderLeads();
     };
 
-    // --- ADIÇÃO v6.1: Lógica para Reatribuir Lead ---
+    // --- Lógica para Reatribuir Lead ---
     window.openReatribuirModal = (leadId, leadTitulo) => {
         formReatribuirLead.querySelector('#reatribuir-lead-id').value = leadId;
         formReatribuirLead.querySelector('#reatribuir-lead-titulo').textContent = leadTitulo;
@@ -243,7 +239,6 @@ document.addEventListener("DOMContentLoaded", function() {
         meusLeadsTab.classList.add('active');
         poolTab.classList.remove('active');
         applyFiltersAndSearch();
-        // ALTERAÇÃO 4: Chama fetchAndRenderStats quando muda de aba
         fetchAndRenderStats();
     });
 
@@ -253,7 +248,6 @@ document.addEventListener("DOMContentLoaded", function() {
         poolTab.classList.add('active');
         meusLeadsTab.classList.remove('active');
         applyFiltersAndSearch();
-        // ALTERAÇÃO 4: Chama fetchAndRenderStats quando muda de aba
         fetchAndRenderStats();
     });
 
@@ -272,7 +266,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const init = async () => {
         await populateFilters();
         fetchAndRenderLeads();
-        // --- ADIÇÃO v6.1: Busca os contadores ---
         fetchAndRenderStats();
     };
     

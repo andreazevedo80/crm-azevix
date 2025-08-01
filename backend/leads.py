@@ -15,7 +15,7 @@ def listar_leads():
     return render_template('leads/leads.html')
 
 # --- ROTAS DE API ---
-# --- ADIÇÃO v6.1: Rota para buscar as estatísticas de leads por status ---
+# --- Rota para buscar as estatísticas de leads por status ---
 @leads.route('/api/leads/stats', methods=['GET'])
 @login_required
 def get_lead_stats():
@@ -33,7 +33,7 @@ def get_lead_stats():
         elif not current_user.has_role('admin'):
             base_query = base_query.filter(Lead.user_id == current_user.id)
 
-    # --- CORREÇÃO: Aplica o filtro da query base antes de agrupar ---
+    # --- Aplica o filtro da query base antes de agrupar ---
     stats_query = base_query.with_entities(Lead.status_lead, db.func.count(Lead.id)).group_by(Lead.status_lead).all()
     stats_dict = dict(stats_query)
 
@@ -65,7 +65,7 @@ def get_leads():
         elif not current_user.has_role('admin'):
             query = query.filter(Lead.user_id == current_user.id)
     
-    # --- CORREÇÃO Bug 2: Usa a variável correta e garante que o valor é um inteiro ---
+    # --- Usa a variável correta e garante que o valor é um inteiro ---
     if (current_user.has_role('admin') or current_user.has_role('gerente')) and owner_id_str:
         try:
             owner_id = int(owner_id_str)
@@ -106,7 +106,7 @@ def get_leads():
         }
     })
 
-# --- ALTERAÇÃO v6.1.1: Lógica de "Assumir Lead" corrigida ---
+# --- Lógica de "Assumir Lead" corrigida ---
 @leads.route('/api/leads/<int:lead_id>/assumir', methods=['POST'])
 @login_required
 def assumir_lead(lead_id):
@@ -132,7 +132,7 @@ def assumir_lead(lead_id):
     
     return jsonify({'success': True, 'message': 'Lead e conta assumidos com sucesso!'})
 
-# --- CORREÇÃO Bug 1: Lógica de "Reatribuir Lead" corrigida para usar check_permission na Conta pai ---
+# --- Lógica de "Reatribuir Lead" corrigida para usar check_permission na Conta pai ---
 @leads.route('/api/leads/<int:lead_id>/reatribuir', methods=['POST'])
 @login_required
 def reatribuir_lead(lead_id):
@@ -144,14 +144,14 @@ def reatribuir_lead(lead_id):
     if not novo_owner_id:
         return jsonify({'success': False, 'error': 'Novo responsável não especificado.'}), 400
 
-    # CORREÇÃO: A permissão para reatribuir um lead é a mesma de editar a CONTA pai.
+    # A permissão para reatribuir um lead é a mesma de editar a CONTA pai.
     if not check_permission(conta, for_editing=True):
         return jsonify({'success': False, 'error': 'Você não tem permissão para reatribuir leads desta conta.'}), 403
 
     owner_antigo_nome = lead.owner.name if lead.owner else "Ninguém (Pool)"
     novo_owner = User.query.get_or_404(novo_owner_id)
 
-    # CORREÇÃO: Altera APENAS o dono do Lead, não da conta.
+    # Altera APENAS o dono do Lead, não da conta.
     lead.user_id = novo_owner_id
     lead.data_ultima_atualizacao = datetime.utcnow()
     
@@ -168,7 +168,7 @@ def reatribuir_lead(lead_id):
 
     return jsonify({'success': True, 'message': 'Oportunidade reatribuída com sucesso.'})
 
-# --- ADIÇÃO v6.0: Rota para criar um novo lead (oportunidade) para uma conta existente ---
+# --- Rota para criar um novo lead (oportunidade) para uma conta existente ---
 @leads.route('/api/leads', methods=['POST'])
 @login_required
 def criar_lead():

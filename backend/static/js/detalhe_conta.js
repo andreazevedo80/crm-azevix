@@ -42,13 +42,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // --- ALTERAÇÃO v9.2: populateSelect agora pode lidar com objetos ---
     const populateSelect = (selectElement, options, selectedValue, isObjectList = false) => {
         selectElement.innerHTML = '';
-        if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
-        if (selectElement.id === 'edit-matriz') selectElement.add(new Option('Nenhuma', ''));
-        if (selectElement.id === 'edit-lead-motivo-perda') selectElement.add(new Option('Selecione...', ''));
+        if (['edit-segmento', 'edit-lead-motivo-perda'].includes(selectElement.id)) {
+            selectElement.add(new Option('Selecione...', ''));
+        }
         
         options.forEach(opt => {
-            const text = isObjectList ? (opt.nome || opt.motivo || opt.name || opt.nome_fantasia) : (opt.name || opt.nome_fantasia || opt);
-            const value = isObjectList ? (opt.nome || opt.motivo) : (opt.id || opt);
+            const text = isObjectList ? opt.nome : opt;
+            const value = isObjectList ? opt.nome : opt;
             selectElement.add(new Option(text, value));
         });
         selectElement.value = selectedValue || '';
