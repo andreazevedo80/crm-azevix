@@ -3,7 +3,6 @@ from flask_login import login_required, current_user
 from .models import Conta, Contato, Lead, User, db, HistoricoAlteracao
 from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
 from datetime import datetime
-from .config_constants import SEGMENTOS, STATUS_LEADS
 
 contas = Blueprint('contas', __name__)
 
@@ -294,17 +293,24 @@ def update_lead_processo(lead_id):
     data = request.get_json()
     changes_to_log = []
     
-    # Atualiza Status e verifica transições
     if 'status_lead' in data and data['status_lead'] != lead.status_lead:
+        status_antigo_obj = ConfigStatusLead.query.filter_by(nome=lead.status_lead).first()
+        status_novo_obj = ConfigStatusLead.query.filter_by(nome=data['status_lead']).first()
+
+        if not status_novo_obj:
+            return jsonify({'success': False, 'error': 'Status inválido.'}), 400
+
+        # Validação do Workflow
+        if status_antigo_obj and status_antigo_obj.proximos_status.count() > 0:
+            if status_novo_obj not in status_antigo_obj.proximos_status:
+                return jsonify({'success': False, 'error': 'Esta transição de status não é permitida pelo workflow.'}), 403
+        
         changes_to_log.append({'campo': 'Status', 'valor_antigo': lead.status_lead, 'valor_novo': data['status_lead']})
         lead.status_lead = data['status_lead']
         
-        if lead.status_lead == 'Qualificado' and lead.estagio_ciclo_vida == 'Lead':
-            changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': 'Oportunidade'})
-            lead.estagio_ciclo_vida = 'Oportunidade'
-        elif lead.status_lead == 'Ganho' and lead.estagio_ciclo_vida != 'Cliente':
-            changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': 'Cliente'})
-            lead.estagio_ciclo_vida = 'Cliente'
+        if status_novo_obj.estagio_alvo and status_novo_obj.estagio_alvo != lead.estagio_ciclo_vida:
+            changes_to_log.append({'campo': 'Estágio', 'valor_antigo': lead.estagio_ciclo_vida, 'valor_novo': status_novo_obj.estagio_alvo})
+            lead.estagio_ciclo_vida = status_novo_obj.estagio_alvo
 
     if 'temperatura' in data and data['temperatura'] != lead.temperatura:
         changes_to_log.append({'campo': 'Temperatura', 'valor_antigo': lead.temperatura, 'valor_novo': data['temperatura']})
@@ -333,7 +339,17 @@ def update_lead_processo(lead_id):
 @contas.route('/api/contas/config', methods=['GET'])
 @login_required
 def get_contas_config():
-    return jsonify({'success': True, 'segmentos': SEGMENTOS, 'status_leads': STATUS_LEADS})
+    """Fornece as opções dinâmicas para os formulários."""
+    segmentos_ativos = ConfigSegmento.query.filter_by(is_active=True).order_by(ConfigSegmento.nome).all()
+    status_ativos = ConfigStatusLead.query.filter_by(is_active=True).order_by(ConfigStatusLead.nome).all()
+    motivos_perda_ativos = ConfigMotivosPerda.query.filter_by(is_active=True).order_by(ConfigMotivosPerda.motivo).all()
+    
+    return jsonify({
+        'success': True,
+        'segmentos': [s.nome for s in segmentos_ativos],
+        'status_leads': [s.to_dict() for s in status_ativos], # Envia o objeto completo
+        'motivos_perda': [m.motivo for m in motivos_perda_ativos]
+    })
 
 @contas.route('/api/contas/search', methods=['GET'])
 @login_required

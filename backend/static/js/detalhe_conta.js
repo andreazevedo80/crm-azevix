@@ -36,18 +36,19 @@ document.addEventListener("DOMContentLoaded", function() {
     let originalContaData = {};
     let contatosData = [];
     let leadsData = []; // Armazena a lista de leads
-    let statusLeadsOptions = []; // Para armazenar os status
-    const motivosPerdaOptions = ['Preço', 'Concorrência', 'Timing', 'Sem Orçamento', 'Sem Fit com o Produto']; // Hardcoded por enquanto
+    let statusLeadsOptions = []; // --- ALTERAÇÃO v9.2: statusLeadsOptions agora armazena os objetos completos ---
+    let motivosPerdaOptions = []; // --- ALTERAÇÃO v9.2: Nova variável para motivos de perda ---
 
-    const populateSelect = (selectElement, options, selectedValue) => {
+    // --- ALTERAÇÃO v9.2: populateSelect agora pode lidar com objetos ---
+    const populateSelect = (selectElement, options, selectedValue, isObjectList = false) => {
         selectElement.innerHTML = '';
         if (selectElement.id === 'edit-segmento') selectElement.add(new Option('Selecione...', ''));
         if (selectElement.id === 'edit-matriz') selectElement.add(new Option('Nenhuma', ''));
         if (selectElement.id === 'edit-lead-motivo-perda') selectElement.add(new Option('Selecione...', ''));
         
         options.forEach(opt => {
-            const text = opt.name || opt.nome_fantasia || opt;
-            const value = opt.id || opt;
+            const text = isObjectList ? (opt.nome || opt.motivo || opt.name || opt.nome_fantasia) : (opt.name || opt.nome_fantasia || opt);
+            const value = isObjectList ? (opt.nome || opt.motivo) : (opt.id || opt);
             selectElement.add(new Option(text, value));
         });
         selectElement.value = selectedValue || '';
@@ -166,6 +167,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (configData.success) { 
             populateSelect(document.getElementById('edit-segmento'), configData.segmentos);
             statusLeadsOptions = configData.status_leads; // Armazena a lista de status
+            motivosPerdaOptions = configData.motivos_perda; // --- ALTERAÇÃO v9.2: Armazena os motivos de perda ---
         }
 
         if ((IS_ADMIN || IS_MANAGER) && adminFields) {
@@ -244,21 +246,34 @@ document.addEventListener("DOMContentLoaded", function() {
         }).then(() => populateDropdownsAndFetchDetails());
     };
 
-    // --- ALTERAÇÃO v5.03: Função openEditLeadProcessoModal completada ---
+    // --- ALTERAÇÃO v9.2: Lógica do modal de edição agora aplica o workflow ---
     window.openEditLeadProcessoModal = (leadId) => {
         const lead = leadsData.find(l => l.id === leadId);
         if (lead) {
             formEditLeadProcesso.querySelector('#edit-lead-id').value = lead.id;
             formEditLeadProcesso.querySelector('#edit-lead-titulo').textContent = lead.titulo;
             
-            // Popula os selects do modal
-            populateSelect(leadStatusSelect, statusLeadsOptions, lead.status_lead);
-            populateSelect(motivoPerdaSelect, motivosPerdaOptions, lead.motivo_perda);
+            const statusAtualObj = statusLeadsOptions.find(s => s.nome === lead.status_lead);
+            let transicoesPermitidas = statusLeadsOptions; // Por padrão, permite todos
+
+            // Se o status atual tem transições definidas, filtra a lista
+            if (statusAtualObj && statusAtualObj.proximos_status_ids.length > 0) {
+                transicoesPermitidas = statusLeadsOptions.filter(s => statusAtualObj.proximos_status_ids.includes(s.id));
+            }
+            
+            // Popula o select de status APENAS com as transições permitidas
+            populateSelect(leadStatusSelect, transicoesPermitidas, lead.status_lead, true);
+            
+            // Popula o select de motivos de perda
+            populateSelect(motivoPerdaSelect, motivosPerdaOptions, lead.motivo_perda, true);
 
             // Controla a visibilidade do motivo da perda
             const checkMotivoPerda = () => {
-                const statusSelecionado = leadStatusSelect.value;
-                if (statusSelecionado === 'Perdido' || statusSelecionado === 'Não Qualificado') {
+                const statusSelecionadoNome = leadStatusSelect.value;
+                const statusSelecionadoObj = statusLeadsOptions.find(s => s.nome === statusSelecionadoNome);
+                
+                // Usa o flag 'is_loss_status' para decidir
+                if (statusSelecionadoObj && statusSelecionadoObj.is_loss_status) {
                     motivoPerdaContainer.style.display = 'block';
                     motivoPerdaSelect.required = true;
                 } else {
@@ -416,7 +431,9 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const updatedData = { status_lead: novoStatus };
         
-        if (novoStatus === 'Perdido' || novoStatus === 'Não Qualificado') {
+        // --- ALTERAÇÃO v9.2: Verificação usando is_loss_status ---
+        const statusSelecionadoObj = statusLeadsOptions.find(s => s.nome === novoStatus);
+        if (statusSelecionadoObj && statusSelecionadoObj.is_loss_status) {
             const motivo = formEditLeadProcesso.querySelector('#edit-lead-motivo-perda').value;
             if (!motivo) {
                 alert('O motivo da perda é obrigatório.');
