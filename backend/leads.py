@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from .models import Lead, User, db, Conta, HistoricoAlteracao
-from .config_constants import ESTAGIOS_CICLO_VIDA, STATUS_LEADS, TEMPERATURAS
+from .config_constants import ESTAGIOS_CICLO_VIDA, TEMPERATURAS
 from datetime import datetime
 from .contas import check_permission
 
