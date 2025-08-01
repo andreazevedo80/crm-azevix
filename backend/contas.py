@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Conta, Contato, Lead, User, db, HistoricoAlteracao
+from .models import Conta, Contato, Lead, User, db, HistoricoAlteracao, ConfigStatusLead, ConfigSegmento, ConfigMotivosPerda
 from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
 from datetime import datetime
 
