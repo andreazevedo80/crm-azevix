@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const populateFilters = async () => {
         try {
-            const response = await fetch('/api/leads/config');
+            const response = await fetch('/api/contas/config');
             const data = await response.json();
             if (data.success) {
                 populateSelect(estagioFilter, data.estagios);

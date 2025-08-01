@@ -15,17 +15,6 @@ def listar_leads():
     return render_template('leads/leads.html')
 
 # --- ROTAS DE API ---
-@leads.route('/api/leads/config', methods=['GET'])
-@login_required
-def get_leads_config():
-    """Fornece as opções para os filtros da página de leads."""
-    return jsonify({
-        'success': True,
-        'estagios': ESTAGIOS_CICLO_VIDA,
-        'status': STATUS_LEADS,
-        'temperaturas': TEMPERATURAS
-    })
-
 # --- ADIÇÃO v6.1: Rota para buscar as estatísticas de leads por status ---
 @leads.route('/api/leads/stats', methods=['GET'])
 @login_required

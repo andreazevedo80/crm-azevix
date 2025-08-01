@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const fetchConfigData = async () => {
         try {
-            const response = await fetch('/api/leads/config'); // Reutiliza a API de config dos leads
+            const response = await fetch('/api/contas/config'); // Reutiliza a API de config dos leads
             const data = await response.json();
             if (data.success) {
                 estagiosOptions = data.estagios;
