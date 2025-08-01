@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from .models import Conta, Contato, Lead, User, db, HistoricoAlteracao, ConfigStatusLead, ConfigSegmento, ConfigMotivosPerda
 from .utils import is_valid_cnpj, get_cnpj_hash, normalize_name
 from datetime import datetime
+from .config_constants import ESTAGIOS_CICLO_VIDA, TEMPERATURAS
 
 contas = Blueprint('contas', __name__)
 
@@ -347,8 +348,10 @@ def get_contas_config():
     return jsonify({
         'success': True,
         'segmentos': [s.nome for s in segmentos_ativos],
-        'status_leads': [s.to_dict() for s in status_ativos], # Envia o objeto completo
-        'motivos_perda': [m.motivo for m in motivos_perda_ativos]
+        'status_leads': [s.to_dict() for s in status_ativos],
+        'motivos_perda': [m.motivo for m in motivos_perda_ativos],
+        'estagios': ESTAGIOS_CICLO_VIDA,
+        'temperaturas': TEMPERATURAS
     })
 
 @contas.route('/api/contas/search', methods=['GET'])
