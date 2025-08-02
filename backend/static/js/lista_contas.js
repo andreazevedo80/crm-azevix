@@ -27,10 +27,11 @@ document.addEventListener("DOMContentLoaded", function() {
         // Popula o filtro de vendedores apenas se o elemento existir (ou seja, se o usuário for admin e gerente)
         if (CAN_FILTER_BY_OWNER && ownerFilter) {
             try {
-                const response = await fetch('/api/admin/form_data');
-                const data = await response.json();
-                if (data.success && data.vendedores) {
-                    data.vendedores.forEach(v => ownerFilter.add(new Option(v.name, v.id)));
+                const adminResponse = await fetch('/api/admin/form_data');
+                const adminData = await adminResponse.json();
+                if (adminData.success) {
+                    // Popula vendedores
+                    adminData.vendedores.forEach(v => ownerFilter.add(new Option(v.name, v.id)));
                 }
             } catch (error) { console.error("Erro ao carregar vendedores:", error); }
         }

@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         options.forEach(opt => {
             const text = isObjectList ? opt[key] : opt;
-            const value = isObjectList ? opt[key] : opt;
+            const value = isObjectList ? opt.nome || opt.motivo : opt;
             selectElement.add(new Option(text, value));
         });
         selectElement.value = selectedValue || '';

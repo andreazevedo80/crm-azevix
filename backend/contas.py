@@ -388,6 +388,8 @@ def criar_conta():
         db.session.commit()
     if data.get('lead_titulo'):
         # --- Define os valores padrão para os novos campos do Lead ---
+        initial_status = ConfigStatusLead.query.filter_by(is_initial_status=True, is_active=True).first()
+        status_name = initial_status.nome if initial_status else 'Novo' # Fallback para 'Novo'
         novo_lead = Lead(
             conta_id=nova_conta.id, 
             user_id=current_user.id, 
@@ -396,7 +398,7 @@ def criar_conta():
             valor_estimado=data.get('lead_valor') or None,
             estagio_ciclo_vida='Lead', # Valor Padrão
             temperatura='Morno', # Valor Padrão
-            status_lead='Novo' # Novo status padrão
+            status_lead=status_name # Novo status padrão
         )
         db.session.add(novo_lead)
     

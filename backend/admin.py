@@ -613,6 +613,8 @@ def import_csv():
             db.session.add(novo_contato)
             db.session.flush()
 
+            initial_status = ConfigStatusLead.query.filter_by(is_initial_status=True, is_active=True).first()
+            status_name = initial_status.nome if initial_status else 'Novo'
             novo_lead = Lead(
                 conta_id=nova_conta.id,
                 contato_id=novo_contato.id,
@@ -620,7 +622,7 @@ def import_csv():
                 titulo=row.get('Título Oportunidade', 'Oportunidade de Prospecção Inicial').strip() or 'Oportunidade de Prospecção Inicial',
                 valor_estimado=float(row['Valor Oportunidade']) if row.get('Valor Oportunidade') else None,
                 estagio_ciclo_vida='Lead',
-                status_lead='Novo',
+                sstatus_lead=status_name,
                 temperatura='Morno'
             )
             db.session.add(novo_lead)

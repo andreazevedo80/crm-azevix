@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const data = await response.json();
             if (data.success) {
                 populateSelect(estagioFilter, data.estagios);
-                populateSelect(statusFilter, data.status_leads, true, 'nome');
+                populateSelect(statusFilter, data.status_leads, true);
                 populateSelect(temperaturaFilter, data.temperaturas);
             }
             // --- Popula o filtro de responsáveis para admin/gerente ---
@@ -43,7 +43,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 const adminDataRes = await fetch('/api/admin/form_data');
                 const adminData = await adminDataRes.json();
                 if (adminData.success) {
-                    populateSelect(ownerFilter, adminData.vendedores, true);
+                    ownerFilter.innerHTML = '<option value="">Todos Responsáveis</option>';
+                    adminData.vendedores.forEach(v => ownerFilter.add(new Option(v.name, v.id)));
                 }
             }
         } catch (error) { console.error("Erro ao carregar filtros:", error); }
