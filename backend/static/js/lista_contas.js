@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const loadingSpinner = `<div class="text-center py-5"><div class="spinner-border text-azevix" role="status"></div></div>`;
     
-    // --- ADIÇÃO v4.01: Estado da Paginação ---
+    // --- Estado da Paginação ---
     let currentPage = 1;
 
     const populateFilters = async () => {

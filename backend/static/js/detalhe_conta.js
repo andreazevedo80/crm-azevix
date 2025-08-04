@@ -165,16 +165,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const configResponse = await fetch('/api/contas/config');
         const configData = await configResponse.json();
         if (configData.success) { 
-            populateSelect(document.getElementById('edit-segmento'), configData.segmentos);
-            statusLeadsOptions = configData.status_leads; // Armazena a lista de status
-            motivosPerdaOptions = configData.motivos_perda; // --- ALTERAÇÃO v9.2: Armazena os motivos de perda ---
+            populateSelect(document.getElementById('edit-segmento'), configData.segmentos, null, true, 'nome');
+            statusLeadsOptions = configData.status_leads; 
+            motivosPerdaOptions = configData.motivos_perda;
         }
 
         if ((IS_ADMIN || IS_MANAGER) && adminFields) {
             const adminResponse = await fetch('/api/admin/form_data');
             const adminData = await adminResponse.json();
             if (adminData.success) {
-                populateSelect(document.getElementById('edit-owner'), adminData.vendedores);
+                populateSelect(document.getElementById('edit-owner'), adminData.vendedores, null, true, 'name');
             }
         }
         
