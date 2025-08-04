@@ -68,4 +68,24 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
+        // Função para popular o select de segmentos
+    const populateSegmentos = async () => {
+        try {
+            const response = await fetch('/api/contas/config');
+            const data = await response.json();
+            if (data.success && data.segmentos) {
+                // Limpa opções existentes (exceto a primeira "Selecione...")
+                segmentoSelect.innerHTML = '<option value="">Selecione...</option>';
+                // Itera sobre a lista de OBJETOS e usa a propriedade .nome
+                data.segmentos.forEach(seg => {
+                    segmentoSelect.add(new Option(seg.nome, seg.nome));
+                });
+            }
+        } catch (error) {
+            console.error("Erro ao carregar segmentos:", error);
+        }
+    };
+
+    // Carga inicial
+    populateSegmentos();
 });
