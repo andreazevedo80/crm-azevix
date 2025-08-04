@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
 from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento
+from .config_constants import STATUS_LEADS_PADRAO
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
 import csv
@@ -272,6 +273,32 @@ def get_statuses():
     statuses = ConfigStatusLead.query.order_by(ConfigStatusLead.nome).all()
     return jsonify({'success': True, 'statuses': [s.to_dict() for s in statuses]})
 
+# --- ADIÇÃO v9.3: API para aplicar os status padrão ---
+@admin.route('/api/statuses/apply-defaults', methods=['POST'])
+@login_required
+def apply_status_defaults():
+    """Adiciona os status padrão que ainda não existem no banco."""
+    try:
+        nomes_existentes = [s.nome for s in ConfigStatusLead.query.all()]
+        novos_adicionados = 0
+        
+        for status_padrao in STATUS_LEADS_PADRAO:
+            if status_padrao['nome'] not in nomes_existentes:
+                novo_status = ConfigStatusLead(
+                    nome=status_padrao['nome'],
+                    estagio_alvo=status_padrao.get('estagio_alvo'),
+                    is_loss_status=status_padrao.get('is_loss_status', False),
+                    is_initial_status=status_padrao.get('is_initial_status', False)
+                )
+                db.session.add(novo_status)
+                novos_adicionados += 1
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': f'{novos_adicionados} status padrão foram adicionados com sucesso.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
+
 # --- APIs para gerenciar Status de Leads ---
 @admin.route('/api/statuses', methods=['POST'])
 def add_status():
@@ -307,7 +334,7 @@ def update_status(status_id):
     status.is_loss_status = data.get('is_loss_status', status.is_loss_status)
     status.is_initial_status = data.get('is_initial_status', status.is_initial_status)
 
-    # --- ADIÇÃO v9.1: Lógica para atualizar as transições do workflow ---
+    # --- Lógica para atualizar as transições do workflow ---
     if 'transition_ids' in data:
         # Limpa as transições antigas
         status.proximos_status = []

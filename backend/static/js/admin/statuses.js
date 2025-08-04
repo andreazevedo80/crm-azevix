@@ -11,11 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelBtn = document.getElementById('cancel-btn');
     const tableBody = document.getElementById('statuses-table-body');
     const transitionsContainer = document.getElementById('transitions-container');
+    const applyDefaultsBtn = document.getElementById('apply-defaults-btn');
 
     let currentStatuses = [];
     let estagiosOptions = [];
 
-    // --- ADIÇÃO v9.1: Função para renderizar os checkboxes de transição ---
+    // --- Função para renderizar os checkboxes de transição ---
     const renderTransitions = (selectedTransitionIds = []) => {
         transitionsContainer.innerHTML = '';
         currentStatuses.forEach(status => {
@@ -103,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const id = statusIdInput.value;
         
-        // --- ADIÇÃO v9.1: Coleta os IDs das transições selecionadas ---
+        // --- Coleta os IDs das transições selecionadas ---
         const selectedTransitions = Array.from(transitionsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
 
         const data = {
@@ -146,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
             statusIsInitialCheck.checked = status.is_initial_status;
             cancelBtn.style.display = 'inline-block';
             
-            // --- ADIÇÃO v9.1: Renderiza os checkboxes de transição ---
+            // --- Renderiza os checkboxes de transição ---
             renderTransitions(status.proximos_status_ids);
 
             window.scrollTo(0, 0);
@@ -172,6 +173,21 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     cancelBtn.addEventListener('click', resetForm);
+
+    applyDefaultsBtn.addEventListener('click', () => {
+        if (confirm('Isso adicionará os status de funil de vendas padrão do sistema que ainda não existirem. Deseja continuar?')) {
+            fetch('/admin/api/statuses/apply-defaults', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        fetchStatuses(); // Recarrega a tabela
+                    } else {
+                        alert(`Erro: ${data.error}`);
+                    }
+                });
+        }
+    });        
 
     const init = async () => {
         await fetchConfigData();
