@@ -1,11 +1,5 @@
 # --- Arquivo central para constantes do sistema ---
 
-# Usado no cadastro de Contas e Leads
-# SEGMENTOS = [
-#     'Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 
-#     'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros'
-# ]
-
 # --- ALTERAÇÃO v9.3: Define os status padrão com mais detalhes ---
 STATUS_LEADS_PADRAO = [
     {'nome': 'Novo', 'estagio_alvo': 'Lead', 'is_initial_status': True},
@@ -22,13 +16,18 @@ STATUS_LEADS_PADRAO = [
     {'nome': 'Não Qualificado', 'estagio_alvo': 'Lead', 'is_loss_status': True},
 ]
 
+# --- ADIÇÃO v9.3: Listas padrão para Motivos de Perda e Segmentos ---
+MOTIVOS_PERDA_PADRAO = [
+    'Preço', 'Concorrência', 'Timing', 'Sem Orçamento', 'Sem Fit com o Produto'
+]
+
+SEGMENTOS_PADRAO = [
+    'Tecnologia', 'Saúde', 'Educação', 'Varejo', 'Serviços', 
+    'Indústria', 'Agronegócio', 'Financeiro', 'Imobiliário', 'Outros'
+]
+
 # O novo Estágio do Ciclo de Vida
 ESTAGIOS_CICLO_VIDA = ['Lead', 'Oportunidade', 'Cliente', 'Cliente Cancelado']
-
-# Os novos Motivos de Perda
-# MOTIVOS_PERDA = [
-#     'Preço', 'Concorrência', 'Timing', 'Sem Orçamento', 'Sem Fit com o Produto'
-# ]
 
 # O novo Termômetro de Vendas
 TEMPERATURAS = ['Quente', 'Morno', 'Frio']

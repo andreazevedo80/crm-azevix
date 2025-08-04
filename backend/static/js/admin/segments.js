@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const segmentNomeInput = document.getElementById('sg-nome');
     const cancelBtn = document.getElementById('cancel-btn-sg');
     const tableBody = document.getElementById('segments-table-body');
+    const applyDefaultsBtn = document.getElementById('apply-defaults-btn-sg');
 
     let currentSegments = [];
 
@@ -98,6 +99,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     cancelBtn.addEventListener('click', resetForm);
+
+    // --- ADIÇÃO v9.3: Listener para o botão de aplicar padrão ---
+    applyDefaultsBtn.addEventListener('click', () => {
+        if (confirm('Isso adicionará os segmentos de mercado padrão do sistema que ainda não existirem. Deseja continuar?')) {
+            fetch('/admin/api/segments/apply-defaults', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        fetchSegments(); // Recarrega a tabela
+                    } else {
+                        alert(`Erro: ${data.error}`);
+                    }
+                });
+        }
+    });
+
 
     fetchSegments();
 });

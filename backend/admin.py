@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
 from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento
-from .config_constants import STATUS_LEADS_PADRAO
+from .config_constants import STATUS_LEADS_PADRAO, MOTIVOS_PERDA_PADRAO, SEGMENTOS_PADRAO
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
 import csv
@@ -374,6 +374,24 @@ def update_loss_reason(reason_id):
     db.session.commit()
     return jsonify({'success': True, 'reason': reason.to_dict()})
 
+# --- ADIÇÃO v9.3: API para aplicar os motivos de perda padrão ---
+@admin.route('/api/loss-reasons/apply-defaults', methods=['POST'])
+@login_required
+def apply_loss_reason_defaults():
+    try:
+        nomes_existentes = [r.motivo for r in ConfigMotivosPerda.query.all()]
+        novos_adicionados = 0
+        for motivo_padrao in MOTIVOS_PERDA_PADRAO:
+            if motivo_padrao not in nomes_existentes:
+                novo_motivo = ConfigMotivosPerda(motivo=motivo_padrao)
+                db.session.add(novo_motivo)
+                novos_adicionados += 1
+        db.session.commit()
+        return jsonify({'success': True, 'message': f'{novos_adicionados} motivos de perda padrão foram adicionados.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
+
 # --- Gestão de Segmentos ---
 @admin.route('/segments')
 def segment_management():
@@ -401,6 +419,23 @@ def update_segment(segment_id):
     segment.is_active = data.get('is_active', segment.is_active)
     db.session.commit()
     return jsonify({'success': True, 'segment': segment.to_dict()})
+
+@admin.route('/api/segments/apply-defaults', methods=['POST'])
+@login_required
+def apply_segment_defaults():
+    try:
+        nomes_existentes = [s.nome for s in ConfigSegmento.query.all()]
+        novos_adicionados = 0
+        for segmento_padrao in SEGMENTOS_PADRAO:
+            if segmento_padrao not in nomes_existentes:
+                novo_segmento = ConfigSegmento(nome=segmento_padrao)
+                db.session.add(novo_segmento)
+                novos_adicionados += 1
+        db.session.commit()
+        return jsonify({'success': True, 'message': f'{novos_adicionados} segmentos padrão foram adicionados.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
 
 # --- Novas rotas para Importação de Dados ---
 @admin.route('/import')

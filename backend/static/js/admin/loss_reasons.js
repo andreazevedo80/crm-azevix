@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const reasonMotivoInput = document.getElementById('lr-motivo');
     const cancelBtn = document.getElementById('cancel-btn-lr');
     const tableBody = document.getElementById('loss-reasons-table-body');
+    const applyDefaultsBtn = document.getElementById('apply-defaults-btn-lr');
 
     let currentReasons = [];
 
@@ -98,6 +99,22 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     cancelBtn.addEventListener('click', resetForm);
+
+    applyDefaultsBtn.addEventListener('click', () => {
+        if (confirm('Isso adicionará os motivos de perda padrão do sistema que ainda não existirem. Deseja continuar?')) {
+            fetch('/admin/api/loss-reasons/apply-defaults', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        fetchReasons(); // Recarrega a tabela
+                    } else {
+                        alert(`Erro: ${data.error}`);
+                    }
+                });
+        }
+    });    
+
 
     fetchReasons();
 });
