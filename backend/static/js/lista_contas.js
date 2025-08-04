@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const response = await fetch('/api/contas/config');
             const data = await response.json();
             if (data.success && data.segmentos) {
-                data.segmentos.forEach(seg => segmentFilter.add(new Option(seg, seg)));
+                data.segmentos.forEach(seg => segmentFilter.add(new Option(seg.nome, seg.nome)));
             }
         } catch (error) { console.error("Erro ao carregar segmentos:", error); }
 
