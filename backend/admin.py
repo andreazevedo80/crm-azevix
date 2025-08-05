@@ -448,17 +448,31 @@ def download_template():
     """Fornece o template CSV para download."""
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Nome Fantasia Empresa', 'CNPJ Empresa', 'Telefone Contato', 'Email Contato', 'Nome Contato', 'Título Oportunidade', 'Valor Oportunidade'])
-    # Exemplo completo
-    writer.writerow(['Exemplo Fantasia', '00.000.000/0001-00', '(11) 99999-8888', 'contato@exemplo.com', 'João Silva', 'Novo Projeto de TI', '15000.00'])
-    # --- ADIÇÃO: Exemplo com dados mínimos ---
-    writer.writerow(['Outra Empresa Exemplo', '', '(81) 98877-6655', '', '', '', ''])
+    headers = [
+        'Nome Fantasia Empresa', 'CNPJ Empresa', 'Telefone Contato', 'Email Contato', 
+        'Nome Contato', 'CEP', 'Logradouro', 'Número', 'Bairro', 'Cidade', 'Estado',
+        'Título Oportunidade', 'Valor Oportunidade'
+    ]
+    writer.writerow(headers)
+    
+    example_full = [
+        'Exemplo Fantasia Completo', '00.000.000/0001-00', '(11) 99999-8888', 'contato@exemplo.com', 
+        'João Silva', '50000-000', 'Rua Exemplo', '123', 'Centro', 'São Paulo', 'SP',
+        'Novo Projeto de TI', '15000.00'
+    ]
+    writer.writerow(example_full)
+    
+    example_min = [
+        'Exemplo Mínimo', '', '(81) 98877-6655', '', '', '', '', '', '', '', '', '', ''
+    ]
+    writer.writerow(example_min)
     
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-disposition": "attachment; filename=template_importacao.csv"}
+        headers={"Content-disposition": "attachment; filename=template_importacao_v2.csv"}
     )
+
 
 def processar_csv(stream):
     """Função auxiliar para ler e validar o CSV, retornando os dados e um relatório."""
@@ -549,12 +563,20 @@ def import_csv_execute():
         
     try:
         success_count = 0
+        errors = [] # Para o histórico
+        
         for row in data:
             nova_conta = Conta(
                 user_id=None,
                 nome_fantasia=row.get('Nome Fantasia Empresa'),
                 razao_social=row.get('Razão Social Empresa', row.get('Nome Fantasia Empresa')),
-                cnpj=row.get('CNPJ Empresa') if is_valid_cnpj(row.get('CNPJ Empresa')) else None
+                cnpj=row.get('CNPJ Empresa') if is_valid_cnpj(row.get('CNPJ Empresa')) else None,
+                cep=row.get('CEP'),
+                logradouro=row.get('Logradouro'),
+                numero=row.get('Número'),
+                bairro=row.get('Bairro'),
+                cidade=row.get('Cidade'),
+                estado=row.get('Estado')
             )
             db.session.add(nova_conta)
             db.session.flush()
@@ -578,12 +600,12 @@ def import_csv_execute():
             db.session.add(novo_lead)
             success_count += 1
 
-        # Cria o registro de histórico
         historico = HistoricoImportacao(
             user_id=current_user.id,
             nome_arquivo=filename,
             sucesso_count=success_count,
-            erro_count=0 # Erros já foram filtrados no preview
+            erro_count=0, # Erros já foram filtrados no preview
+            erros=json.dumps([])
         )
         db.session.add(historico)
         db.session.commit()
