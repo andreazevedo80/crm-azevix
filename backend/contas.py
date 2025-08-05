@@ -377,7 +377,21 @@ def criar_conta():
         if existing_conta: return jsonify({'success': False, 'error': f'Este CNPJ já está cadastrado para a conta "{existing_conta.nome_fantasia}", sob responsabilidade de {existing_conta.owner.name}.'}), 409
     
     matriz_id = data.get('matriz_id') if data.get('matriz_id') else None
-    nova_conta = Conta(user_id=current_user.id, nome_fantasia=data['nome_fantasia'], razao_social=data.get('razao_social'), cnpj=cnpj, tipo_conta=data.get('tipo_conta', 'Privada'), segmento=data.get('segmento'), matriz_id=matriz_id)
+    nova_conta = Conta(
+        user_id=current_user.id,
+        nome_fantasia=data['nome_fantasia'],
+        razao_social=data.get('razao_social'),
+        cnpj=cnpj,
+        tipo_conta=data.get('tipo_conta', 'Privada'),
+        segmento=data.get('segmento'),
+        matriz_id=matriz_id,
+        cep=data.get('cep'),
+        logradouro=data.get('logradouro'),
+        numero=data.get('numero'),
+        bairro=data.get('bairro'),
+        cidade=data.get('cidade'),
+        estado=data.get('estado')
+        )
     db.session.add(nova_conta)
     db.session.commit()
     

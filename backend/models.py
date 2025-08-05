@@ -151,6 +151,15 @@ class Conta(db.Model):
     cnpj_hash = db.Column(db.String(64), unique=True, nullable=True, index=True)
     tipo_conta = db.Column(db.String(50), nullable=False, default='Privada')
     segmento = db.Column(db.String(100), nullable=True)
+    
+    # --- ADIÇÃO v9.4: Campos de Endereço ---
+    cep = db.Column(db.String(20), nullable=True)
+    logradouro = db.Column(db.String(255), nullable=True)
+    numero = db.Column(db.String(20), nullable=True)
+    bairro = db.Column(db.String(100), nullable=True)
+    cidade = db.Column(db.String(100), nullable=True)
+    estado = db.Column(db.String(50), nullable=True)
+    
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     contatos = db.relationship('Contato', backref='conta', lazy='dynamic', cascade='all, delete-orphan')
@@ -178,6 +187,13 @@ class Conta(db.Model):
             'cnpj': self.cnpj,
             'tipo_conta': self.tipo_conta,
             'segmento': self.segmento,
+            # --- ADIÇÃO v9.4: Inclui os campos de endereço no dicionário ---
+            'cep': self.cep,
+            'logradouro': self.logradouro,
+            'numero': self.numero,
+            'bairro': self.bairro,
+            'cidade': self.cidade,
+            'estado': self.estado,
             'owner_id': self.user_id,
             'owner_name': self.owner.name if self.owner else 'N/D',
             'matriz_id': self.matriz_id,
@@ -269,7 +285,7 @@ class HistoricoImportacao(db.Model):
             'erros': self.erros or []
         }
 
-# --- ADIÇÃO v10.0: Novo modelo para o Catálogo de Produtos e Serviços ---
+# --- Modelo para o Catálogo de Produtos e Serviços ---
 class ProdutoServico(db.Model):
     __tablename__ = 'produto_servico'
     id = db.Column(db.Integer, primary_key=True)
