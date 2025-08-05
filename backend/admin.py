@@ -706,7 +706,6 @@ def catalog_management():
 
 @admin.route('/api/catalog', methods=['GET'])
 def get_catalog_items():
-    """Busca todos os itens do catálogo."""
     items = ProdutoServico.query.order_by(ProdutoServico.nome).all()
     return jsonify({'success': True, 'items': [item.to_dict() for item in items]})
 
@@ -714,14 +713,18 @@ def get_catalog_items():
 def add_catalog_item():
     """Adiciona um novo item ao catálogo."""
     data = request.get_json()
-    # Adicionar validação de dados aqui se necessário
+    if not data.get('nome') or not data.get('tipo_item') or not data.get('tipo_cobranca'):
+        return jsonify({'success': False, 'error': 'Nome, Tipo de Item e Tipo de Cobrança são obrigatórios.'}), 400
+
     new_item = ProdutoServico(
         nome=data['nome'],
         descricao=data.get('descricao'),
         tipo_item=data.get('tipo_item'),
         tipo_cobranca=data.get('tipo_cobranca'),
         preco_base=data.get('preco_base') if data.get('preco_base') else None,
-        preco_sob_consulta=data.get('preco_sob_consulta', False)
+        preco_sob_consulta=data.get('preco_sob_consulta', False),
+        catmat_catser=data.get('catmat_catser'),
+        palavras_chave_licitacao=data.get('palavras_chave_licitacao')
     )
     db.session.add(new_item)
     db.session.commit()

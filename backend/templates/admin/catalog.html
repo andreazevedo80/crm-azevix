@@ -10,6 +10,54 @@
     <div class="card-body">
         <form id="catalog-form">
             <input type="hidden" id="item-id">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="item-nome" class="form-label">Nome do Item *</label>
+                    <input type="text" id="item-nome" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="item-tipo" class="form-label">Tipo de Item *</label>
+                    <select id="item-tipo" class="form-select" required>
+                        <option value="Serviço Pontual">Serviço Pontual</option>
+                        <option value="Serviço Recorrente">Serviço Recorrente</option>
+                        <option value="Consultoria">Consultoria</option>
+                        <option value="Produto">Produto</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="item-cobranca" class="form-label">Tipo de Cobrança *</label>
+                    <select id="item-cobranca" class="form-select" required>
+                        <option value="Pacote">Pacote</option>
+                        <option value="Mensal">Mensal</option>
+                        <option value="Hora">Por Hora</option>
+                        <option value="Unitário">Unitário</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="item-preco" class="form-label">Preço Base (R$)</label>
+                    <input type="number" step="0.01" id="item-preco" class="form-control">
+                    <div class="form-check form-switch mt-1">
+                        <input class="form-check-input" type="checkbox" id="item-sob-consulta">
+                        <label class="form-check-label" for="item-sob-consulta">Preço sob consulta</label>
+                    </div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label for="item-descricao" class="form-label">Descrição</label>
+                    <textarea id="item-descricao" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <hr>
+            <h6 class="text-azevix">Campos para Licitação (Opcional)</h6>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="item-catmat" class="form-label">Código CATMAT/CATSER</label>
+                    <input type="text" id="item-catmat" class="form-control">
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label for="item-palavras-chave" class="form-label">Palavras-chave (separadas por vírgula)</label>
+                    <input type="text" id="item-palavras-chave" class="form-control">
+                </div>
+            </div>
             <div class="text-end">
                 <button type="button" id="cancel-btn" class="btn btn-secondary" style="display: none;">Cancelar</button>
                 <button type="submit" class="btn btn-azevix">Salvar</button>
