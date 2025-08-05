@@ -113,7 +113,13 @@ def update_conta(conta_id):
         'Tipo Conta': conta.tipo_conta,
         'Matriz': conta.matriz.nome_fantasia if conta.matriz else "Nenhuma",
         'Responsável': conta.owner.name if conta.owner else "Nenhum",
-        'CNPJ': conta.cnpj
+        'CNPJ': conta.cnpj,
+        'CEP': conta.cep,
+        'Logradouro': conta.logradouro,
+        'Número': conta.numero,
+        'Bairro': conta.bairro,
+        'Cidade': conta.cidade,
+        'Estado': conta.estado
     }
     
     # Tratamento especial para CNPJ (mantendo a lógica original)
@@ -130,6 +136,14 @@ def update_conta(conta_id):
     conta.razao_social = data.get('razao_social', conta.razao_social)
     conta.segmento = data.get('segmento', conta.segmento)
     conta.tipo_conta = data.get('tipo_conta', conta.tipo_conta)
+    
+    # --- ALTERAÇÃO v9.4: Atualiza os campos de endereço ---
+    conta.cep = data.get('cep', conta.cep)
+    conta.logradouro = data.get('logradouro', conta.logradouro)
+    conta.numero = data.get('numero', conta.numero)
+    conta.bairro = data.get('bairro', conta.bairro)
+    conta.cidade = data.get('cidade', conta.cidade)
+    conta.estado = data.get('estado', conta.estado)
     
     if 'matriz_id' in data:
         matriz_id = data.get('matriz_id')
@@ -162,6 +176,20 @@ def update_conta(conta_id):
         changes_to_log.append({'campo': 'Conta Matriz', 'valor_antigo': dados_antigos['Matriz'], 'valor_novo': (conta.matriz.nome_fantasia if conta.matriz else "Nenhuma")})
     if dados_antigos['Responsável'] != (conta.owner.name if conta.owner else "Nenhum"):
         changes_to_log.append({'campo': 'Responsável', 'valor_antigo': dados_antigos['Responsável'], 'valor_novo': (conta.owner.name if conta.owner else "Nenhum")})
+    
+    # --- ALTERAÇÃO v9.4: Registra alterações de endereço no histórico ---
+    if dados_antigos['CEP'] != conta.cep:
+        changes_to_log.append({'campo': 'CEP', 'valor_antigo': dados_antigos['CEP'], 'valor_novo': conta.cep})
+    if dados_antigos['Logradouro'] != conta.logradouro:
+        changes_to_log.append({'campo': 'Logradouro', 'valor_antigo': dados_antigos['Logradouro'], 'valor_novo': conta.logradouro})
+    if dados_antigos['Número'] != conta.numero:
+        changes_to_log.append({'campo': 'Número', 'valor_antigo': dados_antigos['Número'], 'valor_novo': conta.numero})
+    if dados_antigos['Bairro'] != conta.bairro:
+        changes_to_log.append({'campo': 'Bairro', 'valor_antigo': dados_antigos['Bairro'], 'valor_novo': conta.bairro})
+    if dados_antigos['Cidade'] != conta.cidade:
+        changes_to_log.append({'campo': 'Cidade', 'valor_antigo': dados_antigos['Cidade'], 'valor_novo': conta.cidade})
+    if dados_antigos['Estado'] != conta.estado:
+        changes_to_log.append({'campo': 'Estado', 'valor_antigo': dados_antigos['Estado'], 'valor_novo': conta.estado})
     
     # Tratamento especial para CNPJ se foi alterado
     if 'CNPJ' in dados_antigos:

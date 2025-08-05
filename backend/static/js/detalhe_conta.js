@@ -17,16 +17,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const formEditContato = document.getElementById('form-edit-contato');
     const logAuditoriaContainer = document.getElementById('log-auditoria-container');
     const btnDesativarConta = document.getElementById('btn-desativar-conta');
-    
-    // --- ADIÇÃO v5.03: Elementos do Modal de Edição do Processo do Lead ---
     const editLeadProcessoModalEl = document.getElementById('editLeadProcessoModal');
     const editLeadProcessoModal = new bootstrap.Modal(editLeadProcessoModalEl);
     const formEditLeadProcesso = document.getElementById('form-edit-lead-processo');
     const leadStatusSelect = document.getElementById('edit-lead-status');
     const motivoPerdaContainer = document.getElementById('motivo-perda-container');
     const motivoPerdaSelect = document.getElementById('edit-lead-motivo-perda');
-    
-    // --- ADIÇÃO v6.0: Elementos do Modal de Nova Oportunidade ---
     const btnNovaOportunidade = document.getElementById('btn-nova-oportunidade');
     const novaOportunidadeModalEl = document.getElementById('novaOportunidadeModal');
     const novaOportunidadeModal = new bootstrap.Modal(novaOportunidadeModalEl);
@@ -39,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let statusLeadsOptions = []; // --- ALTERAÇÃO v9.2: statusLeadsOptions agora armazena os objetos completos ---
     let motivosPerdaOptions = []; // --- ALTERAÇÃO v9.2: Nova variável para motivos de perda ---
 
-    // --- ALTERAÇÃO v9.2: populateSelect agora pode lidar com objetos ---
+    // --- PopulateSelect agora pode lidar com objetos ---
     const populateSelect = (selectElement, options, selectedValue, isObjectList = false, key = 'nome') => {
         selectElement.innerHTML = '';
         if (['edit-segmento', 'edit-lead-motivo-perda'].includes(selectElement.id)) {
@@ -62,6 +58,13 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-segmento').value = conta.segmento || '';
         matrizSearchInput.value = conta.matriz_nome || '';
         matrizIdInput.value = conta.matriz_id || '';
+        document.getElementById('edit-cep').value = conta.cep || '';
+        document.getElementById('edit-logradouro').value = conta.logradouro || '';
+        document.getElementById('edit-numero').value = conta.numero || '';
+        document.getElementById('edit-bairro').value = conta.bairro || '';
+        document.getElementById('edit-cidade').value = conta.cidade || '';
+        document.getElementById('edit-estado').value = conta.estado || '';
+
         if (IS_ADMIN) {
             document.getElementById('edit-owner').value = conta.owner_id || '';
         }
@@ -71,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function() {
         listaContatos.innerHTML = '';
         if (contatos && contatos.length > 0) {
             contatos.forEach(c => {
-                // --- ALTERAÇÃO: Adicionados botões de ação para cada contato ---
+                // --- Adicionados botões de ação para cada contato ---
                 listaContatos.innerHTML += `
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
@@ -89,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
-    // --- ALTERAÇÃO v5.03: Função renderLeads completamente reescrita ---
+    // --- Função renderLeads completamente reescrita ---
     const renderLeads = (leads) => {
         listaLeads.innerHTML = '';
         if (leads && leads.length > 0) {
@@ -238,7 +241,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }).then(() => populateDropdownsAndFetchDetails());
     };
 
-    // --- ADIÇÃO v5.03: Nova função para atualizar temperatura do lead ---
+    // --- Função para atualizar temperatura do lead ---
     window.updateTemperaturaLead = (leadId, novaTemperatura) => {
         const data = { temperatura: novaTemperatura };
         fetch(`/api/leads/${leadId}/processo`, {
@@ -246,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }).then(() => populateDropdownsAndFetchDetails());
     };
 
-    // --- ALTERAÇÃO v9.2: Lógica do modal de edição agora aplica o workflow ---
+    // --- Lógica do modal de edição agora aplica o workflow ---
     window.openEditLeadProcessoModal = (leadId) => {
         const lead = leadsData.find(l => l.id === leadId);
         if (lead) {
@@ -354,6 +357,12 @@ document.addEventListener("DOMContentLoaded", function() {
             tipo_conta: document.getElementById('edit-tipo_conta').value,
             segmento: document.getElementById('edit-segmento').value,
             matriz_id: matrizIdInput.value,
+            cep: document.getElementById('edit-cep').value,
+            logradouro: document.getElementById('edit-logradouro').value,
+            numero: document.getElementById('edit-numero').value,
+            bairro: document.getElementById('edit-bairro').value,
+            cidade: document.getElementById('edit-cidade').value,
+            estado: document.getElementById('edit-estado').value
         };
         if (IS_ADMIN) {
             updatedData.owner_id = document.getElementById('edit-owner').value;
@@ -423,7 +432,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // --- ADIÇÃO v5.03: Listener para o formulário de edição de processo do lead ---
+    // --- Listener para o formulário de edição de processo do lead ---
     formEditLeadProcesso.addEventListener('submit', async (e) => {
         e.preventDefault();
         const leadId = formEditLeadProcesso.querySelector('#edit-lead-id').value;
@@ -431,7 +440,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const updatedData = { status_lead: novoStatus };
         
-        // --- ALTERAÇÃO v9.2: Verificação usando is_loss_status ---
+        // --- Verificação usando is_loss_status ---
         const statusSelecionadoObj = statusLeadsOptions.find(s => s.nome === novoStatus);
         if (statusSelecionadoObj && statusSelecionadoObj.is_loss_status) {
             const motivo = formEditLeadProcesso.querySelector('#edit-lead-motivo-perda').value;
@@ -454,7 +463,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // --- ADIÇÃO v6.0: Event Listeners para o fluxo de nova oportunidade ---
+    // --- Event Listeners para o fluxo de nova oportunidade ---
     if (btnNovaOportunidade) {
         btnNovaOportunidade.addEventListener('click', () => {
             novaOportunidadeModal.show();
