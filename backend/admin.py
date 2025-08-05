@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento
+from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento, ProdutoServico
 from .config_constants import STATUS_LEADS_PADRAO, MOTIVOS_PERDA_PADRAO, SEGMENTOS_PADRAO
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
@@ -273,7 +273,7 @@ def get_statuses():
     statuses = ConfigStatusLead.query.order_by(ConfigStatusLead.nome).all()
     return jsonify({'success': True, 'statuses': [s.to_dict() for s in statuses]})
 
-# --- ADIÇÃO v9.3: API para aplicar os status padrão ---
+# --- API para aplicar os status padrão ---
 @admin.route('/api/statuses/apply-defaults', methods=['POST'])
 @login_required
 def apply_status_defaults():
@@ -374,7 +374,7 @@ def update_loss_reason(reason_id):
     db.session.commit()
     return jsonify({'success': True, 'reason': reason.to_dict()})
 
-# --- ADIÇÃO v9.3: API para aplicar os motivos de perda padrão ---
+# --- API para aplicar os motivos de perda padrão ---
 @admin.route('/api/loss-reasons/apply-defaults', methods=['POST'])
 @login_required
 def apply_loss_reason_defaults():
@@ -696,3 +696,52 @@ def import_csv():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
+
+# --- ADIÇÃO v10.0: Novas rotas para Gestão do Catálogo ---
+
+@admin.route('/catalog')
+def catalog_management():
+    """Página de gestão do catálogo de produtos e serviços."""
+    return render_template('admin/catalog.html')
+
+@admin.route('/api/catalog', methods=['GET'])
+def get_catalog_items():
+    """Busca todos os itens do catálogo."""
+    items = ProdutoServico.query.order_by(ProdutoServico.nome).all()
+    return jsonify({'success': True, 'items': [item.to_dict() for item in items]})
+
+@admin.route('/api/catalog', methods=['POST'])
+def add_catalog_item():
+    """Adiciona um novo item ao catálogo."""
+    data = request.get_json()
+    # Adicionar validação de dados aqui se necessário
+    new_item = ProdutoServico(
+        nome=data['nome'],
+        descricao=data.get('descricao'),
+        tipo_item=data.get('tipo_item'),
+        tipo_cobranca=data.get('tipo_cobranca'),
+        preco_base=data.get('preco_base') if data.get('preco_base') else None,
+        preco_sob_consulta=data.get('preco_sob_consulta', False)
+    )
+    db.session.add(new_item)
+    db.session.commit()
+    return jsonify({'success': True, 'item': new_item.to_dict()})
+
+@admin.route('/api/catalog/<int:item_id>', methods=['PUT'])
+def update_catalog_item(item_id):
+    """Atualiza um item do catálogo."""
+    item = ProdutoServico.query.get_or_404(item_id)
+    data = request.get_json()
+    
+    item.nome = data.get('nome', item.nome)
+    item.descricao = data.get('descricao', item.descricao)
+    item.tipo_item = data.get('tipo_item', item.tipo_item)
+    item.tipo_cobranca = data.get('tipo_cobranca', item.tipo_cobranca)
+    item.preco_base = data.get('preco_base') if data.get('preco_base') else item.preco_base
+    item.preco_sob_consulta = data.get('preco_sob_consulta', item.preco_sob_consulta)
+    item.catmat_catser = data.get('catmat_catser', item.catmat_catser)
+    item.palavras_chave_licitacao = data.get('palavras_chave_licitacao', item.palavras_chave_licitacao)
+    item.is_active = data.get('is_active', item.is_active)
+    
+    db.session.commit()
+    return jsonify({'success': True, 'item': item.to_dict()})

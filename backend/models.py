@@ -22,7 +22,7 @@ class ConfigGlobal(db.Model):
             return decrypt_data(setting.value)
         return setting.value
 
-# --- ADIÇÃO v9.1: Tabela de associação para o workflow de status ---
+# --- Tabela de associação para o workflow de status ---
 status_transicoes = db.Table('status_transicoes',
     db.Column('status_origem_id', db.Integer, db.ForeignKey('config_status_lead.id'), primary_key=True),
     db.Column('status_destino_id', db.Integer, db.ForeignKey('config_status_lead.id'), primary_key=True)
@@ -38,7 +38,7 @@ class ConfigStatusLead(db.Model):
     is_loss_status = db.Column(db.Boolean, default=False, nullable=False)
     is_initial_status = db.Column(db.Boolean, default=False, nullable=False)
 
-    # --- ADIÇÃO v9.1: Relacionamento para as regras de transição ---
+    # --- Relacionamento para as regras de transição ---
     proximos_status = db.relationship(
         'ConfigStatusLead', 
         secondary=status_transicoes,
@@ -267,4 +267,37 @@ class HistoricoImportacao(db.Model):
             'sucesso_count': self.sucesso_count,
             'erro_count': self.erro_count,
             'erros': self.erros or []
+        }
+
+# --- ADIÇÃO v10.0: Novo modelo para o Catálogo de Produtos e Serviços ---
+class ProdutoServico(db.Model):
+    __tablename__ = 'produto_servico'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(255), nullable=False, index=True)
+    descricao = db.Column(db.Text)
+    
+    # Campos para flexibilidade de tipo e cobrança
+    tipo_item = db.Column(db.String(50), nullable=False, default='Serviço Pontual') # Ex: Produto, Serviço Recorrente, Serviço Pontual, Consultoria
+    tipo_cobranca = db.Column(db.String(50), nullable=False, default='Pacote') # Ex: Unitário, Mensal, Hora, Pacote
+    preco_base = db.Column(db.Numeric(10, 2), nullable=True)
+    preco_sob_consulta = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # Campos específicos para licitações
+    catmat_catser = db.Column(db.String(100), nullable=True)
+    palavras_chave_licitacao = db.Column(db.Text, nullable=True)
+    
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'descricao': self.descricao,
+            'tipo_item': self.tipo_item,
+            'tipo_cobranca': self.tipo_cobranca,
+            'preco_base': str(self.preco_base) if self.preco_base is not None else '0.00',
+            'preco_sob_consulta': self.preco_sob_consulta,
+            'catmat_catser': self.catmat_catser,
+            'palavras_chave_licitacao': self.palavras_chave_licitacao,
+            'is_active': self.is_active
         }
