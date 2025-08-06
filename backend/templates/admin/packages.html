@@ -3,6 +3,53 @@
 
 {% block content %}
 <h1 class="text-azevix mb-4"><i class="fas fa-box-open me-2"></i>Gestão de Pacotes de Serviços</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card card-azevix">
+            <div class="card-header"><h5 id="form-title-package" class="card-title mb-0">Adicionar Novo Pacote</h5></div>
+            <div class="card-body">
+                <form id="package-form">
+                    <input type="hidden" id="package-id">
+                    <div class="mb-3">
+                        <label for="package-nome" class="form-label">Nome do Pacote *</label>
+                        <input type="text" id="package-nome" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="package-descricao" class="form-label">Descrição</label>
+                        <textarea id="package-descricao" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="package-preco" class="form-label">Preço Fixo do Pacote (R$)</label>
+                        <input type="number" step="0.01" id="package-preco" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="package-items" class="form-label">Itens do Catálogo Inclusos</label>
+                        <select id="package-items" class="form-select" multiple style="height: 150px;"></select>
+                        <div class="form-text">Segure Ctrl (ou Cmd em Mac) para selecionar múltiplos itens.</div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" id="cancel-btn-package" class="btn btn-secondary" style="display: none;">Cancelar</button>
+                        <button type="submit" class="btn btn-azevix">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card card-azevix">
+            <div class="card-header"><h5 class="card-title mb-0">Pacotes Cadastrados</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Nome</th><th>Preço</th><th>Itens</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="packages-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
