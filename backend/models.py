@@ -301,3 +301,80 @@ class ProdutoServico(db.Model):
             'palavras_chave_licitacao': self.palavras_chave_licitacao,
             'is_active': self.is_active
         }
+
+# --- ADIÇÃO v10.1: Tabelas de associação para o Catálogo Avançado ---
+
+# Tabela para a relação Muitos-para-Muitos entre Pacotes e Itens do Catálogo
+pacote_itens = db.Table('pacote_itens',
+    db.Column('pacote_id', db.Integer, db.ForeignKey('pacote_servico.id'), primary_key=True),
+    db.Column('produto_servico_id', db.Integer, db.ForeignKey('produto_servico.id'), primary_key=True)
+)
+
+# Tabela para a relação Muitos-para-Muitos entre Serviços e Atividades Padrão
+servico_atividades = db.Table('servico_atividades',
+    db.Column('servico_id', db.Integer, db.ForeignKey('produto_servico.id'), primary_key=True),
+    db.Column('atividade_id', db.Integer, db.ForeignKey('atividade_padrao.id'), primary_key=True)
+)
+
+# --- ADIÇÃO v10.1: Novo modelo para Atividades Padrão ---
+class AtividadePadrao(db.Model):
+    __tablename__ = 'atividade_padrao'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(255), nullable=False, unique=True)
+    descricao = db.Column(db.Text)
+    horas_estimadas = db.Column(db.Numeric(10, 2))
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+# --- ADIÇÃO v10.1: Novo modelo para Pacotes de Serviços ---
+class PacoteServico(db.Model):
+    __tablename__ = 'pacote_servico'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(255), nullable=False, unique=True)
+    descricao = db.Column(db.Text)
+    preco_total = db.Column(db.Numeric(10, 2))
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    
+    itens = db.relationship(
+        'ProdutoServico', 
+        secondary=pacote_itens,
+        lazy='subquery',
+        backref=db.backref('pacotes', lazy=True)
+    )
+
+class ProdutoServico(db.Model):
+    __tablename__ = 'produto_servico'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(255), nullable=False, index=True)
+    descricao = db.Column(db.Text)
+    
+    tipo_item = db.Column(db.String(50), nullable=False, default='Serviço Pontual')
+    tipo_cobranca = db.Column(db.String(50), nullable=False, default='Pacote')
+    preco_base = db.Column(db.Numeric(10, 2), nullable=True)
+    preco_sob_consulta = db.Column(db.Boolean, default=False, nullable=False)
+    
+    catmat_catser = db.Column(db.String(100), nullable=True)
+    palavras_chave_licitacao = db.Column(db.Text, nullable=True)
+    
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+
+    # --- ADIÇÃO v10.1: Relacionamento com Atividades Padrão ---
+    atividades = db.relationship(
+        'AtividadePadrao',
+        secondary=servico_atividades,
+        lazy='subquery',
+        backref=db.backref('servicos', lazy=True)
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'descricao': self.descricao,
+            'tipo_item': self.tipo_item,
+            'tipo_cobranca': self.tipo_cobranca,
+            'preco_base': str(self.preco_base) if self.preco_base is not None else '0.00',
+            'preco_sob_consulta': self.preco_sob_consulta,
+            'catmat_catser': self.catmat_catser,
+            'palavras_chave_licitacao': self.palavras_chave_licitacao,
+            'is_active': self.is_active
+        }
