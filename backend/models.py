@@ -269,39 +269,6 @@ class HistoricoImportacao(db.Model):
             'erros': self.erros or []
         }
 
-# --- ADIÇÃO v10.0: Novo modelo para o Catálogo de Produtos e Serviços ---
-class ProdutoServico(db.Model):
-    __tablename__ = 'produto_servico'
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(255), nullable=False, index=True)
-    descricao = db.Column(db.Text)
-    
-    # Campos para flexibilidade de tipo e cobrança
-    tipo_item = db.Column(db.String(50), nullable=False, default='Serviço Pontual') # Ex: Produto, Serviço Recorrente, Serviço Pontual, Consultoria
-    tipo_cobranca = db.Column(db.String(50), nullable=False, default='Pacote') # Ex: Unitário, Mensal, Hora, Pacote
-    preco_base = db.Column(db.Numeric(10, 2), nullable=True)
-    preco_sob_consulta = db.Column(db.Boolean, default=False, nullable=False)
-    
-    # Campos específicos para licitações
-    catmat_catser = db.Column(db.String(100), nullable=True)
-    palavras_chave_licitacao = db.Column(db.Text, nullable=True)
-    
-    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'nome': self.nome,
-            'descricao': self.descricao,
-            'tipo_item': self.tipo_item,
-            'tipo_cobranca': self.tipo_cobranca,
-            'preco_base': str(self.preco_base) if self.preco_base is not None else '0.00',
-            'preco_sob_consulta': self.preco_sob_consulta,
-            'catmat_catser': self.catmat_catser,
-            'palavras_chave_licitacao': self.palavras_chave_licitacao,
-            'is_active': self.is_active
-        }
-
 # --- ADIÇÃO v10.1: Tabelas de associação para o Catálogo Avançado ---
 
 # Tabela para a relação Muitos-para-Muitos entre Pacotes e Itens do Catálogo
@@ -325,6 +292,13 @@ class AtividadePadrao(db.Model):
     horas_estimadas = db.Column(db.Numeric(10, 2))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id, 'nome': self.nome, 'descricao': self.descricao,
+            'horas_estimadas': str(self.horas_estimadas) if self.horas_estimadas else '0.00',
+            'is_active': self.is_active
+        }
+
 # --- ADIÇÃO v10.1: Novo modelo para Pacotes de Serviços ---
 class PacoteServico(db.Model):
     __tablename__ = 'pacote_servico'
@@ -341,17 +315,28 @@ class PacoteServico(db.Model):
         backref=db.backref('pacotes', lazy=True)
     )
 
+    def to_dict(self):
+        return {
+            'id': self.id, 'nome': self.nome, 'descricao': self.descricao,
+            'preco_total': str(self.preco_total) if self.preco_total else '0.00',
+            'is_active': self.is_active,
+            'item_ids': [item.id for item in self.itens]
+        }
+
+# --- ADIÇÃO v10.0: Novo modelo para o Catálogo de Produtos e Serviços ---
 class ProdutoServico(db.Model):
     __tablename__ = 'produto_servico'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(255), nullable=False, index=True)
     descricao = db.Column(db.Text)
     
-    tipo_item = db.Column(db.String(50), nullable=False, default='Serviço Pontual')
-    tipo_cobranca = db.Column(db.String(50), nullable=False, default='Pacote')
+    # Campos para flexibilidade de tipo e cobrança
+    tipo_item = db.Column(db.String(50), nullable=False, default='Serviço Pontual') # Ex: Produto, Serviço Recorrente, Serviço Pontual, Consultoria
+    tipo_cobranca = db.Column(db.String(50), nullable=False, default='Pacote') # Ex: Unitário, Mensal, Hora, Pacote
     preco_base = db.Column(db.Numeric(10, 2), nullable=True)
     preco_sob_consulta = db.Column(db.Boolean, default=False, nullable=False)
     
+    # Campos específicos para licitações
     catmat_catser = db.Column(db.String(100), nullable=True)
     palavras_chave_licitacao = db.Column(db.Text, nullable=True)
     
@@ -376,5 +361,6 @@ class ProdutoServico(db.Model):
             'preco_sob_consulta': self.preco_sob_consulta,
             'catmat_catser': self.catmat_catser,
             'palavras_chave_licitacao': self.palavras_chave_licitacao,
-            'is_active': self.is_active
+            'is_active': self.is_active,
+            'atividade_ids': [a.id for a in self.atividades]
         }
