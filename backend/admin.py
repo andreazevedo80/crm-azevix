@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort, jsonify, request, current_app, url_for, Response
 from flask_login import login_required, current_user
-from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento, ProdutoServico
+from .models import User, Role, Conta, db, ConfigGlobal, DominiosPermitidos, Lead, Contato, HistoricoImportacao, ConfigStatusLead, ConfigMotivosPerda, ConfigSegmento, ProdutoServico, AtividadePadrao, PacoteServico
 from .config_constants import STATUS_LEADS_PADRAO, MOTIVOS_PERDA_PADRAO, SEGMENTOS_PADRAO
 from .utils import encrypt_data, decrypt_data, is_valid_cnpj, get_cnpj_hash, normalize_name
 from .email import send_test_email, send_invitation_email
