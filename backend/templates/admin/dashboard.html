@@ -108,5 +108,25 @@
             </div>
         </div>
     </div>
+    <div class="col-md-4 mb-4">
+        <div class="card card-azevix h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks-alt fa-3x text-azevix mb-3"></i>
+                <h5 class="card-title">Atividades Padrão</h5>
+                <p class="card-text">Gerenciar os "blocos de montar" dos seus serviços.</p>
+                <a href="{{ url_for('admin.activity_management') }}" class="btn btn-azevix">Acessar</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card card-azevix h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-box-open fa-3x text-azevix mb-3"></i>
+                <h5 class="card-title">Pacotes de Serviços</h5>
+                <p class="card-text">Criar e gerenciar bundles e pacotes de itens do catálogo.</p>
+                <a href="{{ url_for('admin.package_management') }}" class="btn btn-azevix">Acessar</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

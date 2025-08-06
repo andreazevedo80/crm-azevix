@@ -748,3 +748,89 @@ def update_catalog_item(item_id):
     
     db.session.commit()
     return jsonify({'success': True, 'item': item.to_dict()})
+
+# --- ADIÇÃO v10.1: Novas rotas para Atividades e Pacotes ---
+
+# --- Gestão de Atividades Padrão ---
+@admin.route('/activities')
+def activity_management():
+    return render_template('admin/activities.html')
+
+@admin.route('/api/activities', methods=['GET'])
+def get_activities():
+    activities = AtividadePadrao.query.order_by(AtividadePadrao.nome).all()
+    return jsonify({'success': True, 'activities': [a.to_dict() for a in activities]})
+
+@admin.route('/api/activities', methods=['POST'])
+def add_activity():
+    data = request.get_json()
+    new_activity = AtividadePadrao(
+        nome=data['nome'],
+        descricao=data.get('descricao'),
+        horas_estimadas=data.get('horas_estimadas')
+    )
+    db.session.add(new_activity)
+    db.session.commit()
+    return jsonify({'success': True, 'activity': new_activity.to_dict()})
+
+@admin.route('/api/activities/<int:activity_id>', methods=['PUT'])
+def update_activity(activity_id):
+    activity = AtividadePadrao.query.get_or_404(activity_id)
+    data = request.get_json()
+    activity.nome = data.get('nome', activity.nome)
+    activity.descricao = data.get('descricao', activity.descricao)
+    activity.horas_estimadas = data.get('horas_estimadas', activity.horas_estimadas)
+    activity.is_active = data.get('is_active', activity.is_active)
+    db.session.commit()
+    return jsonify({'success': True, 'activity': activity.to_dict()})
+
+
+# --- Gestão de Pacotes de Serviços ---
+@admin.route('/packages')
+def package_management():
+    return render_template('admin/packages.html')
+
+@admin.route('/api/packages', methods=['GET'])
+def get_packages():
+    packages = PacoteServico.query.order_by(PacoteServico.nome).all()
+    # Para o formulário, também precisamos da lista de todos os itens do catálogo
+    all_items = ProdutoServico.query.filter_by(is_active=True).order_by(ProdutoServico.nome).all()
+    return jsonify({
+        'success': True, 
+        'packages': [p.to_dict() for p in packages],
+        'catalog_items': [item.to_dict() for item in all_items]
+    })
+
+@admin.route('/api/packages', methods=['POST'])
+def add_package():
+    data = request.get_json()
+    new_package = PacoteServico(
+        nome=data['nome'],
+        descricao=data.get('descricao'),
+        preco_total=data.get('preco_total')
+    )
+    # Adiciona os itens ao pacote
+    item_ids = data.get('item_ids', [])
+    items = ProdutoServico.query.filter(ProdutoServico.id.in_(item_ids)).all()
+    new_package.itens = items
+    
+    db.session.add(new_package)
+    db.session.commit()
+    return jsonify({'success': True, 'package': new_package.to_dict()})
+
+@admin.route('/api/packages/<int:package_id>', methods=['PUT'])
+def update_package(package_id):
+    package = PacoteServico.query.get_or_404(package_id)
+    data = request.get_json()
+    package.nome = data.get('nome', package.nome)
+    package.descricao = data.get('descricao', package.descricao)
+    package.preco_total = data.get('preco_total', package.preco_total)
+    package.is_active = data.get('is_active', package.is_active)
+    
+    # Atualiza os itens do pacote
+    if 'item_ids' in data:
+        item_ids = data.get('item_ids', [])
+        package.itens = ProdutoServico.query.filter(ProdutoServico.id.in_(item_ids)).all()
+        
+    db.session.commit()
+    return jsonify({'success': True, 'package': package.to_dict()})
