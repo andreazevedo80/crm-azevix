@@ -63,6 +63,8 @@ def create_app():
     app.register_blueprint(admin_blueprint)
     from .leads import leads as leads_blueprint
     app.register_blueprint(leads_blueprint)
+    from .propostas import propostas as propostas_blueprint
+    app.register_blueprint(propostas_blueprint)
 
     setup_database(app)
 

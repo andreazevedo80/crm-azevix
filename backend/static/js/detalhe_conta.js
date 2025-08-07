@@ -118,10 +118,14 @@ document.addEventListener("DOMContentLoaded", function() {
                         <i class="fas ${followupIcon} fa-lg" style="cursor: pointer;" onclick="toggleFollowUp(${l.id}, ${!l.follow_up_necessario})" title="Marcar Follow-up"></i>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="openEditLeadProcessoModal(${l.id})">
-                            <i class="fas fa-edit"></i> Alterar Status
-                        </button>
-                    </td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="openEditLeadProcessoModal(${l.id})">
+                                <i class="fas fa-edit"></i> Alterar Status
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="handleCreateProposal(${l.id})">
+                                <i class="fas fa-file-alt"></i> Criar Proposta
+                            </button>
+                        </div>
                 `;
                 listaLeads.appendChild(row);
             });
@@ -513,3 +517,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
     populateDropdownsAndFetchDetails();
 });
+    // --- ADIÇÃO v11.0: Função para criar uma nova proposta ---
+    window.handleCreateProposal = (leadId) => {
+        if (confirm('Tem certeza que deseja criar uma nova proposta para esta oportunidade?')) {
+            fetch(`/api/leads/${leadId}/propostas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(`Erro ao criar proposta: ${data.error}`);
+                }
+            });
+        }
+    };

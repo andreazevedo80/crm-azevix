@@ -1,0 +1,62 @@
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from flask_login import login_required, current_user
+from .models import Proposta, ItemProposta, ProdutoServico, db
+from .contas import check_permission # Reutilizamos a função de permissão
+
+propostas = Blueprint('propostas', __name__)
+
+# --- ROTAS DE PÁGINA ---
+@propostas.route('/propostas/<int:proposta_id>')
+@login_required
+def detalhe_proposta(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    # A permissão para ver a proposta deriva da permissão para ver a conta
+    if not check_permission(proposta.lead.conta, for_editing=False):
+        flash("Você não tem permissão para ver esta proposta.", "danger")
+        return redirect(url_for('contas.listar_contas'))
+        
+    return render_template('propostas/detalhe_proposta.html', proposta=proposta)
+
+# --- ROTAS DE API ---
+@propostas.route('/api/propostas/<int:proposta_id>/details', methods=['GET'])
+@login_required
+def get_proposta_details(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta.lead.conta, for_editing=False):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    itens_catalogo = ProdutoServico.query.filter_by(is_active=True).order_by(ProdutoServico.nome).all()
+
+    return jsonify({
+        'success': True,
+        'proposta': proposta.to_dict(),
+        'itens': [item.to_dict() for item in proposta.itens.order_by(ItemProposta.id).all()],
+        'catalogo': [item.to_dict() for item in itens_catalogo]
+    })
+
+@propostas.route('/api/propostas/<int:proposta_id>/items', methods=['POST'])
+@login_required
+def add_item_proposta(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta.lead.conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    data = request.get_json()
+    
+    novo_item = ItemProposta(
+        proposta_id=proposta.id,
+        produto_servico_id=data.get('produto_servico_id') or None,
+        descricao=data['descricao'],
+        quantidade=data['quantidade'],
+        valor_unitario=data['valor_unitario']
+    )
+    novo_item.valor_total = novo_item.quantidade * novo_item.valor_unitario
+    
+    db.session.add(novo_item)
+    
+    # Atualiza o valor total da proposta
+    proposta.valor_total = proposta.valor_total + novo_item.valor_total
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'item': novo_item.to_dict()})

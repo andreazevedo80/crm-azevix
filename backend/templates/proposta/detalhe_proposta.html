@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Proposta {{ proposta.numero_proposta }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-azevix mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Proposta {{ proposta.numero_proposta }}</h1>
+    <a href="{{ url_for('contas.detalhe_conta', conta_id=proposta.lead.conta_id) }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Voltar para a Conta</a>
+</div>
+
+<div class="card card-azevix">
+    <div class="card-header"><h5 class="card-title mb-0">Itens da Proposta</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Descrição</th><th class="text-center">Qtd.</th><th class="text-end">Valor Unit.</th><th class="text-end">Valor Total</th><th>Ações</th></tr></thead>
+                <tbody id="itens-proposta-table"></tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td colspan="3" class="text-end">Subtotal:</td>
+                        <td id="subtotal-proposta" class="text-end"></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card card-azevix mt-4">
+    <div class="card-header"><h5 class="card-title mb-0">Adicionar Novo Item</h5></div>
+    <div class="card-body">
+        <form id="form-add-item">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="item-catalogo" class="form-label">Item do Catálogo (Opcional)</label>
+                    <select id="item-catalogo" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label for="item-descricao" class="form-label">Descrição *</label>
+                    <input type="text" id="item-descricao" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="item-qtd" class="form-label">Quantidade *</label>
+                    <input type="number" id="item-qtd" class="form-control" value="1" step="0.01" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="item-valor" class="form-label">Valor Unit. (R$) *</label>
+                    <input type="number" id="item-valor" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-azevix w-100">Adicionar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const PROPOSTA_ID = {{ proposta.id }};
+</script>
+<script src="{{ url_for('static', filename='js/detalhe_proposta.js') }}"></script>
+{% endblock %}
