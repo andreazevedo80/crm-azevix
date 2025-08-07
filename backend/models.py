@@ -390,12 +390,12 @@ class Proposta(db.Model):
     __tablename__ = 'propostas'
     id = db.Column(db.Integer, primary_key=True)
     lead_id = db.Column(db.Integer, db.ForeignKey('leads.id'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True) # Quem criou/editou
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     contato_id = db.Column(db.Integer, db.ForeignKey('contatos.id'), nullable=True)
     
     numero_proposta = db.Column(db.String(50), unique=True, nullable=False)
     versao = db.Column(db.Integer, default=1, nullable=False)
-    status = db.Column(db.String(50), default='Em elaboração', nullable=False) # Ex: Em elaboração, Enviada, Aceita, Recusada
+    status = db.Column(db.String(50), default='Em elaboração', nullable=False)
     
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_envio = db.Column(db.DateTime, nullable=True)
@@ -403,16 +403,24 @@ class Proposta(db.Model):
     
     valor_total = db.Column(db.Numeric(12, 2), default=0.00)
     
-    # Relacionamentos
     criador = db.relationship('User', backref='propostas_criadas')
     contato_principal = db.relationship('Contato', backref='propostas')
     itens = db.relationship('ItemProposta', backref='proposta', lazy='dynamic', cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'lead_id': self.lead_id,
+            'numero_proposta': self.numero_proposta,
+            'status': self.status,
+            'valor_total': str(self.valor_total) if self.valor_total is not None else '0.00',
+            'data_criacao': self.data_criacao.strftime('%d/%m/%Y %H:%M')
+        }
 
 class ItemProposta(db.Model):
     __tablename__ = 'item_proposta'
     id = db.Column(db.Integer, primary_key=True)
     proposta_id = db.Column(db.Integer, db.ForeignKey('propostas.id'), nullable=False, index=True)
-    # Se for nulo, é um item avulso. Se tiver valor, veio do catálogo.
     produto_servico_id = db.Column(db.Integer, db.ForeignKey('produto_servico.id'), nullable=True)
     
     descricao = db.Column(db.Text, nullable=False)
@@ -420,5 +428,13 @@ class ItemProposta(db.Model):
     valor_unitario = db.Column(db.Numeric(10, 2), default=0.00)
     valor_total = db.Column(db.Numeric(12, 2), default=0.00)
     
-    # Relacionamento (opcional) com o item do catálogo
     produto_servico = db.relationship('ProdutoServico')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'descricao': self.descricao,
+            'quantidade': str(self.quantidade),
+            'valor_unitario': str(self.valor_unitario),
+            'valor_total': str(self.valor_total)
+        }
