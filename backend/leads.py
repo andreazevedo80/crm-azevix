@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, url_for
 from flask_login import login_required, current_user
 from .models import Lead, User, db, Conta, HistoricoAlteracao, Proposta
 from .config_constants import ESTAGIOS_CICLO_VIDA, TEMPERATURAS
