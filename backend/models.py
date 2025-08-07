@@ -217,6 +217,9 @@ class Lead(db.Model):
     # --- Campos de auditoria de apropriação ---
     data_apropriacao = db.Column(db.DateTime, nullable=True)
     
+    # --- ADIÇÃO v11.0: Relacionamento com Propostas ---
+    propostas = db.relationship('Proposta', backref='lead', lazy='dynamic')
+    
     def to_dict(self):
         contato_principal = Contato.query.get(self.contato_id) if self.contato_id else None
         return {
@@ -269,7 +272,7 @@ class HistoricoImportacao(db.Model):
             'erros': self.erros or []
         }
 
-# --- ADIÇÃO v10.1: Tabelas de associação para o Catálogo Avançado ---
+# --- Tabelas de associação para o Catálogo Avançado ---
 
 # Tabela para a relação Muitos-para-Muitos entre Pacotes e Itens do Catálogo
 pacote_itens = db.Table('pacote_itens',
@@ -299,7 +302,7 @@ class AtividadePadrao(db.Model):
             'is_active': self.is_active
         }
 
-# --- ADIÇÃO v10.1: Novo modelo para Pacotes de Serviços ---
+# --- Modelo para Pacotes de Serviços ---
 class PacoteServico(db.Model):
     __tablename__ = 'pacote_servico'
     id = db.Column(db.Integer, primary_key=True)
@@ -323,7 +326,7 @@ class PacoteServico(db.Model):
             'item_ids': [item.id for item in self.itens]
         }
 
-# --- ADIÇÃO v10.0: Novo modelo para o Catálogo de Produtos e Serviços ---
+# --- Modelo para o Catálogo de Produtos e Serviços ---
 class ProdutoServico(db.Model):
     __tablename__ = 'produto_servico'
     id = db.Column(db.Integer, primary_key=True)
@@ -342,7 +345,7 @@ class ProdutoServico(db.Model):
     
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
 
-    # --- ADIÇÃO v10.1: Relacionamento com Atividades Padrão ---
+    # --- Relacionamento com Atividades Padrão ---
     atividades = db.relationship(
         'AtividadePadrao',
         secondary=servico_atividades,
@@ -364,3 +367,42 @@ class ProdutoServico(db.Model):
             'is_active': self.is_active,
             'atividade_ids': [a.id for a in self.atividades]
         }
+        
+# --- ADIÇÃO v11.0: Novos modelos para o Módulo de Propostas ---
+
+class Proposta(db.Model):
+    __tablename__ = 'propostas'
+    id = db.Column(db.Integer, primary_key=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('leads.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True) # Quem criou/editou
+    contato_id = db.Column(db.Integer, db.ForeignKey('contatos.id'), nullable=True)
+    
+    numero_proposta = db.Column(db.String(50), unique=True, nullable=False)
+    versao = db.Column(db.Integer, default=1, nullable=False)
+    status = db.Column(db.String(50), default='Em elaboração', nullable=False) # Ex: Em elaboração, Enviada, Aceita, Recusada
+    
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_envio = db.Column(db.DateTime, nullable=True)
+    data_validade = db.Column(db.DateTime, nullable=True)
+    
+    valor_total = db.Column(db.Numeric(12, 2), default=0.00)
+    
+    # Relacionamentos
+    criador = db.relationship('User', backref='propostas_criadas')
+    contato_principal = db.relationship('Contato', backref='propostas')
+    itens = db.relationship('ItemProposta', backref='proposta', lazy='dynamic', cascade='all, delete-orphan')
+
+class ItemProposta(db.Model):
+    __tablename__ = 'item_proposta'
+    id = db.Column(db.Integer, primary_key=True)
+    proposta_id = db.Column(db.Integer, db.ForeignKey('propostas.id'), nullable=False, index=True)
+    # Se for nulo, é um item avulso. Se tiver valor, veio do catálogo.
+    produto_servico_id = db.Column(db.Integer, db.ForeignKey('produto_servico.id'), nullable=True)
+    
+    descricao = db.Column(db.Text, nullable=False)
+    quantidade = db.Column(db.Numeric(10, 2), default=1.00)
+    valor_unitario = db.Column(db.Numeric(10, 2), default=0.00)
+    valor_total = db.Column(db.Numeric(12, 2), default=0.00)
+    
+    # Relacionamento (opcional) com o item do catálogo
+    produto_servico = db.relationship('ProdutoServico')
