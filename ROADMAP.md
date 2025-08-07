@@ -211,6 +211,30 @@ Implementar as APIs no backend que populam as respectivas tabelas com os valores
 - **[NOVO]** Criar tabela de versões de propostas
 - Implementar cálculos automáticos de margem
 
+versão 11.0: Módulo de Propostas (A Fundação)
+Objetivo: Criar o "esqueleto" do módulo de propostas.
+Requisitos:
+Backend (models.py): Criar as novas tabelas Proposta, ItemProposta.
+Fluxo de Criação: Implementar o botão "Criar Proposta" na tela de detalhe_conta, que cria a proposta e redireciona para a nova página de detalhes da proposta.
+Interface de Proposta: Criar a nova página (/propostas/<id>) que, por enquanto, mostrará os dados básicos da proposta e a lista de itens.
+Adicionar Itens: Implementar a funcionalidade para adicionar itens (tanto do Catálogo quanto avulsos) à proposta, com o subtotal sendo calculado automaticamente.
+
+versão 11.1: Inteligência Financeira da Proposta
+Objetivo: Implementar o cálculo de custos e margem de lucro.
+Requisitos:
+Backend (models.py): Criar a tabela CustoProposta.
+Interface de Custos: Na página de detalhes da proposta, adicionar a interface para o vendedor inserir múltiplos custos (fixos ou percentuais).
+Cálculo de Margem: Implementar a lógica no backend e no frontend que calcula e exibe o Lucro Líquido Estimado em tempo real.
+Lógica de Licitação: Implementar a regra de negócio que aplica a comissão da agente de licitação apenas para contas do tipo "Pública".
+
+versão 11.2: Ciclo de Vida e Gestão de Propostas
+Objetivo: Finalizar o fluxo de trabalho do vendedor com a gestão do ciclo de vida das propostas.
+Requisitos:
+Status da Proposta: Implementar a lógica para alterar o status da proposta (Rascunho, Enviada, Aceita, Recusada).
+Prazos e Validade: Adicionar os campos de data de envio e validade.
+Gestão: Implementar as funcionalidades que você sugeriu: Duplicar Proposta e Cancelar Proposta.
+Versionamento: Adicionar a lógica de versionamento, onde cada alteração significativa em uma proposta já enviada gera uma nova versão (v1.1, v1.2).
+
 ---
 
 ## Versão 12.0: Automação de Documentos e Comunicação
