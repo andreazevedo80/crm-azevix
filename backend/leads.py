@@ -121,10 +121,13 @@ def assumir_lead(lead_id):
         conta.user_id = current_user.id
 
     # 2. Atribui o lead clicado e todos os outros leads órfãos da mesma conta
+    initial_status = ConfigStatusLead.query.filter_by(is_initial_status=True, is_active=True).first()
+    status_name = initial_status.nome if initial_status else 'Tentando Contato'
+    
     leads_orfans_da_conta = Lead.query.filter_by(conta_id=conta.id, user_id=None).all()
     for l in leads_orfans_da_conta:
         l.user_id = current_user.id
-        l.status_lead = 'Tentando Contato'
+        l.status_lead = status_name
         l.data_apropriacao = datetime.utcnow()
         l.data_ultima_atualizacao = datetime.utcnow()
     
@@ -181,6 +184,9 @@ def criar_lead():
     # A permissão para criar um lead é a mesma de ver a conta
     if not check_permission(conta):
          return jsonify({'success': False, 'error': 'Você não tem permissão para adicionar um lead a esta conta.'}), 403
+    
+    initial_status = ConfigStatusLead.query.filter_by(is_initial_status=True, is_active=True).first()
+    status_name = initial_status.nome if initial_status else 'Novo'
     novo_lead = Lead(
         conta_id=conta_id,
         user_id=current_user.id,
@@ -189,7 +195,7 @@ def criar_lead():
         contato_id=data.get('contato_id') or None,
         estagio_ciclo_vida='Lead',
         temperatura='Morno',
-        status_lead='Novo'
+        status_lead=status_name
     )
     db.session.add(novo_lead)
     db.session.commit()
