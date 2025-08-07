@@ -35,6 +35,16 @@
                             <div id="edit-matriz-results" class="list-group position-absolute" style="z-index: 1000;"></div>
                         </div>
                     </div>
+                    <hr>
+                    <h6 class="text-muted">Endereço</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4 mb-3"><label for="edit-cep" class="form-label">CEP</label><input type="text" id="edit-cep" name="cep" class="form-control" disabled></div>
+                            <div class="col-md-8 mb-3"><label for="edit-logradouro" class="form-label">Logradouro</label><input type="text" id="edit-logradouro" name="logradouro" class="form-control" disabled></div>
+                            <div class="col-md-4 mb-3"><label for="edit-numero" class="form-label">Número</label><input type="text" id="edit-numero" name="numero" class="form-control" disabled></div>
+                            <div class="col-md-8 mb-3"><label for="edit-bairro" class="form-label">Bairro</label><input type="text" id="edit-bairro" name="bairro" class="form-control" disabled></div>
+                            <div class="col-md-6 mb-3"><label for="edit-cidade" class="form-label">Cidade</label><input type="text" id="edit-cidade" name="cidade" class="form-control" disabled></div>
+                            <div class="col-md-6 mb-3"><label for="edit-estado" class="form-label">Estado</label><input type="text" id="edit-estado" name="estado" class="form-control" disabled></div>
+                        </div>
                     {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
                     <div id="admin-fields" style="display: none;">
                         <hr><h6 class="text-azevix">Painel do Administrador</h6>

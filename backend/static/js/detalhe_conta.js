@@ -62,6 +62,13 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('edit-segmento').value = conta.segmento || '';
         matrizSearchInput.value = conta.matriz_nome || '';
         matrizIdInput.value = conta.matriz_id || '';
+        document.getElementById('edit-cep').value = conta.cep || '';
+        document.getElementById('edit-logradouro').value = conta.logradouro || '';
+        document.getElementById('edit-numero').value = conta.numero || '';
+        document.getElementById('edit-bairro').value = conta.bairro || '';
+        document.getElementById('edit-cidade').value = conta.cidade || '';
+        document.getElementById('edit-estado').value = conta.estado || '';
+
         if (IS_ADMIN) {
             document.getElementById('edit-owner').value = conta.owner_id || '';
         }
@@ -354,6 +361,12 @@ document.addEventListener("DOMContentLoaded", function() {
             tipo_conta: document.getElementById('edit-tipo_conta').value,
             segmento: document.getElementById('edit-segmento').value,
             matriz_id: matrizIdInput.value,
+            cep: document.getElementById('edit-cep').value,
+            logradouro: document.getElementById('edit-logradouro').value,
+            numero: document.getElementById('edit-numero').value,
+            bairro: document.getElementById('edit-bairro').value,
+            cidade: document.getElementById('edit-cidade').value,
+            estado: document.getElementById('edit-estado').value
         };
         if (IS_ADMIN) {
             updatedData.owner_id = document.getElementById('edit-owner').value;

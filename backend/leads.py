@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from .models import Lead, User, db, Conta, HistoricoAlteracao
+from .models import Lead, User, db, Conta, HistoricoAlteracao, Proposta
 from .config_constants import ESTAGIOS_CICLO_VIDA, TEMPERATURAS
 from datetime import datetime
 from .contas import check_permission
@@ -194,3 +194,35 @@ def criar_lead():
     db.session.add(novo_lead)
     db.session.commit()
     return jsonify({'success': True, 'lead': novo_lead.to_dict()})
+
+# --- ADIÇÃO v11.0: API para criar uma nova proposta para um lead ---
+@leads.route('/api/leads/<int:lead_id>/propostas', methods=['POST'])
+@login_required
+def create_proposal_for_lead(lead_id):
+    lead = Lead.query.get_or_404(lead_id)
+    
+    # A permissão para criar uma proposta é a mesma de editar o lead/conta
+    if not check_permission(lead.conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Você não tem permissão para criar propostas para este lead.'}), 403
+
+    # Lógica para gerar um número de proposta único
+    today_str = datetime.utcnow().strftime('%Y%m%d')
+    last_proposal = Proposta.query.order_by(Proposta.id.desc()).first()
+    new_id = (last_proposal.id + 1) if last_proposal else 1
+    numero_proposta = f"PROP-{today_str}-{new_id:04d}"
+
+    nova_proposta = Proposta(
+        lead_id=lead.id,
+        user_id=current_user.id,
+        contato_id=lead.contato_id, # Puxa o contato principal do lead como padrão
+        numero_proposta=numero_proposta,
+        status='Em elaboração'
+    )
+    
+    db.session.add(nova_proposta)
+    db.session.commit()
+
+    # Retorna a URL para a nova página de detalhes da proposta
+    proposta_url = url_for('propostas.detalhe_proposta', proposta_id=nova_proposta.id)
+    
+    return jsonify({'success': True, 'message': 'Proposta criada com sucesso!', 'redirect_url': proposta_url})
