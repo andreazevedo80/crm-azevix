@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const logAuditoriaContainer = document.getElementById('log-auditoria-container');
     const btnDesativarConta = document.getElementById('btn-desativar-conta');
     
-    // --- ADIÇÃO v5.03: Elementos do Modal de Edição do Processo do Lead ---
+    // --- Elementos do Modal de Edição do Processo do Lead ---
     const editLeadProcessoModalEl = document.getElementById('editLeadProcessoModal');
     const editLeadProcessoModal = new bootstrap.Modal(editLeadProcessoModalEl);
     const formEditLeadProcesso = document.getElementById('form-edit-lead-processo');
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const motivoPerdaContainer = document.getElementById('motivo-perda-container');
     const motivoPerdaSelect = document.getElementById('edit-lead-motivo-perda');
     
-    // --- ADIÇÃO v6.0: Elementos do Modal de Nova Oportunidade ---
+    // --- Elementos do Modal de Nova Oportunidade ---
     const btnNovaOportunidade = document.getElementById('btn-nova-oportunidade');
     const novaOportunidadeModalEl = document.getElementById('novaOportunidadeModal');
     const novaOportunidadeModal = new bootstrap.Modal(novaOportunidadeModalEl);
@@ -36,10 +36,10 @@ document.addEventListener("DOMContentLoaded", function() {
     let originalContaData = {};
     let contatosData = [];
     let leadsData = []; // Armazena a lista de leads
-    let statusLeadsOptions = []; // --- ALTERAÇÃO v9.2: statusLeadsOptions agora armazena os objetos completos ---
-    let motivosPerdaOptions = []; // --- ALTERAÇÃO v9.2: Nova variável para motivos de perda ---
+    let statusLeadsOptions = []; 
+    let motivosPerdaOptions = []; 
 
-    // --- ALTERAÇÃO v9.2: populateSelect agora pode lidar com objetos ---
+    // --- populateSelect agora pode lidar com objetos ---
     const populateSelect = (selectElement, options, selectedValue, isObjectList = false, key = 'nome') => {
         selectElement.innerHTML = '';
         if (['edit-segmento', 'edit-lead-motivo-perda'].includes(selectElement.id)) {
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
         listaContatos.innerHTML = '';
         if (contatos && contatos.length > 0) {
             contatos.forEach(c => {
-                // --- ALTERAÇÃO: Adicionados botões de ação para cada contato ---
+                // --- Adicionados botões de ação para cada contato ---
                 listaContatos.innerHTML += `
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 
-    // --- ALTERAÇÃO v5.03: Função renderLeads completamente reescrita ---
+    // ---  Função renderLeads completamente reescrita ---
     const renderLeads = (leads) => {
         listaLeads.innerHTML = '';
         if (leads && leads.length > 0) {
@@ -515,8 +515,6 @@ document.addEventListener("DOMContentLoaded", function() {
         } else { alert('Erro ao adicionar contato: ' + result.error); }
     });
 
-    populateDropdownsAndFetchDetails();
-});
     // --- ADIÇÃO v11.0: Função para criar uma nova proposta ---
     window.handleCreateProposal = (leadId) => {
         if (confirm('Tem certeza que deseja criar uma nova proposta para esta oportunidade?')) {
@@ -534,3 +532,6 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
     };
+
+    populateDropdownsAndFetchDetails();
+});
