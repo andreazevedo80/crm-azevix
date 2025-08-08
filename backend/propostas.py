@@ -122,8 +122,17 @@ def update_proposta_management(proposta_id):
     data = request.get_json()
     
     proposta.status = data.get('status', proposta.status)
-    proposta.contato_id = data.get('contato_id', proposta.contato_id)
     
+    # Lógica corrigida para salvar o contato_id
+    contato_id_str = data.get('contato_id')
+    if contato_id_str:
+        try:
+            proposta.contato_id = int(contato_id_str)
+        except (ValueError, TypeError):
+            proposta.contato_id = None
+    else:
+        proposta.contato_id = None
+
     try:
         if data.get('data_envio'):
             proposta.data_envio = datetime.strptime(data['data_envio'], '%Y-%m-%d')
