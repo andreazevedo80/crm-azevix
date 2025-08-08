@@ -233,7 +233,7 @@ class Lead(db.Model):
     # --- Campos de auditoria de apropriação ---
     data_apropriacao = db.Column(db.DateTime, nullable=True)
     
-    # --- ADIÇÃO v11.0: Relacionamento com Propostas ---
+    # --- Relacionamento com Propostas ---
     propostas = db.relationship('Proposta', backref='lead', lazy='dynamic')
     
     def to_dict(self):
@@ -302,7 +302,7 @@ servico_atividades = db.Table('servico_atividades',
     db.Column('atividade_id', db.Integer, db.ForeignKey('atividade_padrao.id'), primary_key=True)
 )
 
-# --- ADIÇÃO v10.1: Novo modelo para Atividades Padrão ---
+# --- Modelo para Atividades Padrão ---
 class AtividadePadrao(db.Model):
     __tablename__ = 'atividade_padrao'
     id = db.Column(db.Integer, primary_key=True)
@@ -384,7 +384,7 @@ class ProdutoServico(db.Model):
             'atividade_ids': [a.id for a in self.atividades]
         }
         
-# --- ADIÇÃO v11.0: Novos modelos para o Módulo de Propostas ---
+# --- Modelos para o Módulo de Propostas ---
 
 class Proposta(db.Model):
     __tablename__ = 'propostas'
@@ -406,6 +406,8 @@ class Proposta(db.Model):
     criador = db.relationship('User', backref='propostas_criadas')
     contato_principal = db.relationship('Contato', backref='propostas')
     itens = db.relationship('ItemProposta', backref='proposta', lazy='dynamic', cascade='all, delete-orphan')
+    # --- ADIÇÃO v11.1: Relacionamento com Custos ---
+    custos = db.relationship('CustoProposta', backref='proposta', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -437,4 +439,23 @@ class ItemProposta(db.Model):
             'quantidade': str(self.quantidade),
             'valor_unitario': str(self.valor_unitario),
             'valor_total': str(self.valor_total)
+        }
+
+# --- ADIÇÃO v11.1: Novo modelo para Custos da Proposta ---
+
+# --- ADIÇÃO v11.1: Novo modelo para Custos da Proposta ---
+class CustoProposta(db.Model):
+    __tablename__ = 'custo_proposta'
+    id = db.Column(db.Integer, primary_key=True)
+    proposta_id = db.Column(db.Integer, db.ForeignKey('propostas.id'), nullable=False, index=True)
+    descricao = db.Column(db.String(255), nullable=False)
+    tipo_custo = db.Column(db.String(50), nullable=False) # 'Percentual' ou 'Fixo'
+    valor = db.Column(db.Numeric(10, 2), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'descricao': self.descricao,
+            'tipo_custo': self.tipo_custo,
+            'valor': str(self.valor)
         }
