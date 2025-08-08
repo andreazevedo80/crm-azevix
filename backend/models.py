@@ -419,6 +419,7 @@ class Proposta(db.Model):
         return {
             'id': self.id,
             'lead_id': self.lead_id,
+            'contato_id': self.contato_id,
             'numero_proposta': self.numero_proposta,
             'versao': self.versao,
             'status': self.status,
