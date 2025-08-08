@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
-    const renderItens = (itens, subtotal) => {
+    const renderItens = (itens, subtotal, isEditable) => {
         tableBody.innerHTML = '';
         itens.forEach(item => {
             const row = document.createElement('tr');
@@ -35,7 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="text-center">${item.quantidade}</td>
                 <td class="text-end">${formatCurrency(item.valor_unitario)}</td>
                 <td class="text-end">${formatCurrency(item.valor_total)}</td>
-                <td><button class="btn btn-sm btn-outline-danger" onclick="handleDeleteItem(${item.id})"><i class="fas fa-trash"></i></button></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteItem(${item.id})" ${!isEditable ? 'disabled' : ''}>
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
             `;
             tableBody.appendChild(row);
         });
@@ -43,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // --- Função para renderizar a tabela de custos ---
-    const renderCustos = (custos) => {
+    const renderCustos = (custos, isEditable) => {
         custosTableBody.innerHTML = '';
         custos.forEach(custo => {
             const valorFormatado = custo.tipo_custo === 'Percentual' ? `${custo.valor}%` : formatCurrency(custo.valor);
@@ -51,7 +55,11 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td>${custo.descricao}</td>
                 <td class="text-end">${valorFormatado}</td>
-                <td><button class="btn btn-sm btn-outline-danger" onclick="handleDeleteCusto(${custo.id})"><i class="fas fa-trash"></i></button></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteCusto(${custo.id})" ${!isEditable ? 'disabled' : ''}>
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
             `;
             custosTableBody.appendChild(row);
         });
@@ -99,6 +107,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusSelect.value = data.proposta.status;
                     dataEnvioInput.value = data.proposta.data_envio;
                     dataValidadeInput.value = data.proposta.data_validade;
+                    renderItens(data.itens, data.proposta.valor_total, isEditable);
+                    renderCustos(data.custos, isEditable);
+                    calcularResumoFinanceiro();
                     
                     // Desabilita a edição se a proposta não estiver em elaboração
                     const isEditable = data.proposta.status === 'Em elaboração';

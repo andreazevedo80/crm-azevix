@@ -437,14 +437,17 @@ class ItemProposta(db.Model):
     
     produto_servico = db.relationship('ProdutoServico')
 
-    def to_dict(self):
-        return {
+    def to_dict(self, exclude_id=False):
+        data = {
             'id': self.id,
             'descricao': self.descricao,
             'quantidade': str(self.quantidade),
             'valor_unitario': str(self.valor_unitario),
             'valor_total': str(self.valor_total)
         }
+        if exclude_id:
+            del data['id']
+        return data
 
 # --- Modelo para Custos da Proposta ---
 class CustoProposta(db.Model):
@@ -455,10 +458,13 @@ class CustoProposta(db.Model):
     tipo_custo = db.Column(db.String(50), nullable=False) # 'Percentual' ou 'Fixo'
     valor = db.Column(db.Numeric(10, 2), nullable=False)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, exclude_id=False):
+        data = {
             'id': self.id,
             'descricao': self.descricao,
             'tipo_custo': self.tipo_custo,
             'valor': str(self.valor)
         }
+        if exclude_id:
+            del data['id']
+        return data
