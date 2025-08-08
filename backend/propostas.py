@@ -90,25 +90,34 @@ def get_propostas():
     })
 
 # --- API de detalhes agora inclui os custos ---
-@propostas.route('/api/propostas/<int:proposta_id>/details', methods=['GET'])
+# --- ALTERAÇÃO v12.0: API centralizada para salvar todos os dados de gestão ---
+@propostas.route('/api/propostas/<int:proposta_id>/management', methods=['PUT'])
 @login_required
-def get_proposta_details(proposta_id):
+def update_proposta_management(proposta_id):
     proposta = Proposta.query.get_or_404(proposta_id)
-    if not check_permission(proposta.lead.conta, for_editing=False):
+    if not check_permission(proposta.lead.conta, for_editing=True):
         return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+    data = request.get_json()
+    
+    proposta.status = data.get('status', proposta.status)
+    proposta.contato_id = data.get('contato_id', proposta.contato_id)
+    
+    try:
+        if data.get('data_envio'):
+            proposta.data_envio = datetime.strptime(data['data_envio'], '%Y-%m-%d')
+        else:
+            proposta.data_envio = None
+            
+        if data.get('data_validade'):
+            proposta.data_validade = datetime.strptime(data['data_validade'], '%Y-%m-%d')
+        else:
+            proposta.data_validade = None
+    except (ValueError, TypeError):
+        pass
 
-    itens_catalogo = ProdutoServico.query.filter_by(is_active=True).order_by(ProdutoServico.nome).all()
-    # --- CORREÇÃO: Busca os contatos da conta para popular o dropdown ---
-    contatos_conta = Contato.query.filter_by(conta_id=proposta.lead.conta_id, is_active=True).all()
-
-    return jsonify({
-        'success': True,
-        'proposta': proposta.to_dict(),
-        'itens': [item.to_dict() for item in proposta.itens.order_by(ItemProposta.id).all()],
-        'custos': [custo.to_dict() for custo in proposta.custos.order_by(CustoProposta.id).all()],
-        'catalogo': [item.to_dict() for item in itens_catalogo],
-        'contatos': [c.to_dict() for c in contatos_conta] # Envia a lista de contatos
-    })
+    db.session.commit()
+    return jsonify({'success': True, 'proposta': proposta.to_dict()})
 
 @propostas.route('/api/propostas/<int:proposta_id>/items', methods=['POST'])
 @login_required

@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryValorTotal = document.getElementById('summary-valor-total');
     const summaryCustoTotal = document.getElementById('summary-custo-total');
     const summaryLucroLiquido = document.getElementById('summary-lucro-liquido');
+    const formManagement = document.getElementById('form-proposal-management');
     const statusSelect = document.getElementById('proposta-status');
     const dataEnvioInput = document.getElementById('proposta-data-envio');
     const dataValidadeInput = document.getElementById('proposta-data-validade');
-    const btnSaveStatus = document.getElementById('btn-save-status');
     const btnDuplicate = document.getElementById('btn-duplicate-proposta');
     const contatoSelect = document.getElementById('proposta-contato');
 
@@ -124,10 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         catalogoSelect.add(new Option(item.nome, item.id));
                     });
                     
-                    // --- CORREÇÃO: Popula o dropdown de contatos ---
                     populateSelect(contatoSelect, data.contatos, data.proposta.contato_id, true, 'nome', 'id');
-                    
-                    // --- Preenche os campos do ciclo de vida ---
                     statusSelect.value = data.proposta.status;
                     dataEnvioInput.value = data.proposta.data_envio;
                     dataValidadeInput.value = data.proposta.data_validade;
@@ -231,18 +228,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // --- ADIÇÃO v11.2: Listeners para o ciclo de vida ---
-    btnSaveStatus.addEventListener('click', () => {
+    // --- CORREÇÃO v11.2: Listener agora usa o formulário unificado e a API correta ---
+    formManagement.addEventListener('submit', (e) => {
+        e.preventDefault();
         const data = {
             status: statusSelect.value,
+            contato_id: contatoSelect.value,
             data_envio: dataEnvioInput.value,
             data_validade: dataValidadeInput.value
         };
-        fetch(`/api/propostas/${PROPOSTA_ID}/status`, {
+        fetch(`/api/propostas/${PROPOSTA_ID}/management`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-        }).then(() => fetchDetails());
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Alterações salvas com sucesso!');
+                fetchDetails();
+            } else {
+                alert(`Erro ao salvar: ${data.error}`);
+            }
+        });
     });
 
     btnDuplicate.addEventListener('click', () => {
