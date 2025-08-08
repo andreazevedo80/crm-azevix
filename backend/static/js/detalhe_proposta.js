@@ -80,5 +80,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- ADIÇÃO v11.0: Função para deletar um item ---
+    window.handleDeleteItem = (itemId) => {
+        if (confirm('Tem certeza que deseja remover este item da proposta?')) {
+            fetch(`/api/propostas/items/${itemId}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchDetails(); // Recarrega a lista de itens e o subtotal
+                } else {
+                    alert(`Erro ao remover o item: ${data.error}`);
+                }
+            });
+        }
+    };
+
     fetchDetails();
 });

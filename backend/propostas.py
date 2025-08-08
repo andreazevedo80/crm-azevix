@@ -68,3 +68,25 @@ def add_item_proposta(proposta_id):
     db.session.commit()
     
     return jsonify({'success': True, 'item': novo_item.to_dict()})
+
+# --- ADIÇÃO v11.0: API para excluir um item da proposta ---
+@propostas.route('/api/propostas/items/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_item_proposta(item_id):
+    item = ItemProposta.query.get_or_404(item_id)
+    proposta = item.proposta
+    
+    if not check_permission(proposta.lead.conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+    try:
+        # Subtrai o valor do item do total da proposta
+        proposta.valor_total = Decimal(proposta.valor_total) - item.valor_total
+        
+        db.session.delete(item)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Item removido com sucesso.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
