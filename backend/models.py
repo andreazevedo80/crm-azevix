@@ -223,7 +223,7 @@ class Lead(db.Model):
     
     # --- Campos para o processo de vendas ---
     estagio_ciclo_vida = db.Column(db.String(50), nullable=False, default='Lead')
-    temperatura = db.Column(db.String(50), default='Morno') # Quente, Morno, Frio
+    temperatura = db.Column(db.String(50), default='Morno')
     follow_up_necessario = db.Column(db.Boolean, default=False, nullable=False)
     motivo_perda = db.Column(db.String(255), nullable=True)
     
@@ -231,7 +231,11 @@ class Lead(db.Model):
     data_apropriacao = db.Column(db.DateTime, nullable=True)
     
     # --- Relacionamento com Propostas ---
-    propostas = db.relationship('Proposta', backref='lead', lazy='dynamic')
+    propostas = db.relationship('Proposta', backref='lead', lazy='dynamic', foreign_keys='Proposta.lead_id')
+    
+    # --- ADIÇÃO v12.0: Link para a proposta que ganhou a oportunidade ---
+    proposta_aceita_id = db.Column(db.Integer, db.ForeignKey('propostas.id'), nullable=True)
+    proposta_aceita = db.relationship('Proposta', foreign_keys=[proposta_aceita_id])
     
     def to_dict(self):
         contato_principal = Contato.query.get(self.contato_id) if self.contato_id else None
@@ -260,7 +264,7 @@ class HistoricoAlteracao(db.Model):
     valor_antigo = db.Column(db.Text)
     valor_novo = db.Column(db.Text)
 
-# --- Novo modelo para Histórico de Importações ---
+# --- Modelo para Histórico de Importações ---
 class HistoricoImportacao(db.Model):
     __tablename__ = 'historico_importacoes'
     id = db.Column(db.Integer, primary_key=True)
@@ -392,7 +396,7 @@ class Proposta(db.Model):
     
     numero_proposta = db.Column(db.String(50), unique=True, nullable=False)
     
-    # --- ALTERAÇÃO v11.2: Campos de Versionamento ---
+    # --- Campos de Versionamento ---
     versao = db.Column(db.String(20), default='1.0', nullable=False)
     versao_pai_id = db.Column(db.Integer, db.ForeignKey('propostas.id'), nullable=True)
     versao_atual = db.Column(db.Boolean, default=True, index=True)

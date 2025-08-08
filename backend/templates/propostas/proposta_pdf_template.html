@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Proposta {{ proposta.numero_proposta }}</title>
+    <style>
+        /* (Estilos CSS para o PDF - serão adicionados depois) */
+    </style>
+</head>
+<body>
+    <h1>Proposta Comercial</h1>
+    <p><strong>Nº:</strong> {{ proposta.numero_proposta }}</p>
+    <p><strong>Cliente:</strong> {{ proposta.lead.conta.nome_fantasia }}</p>
+    <p><strong>Data de Emissão:</strong> {{ proposta.data_criacao.strftime('%d/%m/%Y') }}</p>
+
+    <hr>
+    <h2>Itens da Proposta</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Qtd.</th>
+                <th>Valor Unit.</th>
+                <th>Valor Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in proposta.itens %}
+            <tr>
+                <td>{{ item.descricao }}</td>
+                <td>{{ item.quantidade }}</td>
+                <td>R$ {{ "%.2f"|format(item.valor_unitario|float) }}</td>
+                <td>R$ {{ "%.2f"|format(item.valor_total|float) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3"><strong>Total:</strong></td>
+                <td><strong>R$ {{ "%.2f"|format(proposta.valor_total|float) }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <hr>
+    <h2>Condições Comerciais</h2>
+    <p>{{ textos.PROPOSAL_COMMERCIAL | safe }}</p>
+</body>
+</html>

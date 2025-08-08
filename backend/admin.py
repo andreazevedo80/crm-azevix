@@ -437,7 +437,7 @@ def apply_segment_defaults():
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
 
-# --- Novas rotas para Importação de Dados ---
+# --- Rotas para Importação de Dados ---
 @admin.route('/import')
 def import_data():
     """Página para importação de dados via CSV."""
@@ -613,7 +613,7 @@ def import_csv_execute():
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado durante a importação: {str(e)}'}), 500
 
-# --- Novas rotas para Histórico de Importações ---
+# --- Rotas para Histórico de Importações ---
 @admin.route('/imports')
 def import_history():
     """Página para visualizar o histórico de importações."""

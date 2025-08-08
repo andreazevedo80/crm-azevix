@@ -4,6 +4,7 @@ from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, C
 from .contas import check_permission
 from decimal import Decimal
 from datetime import datetime
+import weasyprint
 
 propostas = Blueprint('propostas', __name__)
 
@@ -25,6 +26,31 @@ def detalhe_proposta(proposta_id):
         return redirect(url_for('contas.listar_contas'))
         
     return render_template('propostas/detalhe_proposta.html', proposta=proposta)
+
+# --- ADIÇÃO v12.0: Rota para gerar o PDF da proposta ---
+@propostas.route('/propostas/<int:proposta_id>/pdf')
+@login_required
+def gerar_proposta_pdf(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta.lead.conta):
+        abort(403)
+
+    # Coleta todas as informações necessárias para o template
+    dados_empresa = {key: ConfigGlobal.get_setting(key, '') for key in ['COMPANY_NAME', 'COMPANY_CONTACT', 'COMPANY_ADDRESS']}
+    textos_proposta = {key: ConfigGlobal.get_setting(key, '') for key in ['PROPOSAL_GREETING', 'PROPOSAL_COMMERCIAL', 'PROPOSAL_CONFIDENTIALITY']}
+    
+    html = render_template(
+        'propostas/proposta_pdf_template.html', 
+        proposta=proposta,
+        empresa=dados_empresa,
+        textos=textos_proposta
+    )
+    
+    pdf = weasyprint.HTML(string=html).write_pdf()
+    
+    return Response(pdf, mimetype='application/pdf', headers={
+        'Content-Disposition': f'attachment; filename="proposta_{proposta.numero_proposta}.pdf"'
+    })
 
 # --- ROTAS DE API ---
 # --- API para buscar e paginar propostas ---
@@ -175,7 +201,7 @@ def delete_custo_proposta(custo_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
 
-# --- ADIÇÃO v11.2: Novas APIs para o Ciclo de Vida da Proposta ---
+# --- APIs para o Ciclo de Vida da Proposta ---
 @propostas.route('/api/propostas/<int:proposta_id>/status', methods=['PUT'])
 @login_required
 def update_proposta_status(proposta_id):
@@ -230,3 +256,29 @@ def duplicate_proposta(proposta_id):
     
     redirect_url = url_for('propostas.detalhe_proposta', proposta_id=nova_proposta.id)
     return jsonify({'success': True, 'redirect_url': redirect_url})
+
+# --- ADIÇÃO v12.0: Nova API para salvar dados gerais da proposta ---
+@propostas.route('/api/propostas/<int:proposta_id>/general', methods=['PUT'])
+@login_required
+def update_proposta_general(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta.lead.conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    data = request.get_json()
+    
+    if data.get('contato_id'):
+        proposta.contato_id = data.get('contato_id')
+    
+    if data.get('data_envio'):
+        proposta.data_envio = datetime.strptime(data['data_envio'], '%Y-%m-%d')
+    else:
+        proposta.data_envio = None
+        
+    if data.get('data_validade'):
+        proposta.data_validade = datetime.strptime(data['data_validade'], '%Y-%m-%d')
+    else:
+        proposta.data_validade = None
+        
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Dados da proposta atualizados.'})
