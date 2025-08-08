@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead
+from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead, Contato, ConfigGlobal
 from .contas import check_permission
 from decimal import Decimal
 from datetime import datetime
@@ -60,7 +60,8 @@ def get_propostas():
     page = request.args.get('page', 1, type=int)
     per_page = 15
 
-    query = Proposta.query.join(Lead).join(Conta)
+    # --- CORREÇÃO: Especifica a condição do join para remover a ambiguidade ---
+    query = Proposta.query.join(Lead, Proposta.lead_id == Lead.id).join(Conta)
 
     if current_user.has_role('gerente'):
         liderados_ids = [liderado.id for liderado in current_user.liderados]
@@ -97,13 +98,16 @@ def get_proposta_details(proposta_id):
         return jsonify({'success': False, 'error': 'Acesso negado'}), 403
 
     itens_catalogo = ProdutoServico.query.filter_by(is_active=True).order_by(ProdutoServico.nome).all()
+    # --- CORREÇÃO: Busca os contatos da conta para popular o dropdown ---
+    contatos_conta = Contato.query.filter_by(conta_id=proposta.lead.conta_id, is_active=True).all()
 
     return jsonify({
         'success': True,
         'proposta': proposta.to_dict(),
         'itens': [item.to_dict() for item in proposta.itens.order_by(ItemProposta.id).all()],
         'custos': [custo.to_dict() for custo in proposta.custos.order_by(CustoProposta.id).all()],
-        'catalogo': [item.to_dict() for item in itens_catalogo]
+        'catalogo': [item.to_dict() for item in itens_catalogo],
+        'contatos': [c.to_dict() for c in contatos_conta] # Envia a lista de contatos
     })
 
 @propostas.route('/api/propostas/<int:proposta_id>/items', methods=['POST'])

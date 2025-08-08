@@ -10,13 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryValorTotal = document.getElementById('summary-valor-total');
     const summaryCustoTotal = document.getElementById('summary-custo-total');
     const summaryLucroLiquido = document.getElementById('summary-lucro-liquido');
-    
-    // --- ADIÇÃO v11.2: Constantes para Ciclo de Vida ---
     const statusSelect = document.getElementById('proposta-status');
     const dataEnvioInput = document.getElementById('proposta-data-envio');
     const dataValidadeInput = document.getElementById('proposta-data-validade');
     const btnSaveStatus = document.getElementById('btn-save-status');
     const btnDuplicate = document.getElementById('btn-duplicate-proposta');
+    const contatoSelect = document.getElementById('proposta-contato');
 
     let catalogoItems = [];
     let currentItens = [];
@@ -85,6 +84,24 @@ document.addEventListener('DOMContentLoaded', function() {
         summaryLucroLiquido.textContent = formatCurrency(lucroLiquido);
         summaryLucroLiquido.className = `card-title ${lucroLiquido >= 0 ? 'text-primary' : 'text-danger'}`;
     };
+
+    // --- CORREÇÃO: Torna a função populateSelect mais inteligente ---
+    const populateSelect = (selectElement, options, selectedValue, isObjectList = false, keyText = 'nome', keyValue = 'nome') => {
+        selectElement.innerHTML = '';
+        if (['item-catalogo'].includes(selectElement.id)) {
+            selectElement.add(new Option('Selecione do catálogo...', ''));
+        }
+        if (['proposta-contato'].includes(selectElement.id)) {
+            selectElement.add(new Option('Selecione o contato...', ''));
+        }
+        
+        options.forEach(opt => {
+            const text = isObjectList ? opt[keyText] : opt;
+            const value = isObjectList ? opt[keyValue] : opt;
+            selectElement.add(new Option(text, value));
+        });
+        selectElement.value = selectedValue || '';
+    };
     
     const fetchDetails = () => {
         fetch(`/api/propostas/${PROPOSTA_ID}/details`)
@@ -93,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     currentItens = data.itens;
                     currentCustos = data.custos;
-                    
+  
                     // Desabilita a edição se a proposta não estiver em elaboração
                     const isEditable = data.proposta.status === 'Em elaboração';
                     
@@ -107,12 +124,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         catalogoSelect.add(new Option(item.nome, item.id));
                     });
                     
-                    // --- ADIÇÃO v11.2: Preenche os campos do ciclo de vida ---
+                    // --- CORREÇÃO: Popula o dropdown de contatos ---
+                    populateSelect(contatoSelect, data.contatos, data.proposta.contato_id, true, 'nome', 'id');
+                    
+                    // --- Preenche os campos do ciclo de vida ---
                     statusSelect.value = data.proposta.status;
                     dataEnvioInput.value = data.proposta.data_envio;
                     dataValidadeInput.value = data.proposta.data_validade;
                     
-                    // --- CORREÇÃO: Desabilita todos os elementos dos formulários ---
+                    // --- Desabilita todos os elementos dos formulários ---
                     formAddItem.querySelectorAll('input, select, button').forEach(el => el.disabled = !isEditable);
                     formAddCusto.querySelectorAll('input, select, button').forEach(el => el.disabled = !isEditable);
                 }
