@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="text-center">${item.quantidade}</td>
                 <td class="text-end">${formatCurrency(item.valor_unitario)}</td>
                 <td class="text-end">${formatCurrency(item.valor_total)}</td>
-                <td><button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button></td>
+                <td><button class="btn btn-sm btn-outline-danger" onclick="handleDeleteItem(${item.id})"><i class="fas fa-trash"></i></button></td>
             `;
             tableBody.appendChild(row);
         });
