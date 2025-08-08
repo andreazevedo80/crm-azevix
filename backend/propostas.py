@@ -1,13 +1,20 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 # --- ALTERAÇÃO v11.1: Importa o novo modelo de Custo ---
-from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta
+from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead
 from .contas import check_permission
 from decimal import Decimal
 
 propostas = Blueprint('propostas', __name__)
 
 # --- ROTAS DE PÁGINA ---
+# --- ADIÇÃO v11.0: Nova rota para a página de listagem ---
+@propostas.route('/propostas')
+@login_required
+def listar_propostas():
+    """Renderiza a página de listagem de propostas."""
+    return render_template('propostas/lista_propostas.html')
+
 @propostas.route('/propostas/<int:proposta_id>')
 @login_required
 def detalhe_proposta(proposta_id):
@@ -20,6 +27,41 @@ def detalhe_proposta(proposta_id):
     return render_template('propostas/detalhe_proposta.html', proposta=proposta)
 
 # --- ROTAS DE API ---
+# --- ADIÇÃO v11.0: Nova API para buscar e paginar propostas ---
+@propostas.route('/api/propostas', methods=['GET'])
+@login_required
+def get_propostas():
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
+
+    query = Proposta.query.join(Lead).join(Conta)
+
+    if current_user.has_role('gerente'):
+        liderados_ids = [liderado.id for liderado in current_user.liderados]
+        liderados_ids.append(current_user.id)
+        query = query.filter(Conta.user_id.in_(liderados_ids))
+    elif not current_user.has_role('admin'):
+        query = query.filter(Conta.user_id == current_user.id)
+
+    pagination = query.order_by(Proposta.data_criacao.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    
+    propostas_list = []
+    for prop in pagination.items:
+        prop_dict = prop.to_dict()
+        prop_dict['conta_nome'] = prop.lead.conta.nome_fantasia
+        prop_dict['lead_titulo'] = prop.lead.titulo
+        prop_dict['criador_nome'] = prop.criador.name
+        propostas_list.append(prop_dict)
+
+    return jsonify({
+        'success': True,
+        'propostas': propostas_list,
+        'pagination': {
+            'total': pagination.total, 'pages': pagination.pages, 'has_prev': pagination.has_prev,
+            'has_next': pagination.has_next, 'page': pagination.page
+        }
+    })
+
 # --- ALTERAÇÃO v11.1: API de detalhes agora inclui os custos ---
 @propostas.route('/api/propostas/<int:proposta_id>/details', methods=['GET'])
 @login_required

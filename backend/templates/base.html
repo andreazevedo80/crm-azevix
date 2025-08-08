@@ -23,6 +23,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('contas.listar_contas') }}">Contas</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('leads.listar_leads') }}">Leads</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('propostas.listar_propostas') }}">Propostas</a></li>
                         {% if current_user.has_role('admin') %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Administração</a></li>
                         {% endif %}
