@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, Response
 from flask_login import login_required, current_user
-from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead, Contato, ConfigGlobal, User, Contato
+from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead, ConfigGlobal, User, Contato
 from .contas import check_permission
 from decimal import Decimal
 from datetime import datetime
