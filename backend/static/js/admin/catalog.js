@@ -12,8 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const palavrasChaveInput = document.getElementById('item-palavras-chave');
     const cancelBtn = document.getElementById('cancel-btn');
     const tableBody = document.getElementById('catalog-table-body');
+    const activitiesSection = document.getElementById('activities-section');
+    const activitiesContainer = document.getElementById('activities-container');
 
     let currentItems = [];
+    let availableActivities = [];
 
     const renderTable = () => {
         tableBody.innerHTML = '';
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     currentItems = data.items;
+                    availableActivities = data.activities;
                     renderTable();
                 }
             });
@@ -55,6 +59,22 @@ document.addEventListener('DOMContentLoaded', function() {
         precoInput.disabled = false;
     };
 
+    const renderActivitiesCheckboxes = (selectedActivityIds = []) => {
+        activitiesContainer.innerHTML = '';
+        availableActivities.forEach(activity => {
+            const isChecked = selectedActivityIds.includes(activity.id);
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${activity.id}" id="act-${activity.id}" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label" for="act-${activity.id}">${activity.nome}</label>
+                </div>
+            `;
+            activitiesContainer.appendChild(col);
+        });
+    };
+
     sobConsultaCheck.addEventListener('change', () => {
         precoInput.disabled = sobConsultaCheck.checked;
         if (sobConsultaCheck.checked) {
@@ -65,6 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const id = itemIdInput.value;
+        const selectedActivities = Array.from(activitiesContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+        
         const data = {
             nome: nomeInput.value,
             tipo_item: tipoSelect.value,
@@ -73,7 +95,8 @@ document.addEventListener('DOMContentLoaded', function() {
             preco_sob_consulta: sobConsultaCheck.checked,
             descricao: descricaoInput.value,
             catmat_catser: catmatInput.value,
-            palavras_chave_licitacao: palavrasChaveInput.value
+            palavras_chave_licitacao: palavrasChaveInput.value,
+            activity_ids: selectedActivities
         };
         
         const url = id ? `/admin/api/catalog/${id}` : '/admin/api/catalog';
@@ -110,6 +133,15 @@ document.addEventListener('DOMContentLoaded', function() {
             palavrasChaveInput.value = item.palavras_chave_licitacao;
             cancelBtn.style.display = 'inline-block';
             precoInput.disabled = item.preco_sob_consulta;
+
+            // Mostra a seção de atividades apenas se for um serviço
+            if (item.tipo_item === 'Serviço Pontual' || item.tipo_item === 'Consultoria') {
+                activitiesSection.style.display = 'block';
+                renderActivitiesCheckboxes(item.atividade_ids);
+            } else {
+                activitiesSection.style.display = 'none';
+            }
+
             window.scrollTo(0, 0);
         }
     };

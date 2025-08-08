@@ -716,7 +716,7 @@ def import_csv():
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro inesperado: {str(e)}'}), 500
 
-# --- ADIÇÃO v10.0: Novas rotas para Gestão do Catálogo ---
+# --- Rotas para Gestão do Catálogo ---
 
 @admin.route('/catalog')
 def catalog_management():
@@ -726,7 +726,12 @@ def catalog_management():
 @admin.route('/api/catalog', methods=['GET'])
 def get_catalog_items():
     items = ProdutoServico.query.order_by(ProdutoServico.nome).all()
-    return jsonify({'success': True, 'items': [item.to_dict() for item in items]})
+    activities = AtividadePadrao.query.filter_by(is_active=True).order_by(AtividadePadrao.nome).all()
+    return jsonify({
+        'success': True, 
+        'items': [item.to_dict() for item in items],
+        'activities': [a.to_dict() for a in activities]
+    })
 
 @admin.route('/api/catalog', methods=['POST'])
 def add_catalog_item():
@@ -764,11 +769,18 @@ def update_catalog_item(item_id):
     item.catmat_catser = data.get('catmat_catser', item.catmat_catser)
     item.palavras_chave_licitacao = data.get('palavras_chave_licitacao', item.palavras_chave_licitacao)
     item.is_active = data.get('is_active', item.is_active)
-    
+
+    # Lógica para atualizar as atividades associadas
+    if 'activity_ids' in data:
+        item.atividades = []
+        atividades_selecionadas = AtividadePadrao.query.filter(AtividadePadrao.id.in_(data['activity_ids'])).all()
+        for atividade in atividades_selecionadas:
+            item.atividades.append(atividade)
+
     db.session.commit()
     return jsonify({'success': True, 'item': item.to_dict()})
 
-# --- ADIÇÃO v10.1: Novas rotas para Atividades e Pacotes ---
+# --- Rotas para Atividades e Pacotes ---
 
 # --- Gestão de Atividades Padrão ---
 @admin.route('/activities')
