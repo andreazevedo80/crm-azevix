@@ -125,11 +125,8 @@ def update_proposta_management(proposta_id):
     
     # Lógica corrigida para salvar o contato_id
     contato_id_str = data.get('contato_id')
-    if contato_id_str:
-        try:
-            proposta.contato_id = int(contato_id_str)
-        except (ValueError, TypeError):
-            proposta.contato_id = None
+    if contato_id_str and str(contato_id_str).isdigit():
+        proposta.contato_id = int(contato_id_str)
     else:
         proposta.contato_id = None
 
