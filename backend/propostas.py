@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead
 from .contas import check_permission
 from decimal import Decimal
+from datetime import datetime
 
 propostas = Blueprint('propostas', __name__)
 
@@ -107,7 +108,7 @@ def add_item_proposta(proposta_id):
     db.session.add(novo_item)
     
     # Atualiza o valor total da proposta
-    proposta.valor_total = proposta.valor_total + novo_item.valor_total
+    proposta.valor_total = Decimal(proposta.valor_total) + novo_item.valor_total
     
     db.session.commit()
     
@@ -208,7 +209,7 @@ def duplicate_proposta(proposta_id):
         lead_id=proposta_original.lead_id,
         user_id=current_user.id,
         contato_id=proposta_original.contato_id,
-        numero_proposta=f"{proposta_original.numero_proposta}-V{versao_major + 1}",
+        numero_proposta=f"{proposta_original.numero_proposta.split('-V')[0]}-V{versao_major + 1}",
         versao=nova_versao,
         status='Em elaboração',
         valor_total=proposta_original.valor_total
