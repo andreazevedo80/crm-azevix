@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 from .models import Proposta, ItemProposta, ProdutoServico, db
-from .contas import check_permission # Reutilizamos a função de permissão
+from .contas import check_permission
+from decimal import Decimal
 
 propostas = Blueprint('propostas', __name__)
 
@@ -43,12 +44,19 @@ def add_item_proposta(proposta_id):
 
     data = request.get_json()
     
+    # --- CORREÇÃO v11.0: Converte os valores para Decimal antes de usar ---
+    try:
+        quantidade = Decimal(data['quantidade'])
+        valor_unitario = Decimal(data['valor_unitario'])
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'error': 'Quantidade e Valor Unitário devem ser números válidos.'}), 400
+
     novo_item = ItemProposta(
         proposta_id=proposta.id,
         produto_servico_id=data.get('produto_servico_id') or None,
         descricao=data['descricao'],
-        quantidade=data['quantidade'],
-        valor_unitario=data['valor_unitario']
+        quantidade=quantidade,
+        valor_unitario=valor_unitario
     )
     novo_item.valor_total = novo_item.quantidade * novo_item.valor_unitario
     
