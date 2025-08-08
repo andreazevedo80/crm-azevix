@@ -99,9 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         selectElement.value = selectedValue || '';
     };
-
-        selectElement.value = selectedValue || '';
-    };
     
     const fetchDetails = () => {
         fetch(`/api/propostas/${PROPOSTA_ID}/details`)
