@@ -5,13 +5,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const catalogoSelect = document.getElementById('item-catalogo');
     const descricaoInput = document.getElementById('item-descricao');
     const valorInput = document.getElementById('item-valor');
-
-    // --- ADIÇÃO v11.1: Constantes para Custos e Resumo ---
     const custosTableBody = document.getElementById('custos-proposta-table');
     const formAddCusto = document.getElementById('form-add-custo');
     const summaryValorTotal = document.getElementById('summary-valor-total');
     const summaryCustoTotal = document.getElementById('summary-custo-total');
     const summaryLucroLiquido = document.getElementById('summary-lucro-liquido');
+    
+    // --- ADIÇÃO v11.2: Constantes para Ciclo de Vida ---
+    const statusSelect = document.getElementById('proposta-status');
+    const dataEnvioInput = document.getElementById('proposta-data-envio');
+    const dataValidadeInput = document.getElementById('proposta-data-validade');
+    const btnSaveStatus = document.getElementById('btn-save-status');
+    const btnDuplicate = document.getElementById('btn-duplicate-proposta');
 
     let catalogoItems = [];
     let currentItens = [];
@@ -37,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         subtotalEl.textContent = formatCurrency(subtotal);
     };
 
-    // --- ADIÇÃO v11.1: Função para renderizar a tabela de custos ---
+    // --- Função para renderizar a tabela de custos ---
     const renderCustos = (custos) => {
         custosTableBody.innerHTML = '';
         custos.forEach(custo => {
@@ -52,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // --- ADIÇÃO v11.1: Função para calcular e exibir o resumo financeiro ---
+    // --- Função para calcular e exibir o resumo financeiro ---
     const calcularResumoFinanceiro = () => {
         const valorTotalProposta = currentItens.reduce((sum, item) => sum + parseFloat(item.valor_total), 0);
         
@@ -89,6 +94,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     catalogoItems.forEach(item => {
                         catalogoSelect.add(new Option(item.nome, item.id));
                     });
+                    
+                    // --- ADIÇÃO v11.2: Preenche os campos do ciclo de vida ---
+                    statusSelect.value = data.proposta.status;
+                    dataEnvioInput.value = data.proposta.data_envio;
+                    dataValidadeInput.value = data.proposta.data_validade;
+                    
+                    // Desabilita a edição se a proposta não estiver em elaboração
+                    const isEditable = data.proposta.status === 'Em elaboração';
+                    formAddItem.querySelectorAll('input, select, button').forEach(el => el.disabled = !isEditable);
+                    formAddCusto.querySelectorAll('input, select, button').forEach(el => el.disabled = !isEditable);
                 }
             });
     };
@@ -146,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // --- ADIÇÃO v11.1: Lógica para adicionar e deletar custos ---
+    // --- Lógica para adicionar e deletar custos ---
     formAddCusto.addEventListener('submit', (e) => {
         e.preventDefault();
         const data = {
@@ -184,6 +199,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
     };
+
+    // --- ADIÇÃO v11.2: Listeners para o ciclo de vida ---
+    btnSaveStatus.addEventListener('click', () => {
+        const data = {
+            status: statusSelect.value,
+            data_envio: dataEnvioInput.value,
+            data_validade: dataValidadeInput.value
+        };
+        fetch(`/api/propostas/${PROPOSTA_ID}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(() => fetchDetails());
+    });
+
+    btnDuplicate.addEventListener('click', () => {
+        if (confirm('Isso criará uma nova versão desta proposta. Deseja continuar?')) {
+            fetch(`/api/propostas/${PROPOSTA_ID}/duplicate`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        alert(`Erro ao duplicar: ${data.error}`);
+                    }
+                });
+        }
+    });
 
     fetchDetails();
 });

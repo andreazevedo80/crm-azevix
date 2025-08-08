@@ -27,7 +27,7 @@ status_transicoes = db.Table('status_transicoes',
     db.Column('status_origem_id', db.Integer, db.ForeignKey('config_status_lead.id'), primary_key=True),
     db.Column('status_destino_id', db.Integer, db.ForeignKey('config_status_lead.id'), primary_key=True)
 )
-# --- Novos modelos para entidades de vendas configuráveis ---
+# --- Modelos para entidades de vendas configuráveis ---
 class ConfigStatusLead(db.Model):
     __tablename__ = 'config_status_lead'
     id = db.Column(db.Integer, primary_key=True)
@@ -151,8 +151,6 @@ class Conta(db.Model):
     cnpj_hash = db.Column(db.String(64), unique=True, nullable=True, index=True)
     tipo_conta = db.Column(db.String(50), nullable=False, default='Privada')
     segmento = db.Column(db.String(100), nullable=True)
-    
-    # --- ADIÇÃO v9.4: Campos de Endereço ---
     cep = db.Column(db.String(20), nullable=True)
     logradouro = db.Column(db.String(255), nullable=True)
     numero = db.Column(db.String(20), nullable=True)
@@ -187,7 +185,6 @@ class Conta(db.Model):
             'cnpj': self.cnpj,
             'tipo_conta': self.tipo_conta,
             'segmento': self.segmento,
-            # --- ADIÇÃO v9.4: Inclui os campos de endereço no dicionário ---
             'cep': self.cep,
             'logradouro': self.logradouro,
             'numero': self.numero,
@@ -394,8 +391,13 @@ class Proposta(db.Model):
     contato_id = db.Column(db.Integer, db.ForeignKey('contatos.id'), nullable=True)
     
     numero_proposta = db.Column(db.String(50), unique=True, nullable=False)
-    versao = db.Column(db.Integer, default=1, nullable=False)
-    status = db.Column(db.String(50), default='Em elaboração', nullable=False)
+    
+    # --- ALTERAÇÃO v11.2: Campos de Versionamento ---
+    versao = db.Column(db.String(20), default='1.0', nullable=False)
+    versao_pai_id = db.Column(db.Integer, db.ForeignKey('propostas.id'), nullable=True)
+    versao_atual = db.Column(db.Boolean, default=True, index=True)
+    
+    status = db.Column(db.String(50), default='Em elaboração', nullable=False) # Em elaboração, Enviada, Aceita, Recusada, Cancelada
     
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_envio = db.Column(db.DateTime, nullable=True)
@@ -406,17 +408,20 @@ class Proposta(db.Model):
     criador = db.relationship('User', backref='propostas_criadas')
     contato_principal = db.relationship('Contato', backref='propostas')
     itens = db.relationship('ItemProposta', backref='proposta', lazy='dynamic', cascade='all, delete-orphan')
-    # --- ADIÇÃO v11.1: Relacionamento com Custos ---
     custos = db.relationship('CustoProposta', backref='proposta', lazy='dynamic', cascade='all, delete-orphan')
+    versoes = db.relationship('Proposta', backref=db.backref('versao_pai', remote_side=[id]), lazy='dynamic')
 
     def to_dict(self):
         return {
             'id': self.id,
             'lead_id': self.lead_id,
             'numero_proposta': self.numero_proposta,
+            'versao': self.versao,
             'status': self.status,
             'valor_total': str(self.valor_total) if self.valor_total is not None else '0.00',
-            'data_criacao': self.data_criacao.strftime('%d/%m/%Y %H:%M')
+            'data_criacao': self.data_criacao.strftime('%Y-%m-%d'),
+            'data_envio': self.data_envio.strftime('%Y-%m-%d') if self.data_envio else None,
+            'data_validade': self.data_validade.strftime('%Y-%m-%d') if self.data_validade else None
         }
 
 class ItemProposta(db.Model):
@@ -441,9 +446,7 @@ class ItemProposta(db.Model):
             'valor_total': str(self.valor_total)
         }
 
-# --- ADIÇÃO v11.1: Novo modelo para Custos da Proposta ---
-
-# --- ADIÇÃO v11.1: Novo modelo para Custos da Proposta ---
+# --- Modelo para Custos da Proposta ---
 class CustoProposta(db.Model):
     __tablename__ = 'custo_proposta'
     id = db.Column(db.Integer, primary_key=True)

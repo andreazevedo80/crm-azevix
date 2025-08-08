@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-# --- ALTERAÇÃO v11.1: Importa o novo modelo de Custo ---
 from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead
 from .contas import check_permission
 from decimal import Decimal
@@ -8,7 +7,7 @@ from decimal import Decimal
 propostas = Blueprint('propostas', __name__)
 
 # --- ROTAS DE PÁGINA ---
-# --- ADIÇÃO v11.0: Nova rota para a página de listagem ---
+# --- Rota para a página de listagem ---
 @propostas.route('/propostas')
 @login_required
 def listar_propostas():
@@ -27,7 +26,7 @@ def detalhe_proposta(proposta_id):
     return render_template('propostas/detalhe_proposta.html', proposta=proposta)
 
 # --- ROTAS DE API ---
-# --- ADIÇÃO v11.0: Nova API para buscar e paginar propostas ---
+# --- API para buscar e paginar propostas ---
 @propostas.route('/api/propostas', methods=['GET'])
 @login_required
 def get_propostas():
@@ -62,7 +61,7 @@ def get_propostas():
         }
     })
 
-# --- ALTERAÇÃO v11.1: API de detalhes agora inclui os custos ---
+# --- API de detalhes agora inclui os custos ---
 @propostas.route('/api/propostas/<int:proposta_id>/details', methods=['GET'])
 @login_required
 def get_proposta_details(proposta_id):
@@ -136,7 +135,7 @@ def delete_item_proposta(item_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
 
-# --- ADIÇÃO v11.1: Novas APIs para gerenciar custos ---
+# --- APIs para gerenciar custos ---
 @propostas.route('/api/propostas/<int:proposta_id>/custos', methods=['POST'])
 @login_required
 def add_custo_proposta(proposta_id):
@@ -174,3 +173,59 @@ def delete_custo_proposta(custo_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Ocorreu um erro: {str(e)}'}), 500
+
+# --- ADIÇÃO v11.2: Novas APIs para o Ciclo de Vida da Proposta ---
+@propostas.route('/api/propostas/<int:proposta_id>/status', methods=['PUT'])
+@login_required
+def update_proposta_status(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta.lead.conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+    data = request.get_json()
+    proposta.status = data.get('status', proposta.status)
+    
+    if data.get('data_envio'):
+        proposta.data_envio = datetime.strptime(data['data_envio'], '%Y-%m-%d')
+    if data.get('data_validade'):
+        proposta.data_validade = datetime.strptime(data['data_validade'], '%Y-%m-%d')
+
+    db.session.commit()
+    return jsonify({'success': True, 'proposta': proposta.to_dict()})
+
+@propostas.route('/api/propostas/<int:proposta_id>/duplicate', methods=['POST'])
+@login_required
+def duplicate_proposta(proposta_id):
+    proposta_original = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta_original.lead.conta, for_editing=True):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    # Lógica de versionamento
+    versao_major = int(proposta_original.versao.split('.')[0])
+    nova_versao = f"{versao_major + 1}.0"
+
+    nova_proposta = Proposta(
+        lead_id=proposta_original.lead_id,
+        user_id=current_user.id,
+        contato_id=proposta_original.contato_id,
+        numero_proposta=f"{proposta_original.numero_proposta}-V{versao_major + 1}",
+        versao=nova_versao,
+        status='Em elaboração',
+        valor_total=proposta_original.valor_total
+    )
+    db.session.add(nova_proposta)
+
+    # Copia os itens
+    for item in proposta_original.itens:
+        novo_item = ItemProposta(proposta=nova_proposta, **item.to_dict(exclude_id=True))
+        db.session.add(novo_item)
+        
+    # Copia os custos
+    for custo in proposta_original.custos:
+        novo_custo = CustoProposta(proposta=nova_proposta, **custo.to_dict(exclude_id=True))
+        db.session.add(novo_custo)
+
+    db.session.commit()
+    
+    redirect_url = url_for('propostas.detalhe_proposta', proposta_id=nova_proposta.id)
+    return jsonify({'success': True, 'redirect_url': redirect_url})

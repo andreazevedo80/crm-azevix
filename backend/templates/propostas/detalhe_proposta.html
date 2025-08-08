@@ -91,6 +91,31 @@
     
     <!-- NOVO: Coluna lateral com Card dos Custos da Proposta -->
     <div class="col-lg-4">
+        <!-- NOVO: Card Status e Ciclo de Vida -->
+        <div class="card card-azevix mb-4">
+            <div class="card-header"><h5 class="card-title mb-0">Status e Ciclo de Vida</h5></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="proposta-status" class="form-label">Status da Proposta</label>
+                    <select id="proposta-status" class="form-select">
+                        <option value="Em elaboração">Em elaboração</option>
+                        <option value="Enviada">Enviada</option>
+                        <option value="Aceita">Aceita</option>
+                        <option value="Recusada">Recusada</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label for="proposta-data-envio" class="form-label">Data de Envio</label><input type="date" id="proposta-data-envio" class="form-control"></div>
+                    <div class="col-6 mb-3"><label for="proposta-data-validade" class="form-label">Data de Validade</label><input type="date" id="proposta-data-validade" class="form-control"></div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button id="btn-save-status" class="btn btn-azevix">Salvar Alterações de Status</button>
+                    <button id="btn-duplicate-proposta" class="btn btn-outline-secondary">Duplicar Proposta (Criar v2)</button>
+                </div>
+            </div>
+        </div>
+        
         <div class="card card-azevix">
             <div class="card-header"><h5 class="card-title mb-0">Custos da Proposta</h5></div>
             <div class="card-body">
