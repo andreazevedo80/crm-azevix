@@ -93,8 +93,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     currentItens = data.itens;
                     currentCustos = data.custos;
-                    renderItens(data.itens, data.proposta.valor_total);
-                    renderCustos(data.custos);
+                    
+                    // Desabilita a edição se a proposta não estiver em elaboração
+                    const isEditable = data.proposta.status === 'Em elaboração';
+                    
+                    renderItens(data.itens, data.proposta.valor_total, isEditable);
+                    renderCustos(data.custos, isEditable);
                     calcularResumoFinanceiro();
                     catalogoItems = data.catalogo;
                     
@@ -107,12 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusSelect.value = data.proposta.status;
                     dataEnvioInput.value = data.proposta.data_envio;
                     dataValidadeInput.value = data.proposta.data_validade;
-                    renderItens(data.itens, data.proposta.valor_total, isEditable);
-                    renderCustos(data.custos, isEditable);
-                    calcularResumoFinanceiro();
                     
-                    // Desabilita a edição se a proposta não estiver em elaboração
-                    const isEditable = data.proposta.status === 'Em elaboração';
+                    // --- CORREÇÃO: Desabilita todos os elementos dos formulários ---
                     formAddItem.querySelectorAll('input, select, button').forEach(el => el.disabled = !isEditable);
                     formAddCusto.querySelectorAll('input, select, button').forEach(el => el.disabled = !isEditable);
                 }
