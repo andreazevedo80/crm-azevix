@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, Response
 from flask_login import login_required, current_user
-from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead, Contato, ConfigGlobal
+from .models import Proposta, ItemProposta, ProdutoServico, db, CustoProposta, Conta, Lead, Contato, ConfigGlobal, User, Contato
 from .contas import check_permission
 from decimal import Decimal
 from datetime import datetime
@@ -87,6 +87,27 @@ def get_propostas():
             'total': pagination.total, 'pages': pagination.pages, 'has_prev': pagination.has_prev,
             'has_next': pagination.has_next, 'page': pagination.page
         }
+    })
+
+# --- ADIÇÃO: API de detalhes da proposta com contatos da conta ---
+@propostas.route('/api/propostas/<int:proposta_id>/details', methods=['GET'])
+@login_required
+def get_proposta_details(proposta_id):
+    proposta = Proposta.query.get_or_404(proposta_id)
+    if not check_permission(proposta.lead.conta, for_editing=False):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    itens_catalogo = ProdutoServico.query.filter_by(is_active=True).order_by(ProdutoServico.nome).all()
+    # --- CORREÇÃO: Busca os contatos da conta para popular o dropdown ---
+    contatos_conta = Contato.query.filter_by(conta_id=proposta.lead.conta_id, is_active=True).all()
+
+    return jsonify({
+        'success': True,
+        'proposta': proposta.to_dict(),
+        'itens': [item.to_dict() for item in proposta.itens.order_by(ItemProposta.id).all()],
+        'custos': [custo.to_dict() for custo in proposta.custos.order_by(CustoProposta.id).all()],
+        'catalogo': [item.to_dict() for item in itens_catalogo],
+        'contatos': [c.to_dict() for c in contatos_conta]
     })
 
 # --- API de detalhes agora inclui os custos ---

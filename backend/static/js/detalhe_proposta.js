@@ -86,13 +86,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // --- CORREÇÃO: Torna a função populateSelect mais inteligente ---
-    const populateSelect = (selectElement, options, selectedValue, isObjectList = false, keyText = 'nome', keyValue = 'nome') => {
+    const populateSelect = (selectElement, options, selectedValue, isObjectList = false, keyText = 'nome', keyValue = 'id') => {
         selectElement.innerHTML = '';
-        if (['item-catalogo'].includes(selectElement.id)) {
-            selectElement.add(new Option('Selecione do catálogo...', ''));
-        }
-        if (['proposta-contato'].includes(selectElement.id)) {
-            selectElement.add(new Option('Selecione o contato...', ''));
+        if (['item-catalogo', 'proposta-contato'].includes(selectElement.id)) {
+            selectElement.add(new Option('Selecione...', ''));
         }
         
         options.forEach(opt => {
@@ -100,6 +97,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const value = isObjectList ? opt[keyValue] : opt;
             selectElement.add(new Option(text, value));
         });
+        selectElement.value = selectedValue || '';
+    };
+
         selectElement.value = selectedValue || '';
     };
     
